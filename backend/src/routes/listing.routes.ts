@@ -6,13 +6,12 @@ import {
     getListings
 } from "../controllers/listing.controller.js";
 import {
-    createListingSchema, updateListingSchema, updateListingStatusSchema,
-    paginationSchema
+    createListingSchema, updateListingSchema, updateListingStatusSchema, paginationSchema, listingQuerySchema
 } from "../validators/listing.validator.js"
 
 const router = Router();
 
-router.get("/", validateQuery(paginationSchema), getListings);
+router.get("/", validateQuery(listingQuerySchema), getListings);
 router.get("/me", requireAuth, validateQuery(paginationSchema), getMyListings);
 router.get("/:id", getListingById);
 router.post("/", requireAuth, validate(createListingSchema), createListing);

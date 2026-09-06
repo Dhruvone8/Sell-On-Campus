@@ -159,9 +159,9 @@ export async function getMyListings(req: Request, res: Response) {
 
 export async function getListings(req: Request, res: Response) {
     try {
-        const { page, limit } = res.locals.validatedQuery
+        const { page, limit, categoryId, condition, minPrice, maxPrice, sort } = res.locals.validatedQuery;
 
-        const result = await getListingsService(page, limit);
+        const result = await getListingsService(page, limit, { categoryId, condition, minPrice, maxPrice }, sort);
 
         return res.status(200).json(result);
 

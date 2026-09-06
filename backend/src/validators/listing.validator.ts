@@ -31,3 +31,22 @@ export const paginationSchema = z.object({
     page: z.coerce.number().int().min(1).default(1),
     limit: z.coerce.number().int().min(1).max(50).default(10),
 })
+
+export const listingQuerySchema = z.object({
+    page: z.coerce.number().int().min(1).default(1),
+    limit: z.coerce.number().int().min(1).max(50).default(10),
+    categoryId: z.string().min(1).optional(),
+    condition: z.enum(["NEW", "LIKE_NEW", "GOOD", "FAIR"]).optional(),
+    minPrice: z.coerce.number().nonnegative().optional(),
+    maxPrice: z.coerce.number().nonnegative().optional(),
+    sort: z.enum(["newest", "oldest", "price_asc", "price_desc"]).default("newest")
+}).refine(
+    (data) =>
+        data.minPrice === undefined ||
+        data.maxPrice === undefined ||
+        data.minPrice <= data.maxPrice,
+    {
+        message: "minPrice cannot be greater than maxPrice",
+        path: ["minPrice"]
+    }
+);

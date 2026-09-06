@@ -24,6 +24,12 @@ interface UpdateListingData {
     model?: string | null;
 }
 
+type ListingSort =
+    | "newest"
+    | "oldest"
+    | "price_asc"
+    | "price_desc";
+
 export async function createListing(data: CreateListingData) {
     const category = await prisma.category.findUnique({
         where: {
@@ -44,17 +50,11 @@ export async function createListing(data: CreateListingData) {
             categoryId: data.categoryId,
             condition: data.condition,
 
-            ...(data.brand !== undefined && {
-                brand: data.brand
-            }),
+            ...(data.brand !== undefined && { brand: data.brand }),
 
-            ...(data.color !== undefined && {
-                color: data.color
-            }),
+            ...(data.color !== undefined && { color: data.color }),
 
-            ...(data.model !== undefined && {
-                model: data.model
-            })
+            ...(data.model !== undefined && { model: data.model })
         }
     });
 
@@ -106,37 +106,21 @@ export async function updateListing(listingId: string, userId: string, data: Upd
     }
 
     const updateData = {
-        ...(data.title !== undefined && {
-            title: data.title
-        }),
+        ...(data.title !== undefined && { title: data.title }),
 
-        ...(data.description !== undefined && {
-            description: data.description
-        }),
+        ...(data.description !== undefined && { description: data.description }),
 
-        ...(data.price !== undefined && {
-            price: data.price
-        }),
+        ...(data.price !== undefined && { price: data.price }),
 
-        ...(data.categoryId !== undefined && {
-            categoryId: data.categoryId
-        }),
+        ...(data.categoryId !== undefined && { categoryId: data.categoryId }),
 
-        ...(data.condition !== undefined && {
-            condition: data.condition
-        }),
+        ...(data.condition !== undefined && { condition: data.condition }),
 
-        ...("brand" in data && {
-            brand: data.brand
-        }),
+        ...("brand" in data && { brand: data.brand }),
 
-        ...("color" in data && {
-            color: data.color
-        }),
+        ...("color" in data && { color: data.color }),
 
-        ...("model" in data && {
-            model: data.model
-        })
+        ...("model" in data && { model: data.model })
     };
 
     return prisma.listing.update({
@@ -213,17 +197,48 @@ export async function getMyListings(userId: string, page: number, limit: number)
     }
 }
 
-export async function getListings(page: number, limit: number) {
+export async function getListings(
+    page: number,
+    limit: number,
+    filters: {
+        categoryId?: string;
+        condition?: "NEW" | "LIKE_NEW" | "GOOD" | "FAIR";
+        minPrice?: number;
+        maxPrice?: number;
+    },
+    sort: ListingSort
+) {
     const skip = (page - 1) * limit;
+
+    const where = {
+        status: "ACTIVE" as const,
+
+        ...(filters.categoryId && { categoryId: filters.categoryId }),
+
+        ...(filters.condition && { condition: filters.condition }),
+
+        ...(filters.minPrice !== undefined || filters.maxPrice !== undefined) && {
+            price: {
+                ...(filters.minPrice !== undefined && { gte: filters.minPrice }),
+                ...(filters.maxPrice !== undefined && { lte: filters.maxPrice })
+            }
+        }
+    };
+
+    const orderBy = {
+        newest: { createdAt: "desc" as const },
+
+        oldest: { createdAt: "asc" as const },
+
+        price_asc: { price: "asc" as const },
+
+        price_desc: { price: "desc" as const }
+    }[sort];
 
     const [listings, total] = await Promise.all([
         prisma.listing.findMany({
-            where: {
-                status: "ACTIVE",
-            },
-            orderBy: {
-                createdAt: "desc"
-            },
+            where,
+            orderBy,
             skip,
             take: limit,
             include: {
@@ -231,11 +246,7 @@ export async function getListings(page: number, limit: number) {
             }
         }),
 
-        prisma.listing.count({
-            where: {
-                status: "ACTIVE",
-            }
-        })
+        prisma.listing.count({ where })
     ]);
 
     const totalPages = Math.ceil(total / limit);
