@@ -17,7 +17,6 @@ export const updateListingSchema = z.object({
     price: z.number().nonnegative().optional(),
     categoryId: z.string().min(1).optional(),
     condition: z.enum(["NEW", "LIKE_NEW", "GOOD", "FAIR"]).optional(),
-
     brand: z.string().trim().max(20).nullable().optional(),
     color: z.string().trim().max(15).nullable().optional(),
     model: z.string().trim().max(30).nullable().optional(),
@@ -39,7 +38,8 @@ export const listingQuerySchema = z.object({
     condition: z.enum(["NEW", "LIKE_NEW", "GOOD", "FAIR"]).optional(),
     minPrice: z.coerce.number().nonnegative().optional(),
     maxPrice: z.coerce.number().nonnegative().optional(),
-    sort: z.enum(["newest", "oldest", "price_asc", "price_desc"]).default("newest")
+    sort: z.enum(["newest", "oldest", "price_asc", "price_desc"]).default("newest"),
+    search: z.string().trim().min(1).max(50).optional()
 }).refine(
     (data) =>
         data.minPrice === undefined ||

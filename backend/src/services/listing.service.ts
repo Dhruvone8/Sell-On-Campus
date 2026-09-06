@@ -1,4 +1,5 @@
 import { prisma } from "../lib/prisma.js"
+import { Prisma, PrismaClient } from "../generated/prisma/client.js";
 import { AppError } from "../lib/error.js";
 
 interface CreateListingData {
@@ -205,12 +206,13 @@ export async function getListings(
         condition?: "NEW" | "LIKE_NEW" | "GOOD" | "FAIR";
         minPrice?: number;
         maxPrice?: number;
+        search?: string
     },
     sort: ListingSort
 ) {
     const skip = (page - 1) * limit;
 
-    const where = {
+    const where: Prisma.ListingWhereInput = {
         status: "ACTIVE" as const,
 
         ...(filters.categoryId && { categoryId: filters.categoryId }),
@@ -222,7 +224,16 @@ export async function getListings(
                 ...(filters.minPrice !== undefined && { gte: filters.minPrice }),
                 ...(filters.maxPrice !== undefined && { lte: filters.maxPrice })
             }
-        }
+        },
+
+        ...(filters.search && {
+            OR: [
+                { title: { contains: filters.search, mode: "insensitive" } },
+                { description: { contains: filters.search, mode: "insensitive" } },
+                { brand: { contains: filters.search, mode: "insensitive" } },
+                { model: { contains: filters.search, mode: "insensitive" } }
+            ]
+        }),
     };
 
     const orderBy = {
