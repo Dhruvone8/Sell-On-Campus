@@ -15,6 +15,8 @@ export async function createListing(req: Request, res: Response) {
 
         const { title, description, price, categoryId, condition, brand, color, model } = req.body;
 
+        const files = req.files as Express.Multer.File[] || undefined
+
         const listing = await createListingService({
             sellerId: userId,
             title,
@@ -24,7 +26,8 @@ export async function createListing(req: Request, res: Response) {
             condition,
             brand,
             color,
-            model
+            model,
+            files
         });
 
         return res.status(201).json({ message: "Listing created successfully", listing });

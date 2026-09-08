@@ -8,13 +8,14 @@ import {
 import {
     createListingSchema, updateListingSchema, updateListingStatusSchema, paginationSchema, listingQuerySchema
 } from "../validators/listing.validator.js"
+import { upload } from "../middleware/upload.middleware.js"
 
 const router = Router();
 
 router.get("/", validateQuery(listingQuerySchema), getListings);
 router.get("/me", requireAuth, validateQuery(paginationSchema), getMyListings);
 router.get("/:id", getListingById);
-router.post("/", requireAuth, validate(createListingSchema), createListing);
+router.post("/", requireAuth, upload.array("images", 5), validate(createListingSchema), createListing);
 router.patch("/:id", requireAuth, validate(updateListingSchema), updateListing);
 router.patch("/:id/status", requireAuth, validate(updateListingStatusSchema), updateListingStatus);
 

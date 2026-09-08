@@ -3,7 +3,7 @@ import { z } from "zod";
 export const createListingSchema = z.object({
     title: z.string().trim().min(3).max(50),
     description: z.string().trim().min(10).max(200),
-    price: z.number().nonnegative(),
+    price: z.coerce.number().nonnegative(),
     categoryId: z.string().min(1),
     condition: z.enum(["NEW", "LIKE_NEW", "GOOD", "FAIR"]),
     brand: z.string().trim().max(20).optional(),

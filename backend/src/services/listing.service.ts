@@ -1,6 +1,7 @@
 import { prisma } from "../lib/prisma.js"
 import { Prisma, PrismaClient } from "../generated/prisma/client.js";
 import { AppError } from "../lib/error.js";
+import { uploadImage } from "./cloudinary.service.js"
 
 interface CreateListingData {
     sellerId: string;
@@ -12,6 +13,7 @@ interface CreateListingData {
     brand?: string;
     color?: string;
     model?: string;
+    files?: Express.Multer.File[];
 }
 
 interface UpdateListingData {
@@ -52,14 +54,29 @@ export async function createListing(data: CreateListingData) {
             condition: data.condition,
 
             ...(data.brand !== undefined && { brand: data.brand }),
-
             ...(data.color !== undefined && { color: data.color }),
-
             ...(data.model !== undefined && { model: data.model })
         }
     });
 
-    return listing;
+    const uploadedImages = [];
+
+    if (data.files && data.files.length > 0) {
+        for (const file of data.files) {
+            const result = await uploadImage(file.buffer, `sell-on-campus/listings/${listing.id}`);
+
+            const listingImage = await prisma.listingImage.create({
+                data: {
+                    imageUrl: result.secure_url,
+                    listingId: listing.id
+                }
+            });
+
+            uploadedImages.push(listingImage);
+        }
+    }
+
+    return { ...listing, images: uploadedImages };
 }
 
 export async function getListingById(listingId: string) {
@@ -263,4 +280,20 @@ export async function getListings(
     const totalPages = Math.ceil(total / limit);
 
     return { listings, pagination: { page, limit, total, totalPages } };
+}
+
+export async function uploadListingImage(listingId: string, userId: string, file: Express.Multer.File) {
+    const listing = await prisma.listing.findUnique({
+        where: {
+            id: listingId,
+        }
+    })
+
+    if (!listing) {
+        throw new AppError("Listing Not Found", 404);
+    }
+
+    if (listing.sellerId !== userId) {
+
+    }
 }
