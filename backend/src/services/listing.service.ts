@@ -1,7 +1,7 @@
 import { prisma } from "../lib/prisma.js"
 import { Prisma, PrismaClient } from "../generated/prisma/client.js";
 import { AppError } from "../lib/error.js";
-import { uploadImage } from "./cloudinary.service.js"
+import { uploadImage, deleteImage } from "./cloudinary.service.js"
 
 interface CreateListingData {
     sellerId: string;
@@ -35,9 +35,7 @@ type ListingSort =
 
 export async function createListing(data: CreateListingData) {
     const category = await prisma.category.findUnique({
-        where: {
-            id: data.categoryId,
-        }
+        where: { id: data.categoryId }
     });
 
     if (!category) {
@@ -52,31 +50,78 @@ export async function createListing(data: CreateListingData) {
             price: data.price,
             categoryId: data.categoryId,
             condition: data.condition,
-
             ...(data.brand !== undefined && { brand: data.brand }),
             ...(data.color !== undefined && { color: data.color }),
             ...(data.model !== undefined && { model: data.model })
         }
     });
 
-    const uploadedImages = [];
+    const uploadedImages: {
+        secure_url: string;
+        public_id: string;
+    }[] = [];
 
-    if (data.files && data.files.length > 0) {
-        for (const file of data.files) {
-            const result = await uploadImage(file.buffer, `sell-on-campus/listings/${listing.id}`);
+    try {
+        // Phase 1: upload ALL images to Cloudinary
+        if (data.files && data.files.length > 0) {
+            for (const file of data.files) {
+                const result = await uploadImage(
+                    file.buffer,
+                    `sell-on-campus/listings/${listing.id}`
+                );
 
-            const listingImage = await prisma.listingImage.create({
-                data: {
-                    imageUrl: result.secure_url,
-                    listingId: listing.id
-                }
-            });
-
-            uploadedImages.push(listingImage);
+                uploadedImages.push(result);
+            }
         }
-    }
 
-    return { ...listing, images: uploadedImages };
+        // Phase 2: ALL uploads succeeded.
+        // Now create ListingImage records.
+        const imageRecords = await Promise.all(
+            uploadedImages.map((image) =>
+                prisma.listingImage.create({
+                    data: {
+                        imageUrl: image.secure_url,
+                        publicId: image.public_id,
+                        listingId: listing.id
+                    }
+                })
+            )
+        );
+
+        return {
+            ...listing,
+            images: imageRecords
+        };
+    } catch (error) {
+        // Remove any Cloudinary images that were successfully uploaded.
+        for (const image of uploadedImages) {
+            try {
+                await deleteImage(image.public_id);
+            } catch (cleanupError) {
+                console.error(
+                    "Failed to cleanup Cloudinary image:",
+                    image.public_id,
+                    cleanupError
+                );
+            }
+        }
+
+        // Remove the listing.
+        // ListingImage rows, if any, are removed through onDelete: Cascade.
+        try {
+            await prisma.listing.delete({
+                where: { id: listing.id }
+            });
+        } catch (cleanupError) {
+            console.error(
+                "Failed to cleanup listing:",
+                listing.id,
+                cleanupError
+            );
+        }
+
+        throw error;
+    }
 }
 
 export async function getListingById(listingId: string) {
@@ -86,6 +131,7 @@ export async function getListingById(listingId: string) {
         },
         include: {
             category: true,
+            images: true
         }
     });
 
@@ -93,7 +139,12 @@ export async function getListingById(listingId: string) {
         throw new AppError("Listing not Found", 404);
     }
 
-    return listing;
+    return {
+        ...listing, images: listing.images.map((image) => ({
+            id: image.id,
+            imageUrl: image.imageUrl
+        }))
+    }
 }
 
 export async function updateListing(listingId: string, userId: string, data: UpdateListingData) {
@@ -197,7 +248,8 @@ export async function getMyListings(userId: string, page: number, limit: number)
             skip,
             take: limit,
             include: {
-                category: true
+                category: true,
+                images: true
             }
         }),
 
@@ -210,8 +262,16 @@ export async function getMyListings(userId: string, page: number, limit: number)
 
     const totalPages = Math.ceil(total / limit);
 
+    const listingsWithImages = listings.map((listing) => ({
+        ...listing,
+        images: listing.images.map((image) => ({
+            id: image.id,
+            imageUrl: image.imageUrl
+        }))
+    }));
+
     return {
-        listings, pagination: { page, limit, total, totalPages }
+        listings: listingsWithImages, pagination: { page, limit, total, totalPages }
     }
 }
 
@@ -270,7 +330,8 @@ export async function getListings(
             skip,
             take: limit,
             include: {
-                category: true
+                category: true,
+                images: true
             }
         }),
 
@@ -279,7 +340,15 @@ export async function getListings(
 
     const totalPages = Math.ceil(total / limit);
 
-    return { listings, pagination: { page, limit, total, totalPages } };
+    const listingsWithImages = listings.map((listing) => ({
+        ...listing,
+        images: listing.images.map((image) => ({
+            id: image.id,
+            imageUrl: image.imageUrl
+        }))
+    }));
+
+    return { listings: listingsWithImages, pagination: { page, limit, total, totalPages } };
 }
 
 export async function uploadListingImage(listingId: string, userId: string, file: Express.Multer.File) {

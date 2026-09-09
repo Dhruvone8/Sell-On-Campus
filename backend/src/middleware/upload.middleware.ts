@@ -1,4 +1,6 @@
 import multer from "multer";
+import { handleMulterError } from "./multer-error.middleware.js";
+import type { Request, Response, NextFunction } from "express";
 
 const storage = multer.memoryStorage();
 
@@ -13,3 +15,14 @@ export const upload = multer({
         }
     }
 });
+
+
+export function uploadListingImages(req: Request, res: Response, next: NextFunction) {
+    upload.array("images", 5)(req, res, (error) => {
+        if (error) {
+            return handleMulterError(error, req, res, next);
+        }
+
+        next();
+    });
+}
