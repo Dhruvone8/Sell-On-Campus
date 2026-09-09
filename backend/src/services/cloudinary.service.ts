@@ -24,3 +24,7 @@ export function uploadImage(buffer: Buffer, folder: string): Promise<{ secure_ur
         uploadStream.end(buffer);
     });
 }
+
+export async function deleteImage(publicId: string) {
+    await cloudinary.uploader.destroy(publicId);
+}
