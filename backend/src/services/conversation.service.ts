@@ -63,11 +63,28 @@ export async function createMessage(conversationId: string, senderId: string, co
         throw new AppError("You are not a participant in this conversation", 403)
     }
 
-    return prisma.message.create({
-        data: {
-            content,
-            conversationId: conversation.id,
-            senderId
-        }
-    })
+    return prisma.$transaction(async (tx) => {
+        const updatedConversation = await tx.conversation.update({
+            where: {
+                id: conversation.id,
+            },
+            data: {
+                messageSequence: {
+                    increment: 1,
+                },
+            },
+            select: {
+                messageSequence: true,
+            }
+        });
+
+        return tx.message.create({
+            data: {
+                content,
+                conversationId: conversation?.id,
+                senderId,
+                sequence: updatedConversation.messageSequence
+            },
+        });
+    });
 }
