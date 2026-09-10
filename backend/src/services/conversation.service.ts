@@ -40,3 +40,34 @@ export async function createConversation(listingId: string, buyerId: string) {
         },
     });
 }
+
+export async function createMessage(conversationId: string, senderId: string, content: string) {
+    const conversation = await prisma.conversation.findUnique({
+        where: {
+            id: conversationId,
+        },
+        select: {
+            id: true,
+            buyerId: true,
+            sellerId: true
+        },
+    });
+
+    if (!conversation) {
+        throw new AppError("Conversation Not Found", 404);
+    }
+
+    const isParticipant = conversation.buyerId === senderId || conversation.sellerId === senderId;
+
+    if (!isParticipant) {
+        throw new AppError("You are not a participant in this conversation", 403)
+    }
+
+    return prisma.message.create({
+        data: {
+            content,
+            conversationId: conversation.id,
+            senderId
+        }
+    })
+}
