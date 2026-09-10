@@ -11,5 +11,9 @@ model Message {
   senderId String
   sender   User   @relation(fields: [senderId], references: [id])
 
+  sequence Int
+
   createdAt DateTime @default(now())
+
+  @@unique([conversationId, sequence])
 }
