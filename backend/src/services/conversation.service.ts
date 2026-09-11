@@ -88,3 +88,58 @@ export async function createMessage(conversationId: string, senderId: string, co
         });
     });
 }
+
+export async function getConversationMessages(conversationId: string, userId: string, limit: number, cursor?: number) {
+    const conversation = await prisma.conversation.findUnique({
+        where: {
+            id: conversationId,
+        },
+        select: {
+            id: true,
+            buyerId: true,
+            sellerId: true,
+        },
+    });
+
+    if (!conversation) {
+        throw new AppError("Conversation not Found", 404);
+    }
+
+    // Check if the user is the buyer / seller for the listing which conversation is related to
+    const isParticipant = userId === conversation.buyerId || userId === conversation.sellerId;
+
+    if (!isParticipant) {
+        throw new AppError("You are not a participant in this conversation", 403);
+    }
+
+    const messages = await prisma.message.findMany({
+        where: {
+            conversationId: conversation.id,
+            ...(cursor !== undefined ? {
+                sequence: {
+                    lt: cursor,
+                },
+            } : {}),
+        },
+
+        orderBy: {
+            sequence: "desc",
+        },
+
+        take: limit + 1,
+    });
+
+    const hasMore = messages.length > limit;
+
+    if(hasMore) {
+        messages.pop();
+    }
+
+    messages.reverse();
+
+    return {
+        messages, pagination: {
+            nextCursor: messages.length > 0 ? messages[0]?.sequence : null, hasMore
+        },
+    };
+}
