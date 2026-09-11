@@ -1,5 +1,8 @@
 import type { Request, Response } from "express";
-import { createConversation as createConversationService, createMessage as createMessageService } from "../services/conversation.service.js";
+import {
+    createConversation as createConversationService, createMessage as createMessageService,
+    getConversationMessages as getConversationMessagesService
+} from "../services/conversation.service.js";
 import { AppError } from "../lib/error.js";
 
 export async function createConversation(req: Request, res: Response) {
@@ -28,4 +31,23 @@ export async function createMessage(req: Request, res: Response) {
     const message = await createMessageService(conversationId, senderId, content);
 
     return res.status(200).json({ message });
+}
+
+export async function getConversationMessages(req: Request, res: Response) {
+    const userId = req.userId;
+    const { conversationId } = req.params;
+
+    if (!userId) {
+        throw new AppError("Unauthenticated", 400);
+    }
+
+    if (typeof conversationId !== "string") {
+        throw new AppError("Invalid Conversation Id", 400);
+    }
+
+    const { cursor, limit } = res.locals.validatedQuery;
+
+    const result = await getConversationMessagesService(conversationId, userId, limit, cursor);
+
+    return res.status(200).json(result);
 }
