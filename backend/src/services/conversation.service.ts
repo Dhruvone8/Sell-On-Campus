@@ -200,9 +200,10 @@ export async function getUserConversations(userId: string, limit: number, cursor
             messages: { some: {} },
         },
 
-        orderBy: {
-            updatedAt: "desc",
-        },
+        orderBy: [
+            { updatedAt: "desc" },
+            { id: "desc" }
+        ],
 
         ...(decodedCursor
             ? {
