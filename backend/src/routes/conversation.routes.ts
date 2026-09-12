@@ -5,12 +5,12 @@ import {
     createConversation, createMessage, getConversationMessages, getUserConversations
 } from "../controllers/conversation.controller.js";
 import {
-    conversationMessagesQuerySchema, createConversationSchema, createMessageSchema
+    conversationMessagesQuerySchema, createConversationSchema, createMessageSchema, userConversationsQuerySchema
 } from "../validators/conversation.validator.js";
 
 const router = Router();
 
-router.get("/", requireAuth, getUserConversations)
+router.get("/", requireAuth, validateQuery(userConversationsQuerySchema), getUserConversations)
 router.get("/:conversationId/messages", requireAuth, validateQuery(conversationMessagesQuerySchema), getConversationMessages)
 router.post("/", requireAuth, validate(createConversationSchema), createConversation);
 router.post("/:conversationId/messages", requireAuth, validate(createMessageSchema), createMessage);
