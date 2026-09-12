@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import {
     createConversation as createConversationService, createMessage as createMessageService,
-    getConversationMessages as getConversationMessagesService
+    getConversationMessages as getConversationMessagesService, getUserConversations as getUserConversationsService
 } from "../services/conversation.service.js";
 import { AppError } from "../lib/error.js";
 
@@ -50,4 +50,18 @@ export async function getConversationMessages(req: Request, res: Response) {
     const result = await getConversationMessagesService(conversationId, userId, limit, cursor);
 
     return res.status(200).json(result);
+}
+
+export async function getUserConversations(req: Request, res: Response) {
+    const userId = req.userId;
+
+    if (!userId) {
+        throw new AppError("Unauthenticated", 400);
+    }
+
+    const conversations = await getUserConversationsService(userId);
+
+    return res.status(200).json({ conversations });
+
+
 }

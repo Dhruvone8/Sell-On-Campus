@@ -1,5 +1,5 @@
 import { prisma } from "../lib/prisma.js"
-import { Prisma, PrismaClient } from "../generated/prisma/client.js";
+import { Prisma } from "../generated/prisma/client.js";
 import { AppError } from "../lib/error.js";
 import { uploadImage, deleteImage } from "./cloudinary.service.js"
 
