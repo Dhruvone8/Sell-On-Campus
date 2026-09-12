@@ -78,7 +78,7 @@ export async function createMessage(conversationId: string, senderId: string, co
             }
         });
 
-        return tx.message.create({
+        const message = await tx.message.create({
             data: {
                 content,
                 conversationId: conversation?.id,
@@ -86,6 +86,17 @@ export async function createMessage(conversationId: string, senderId: string, co
                 sequence: updatedConversation.messageSequence
             },
         });
+
+        await tx.conversation.update({
+            where: {
+                id: conversation.id,
+            },
+            data: {
+                updatedAt: new Date(),
+            },
+        });
+
+        return message;
     });
 }
 
@@ -131,7 +142,7 @@ export async function getConversationMessages(conversationId: string, userId: st
 
     const hasMore = messages.length > limit;
 
-    if(hasMore) {
+    if (hasMore) {
         messages.pop();
     }
 
@@ -142,4 +153,72 @@ export async function getConversationMessages(conversationId: string, userId: st
             nextCursor: messages.length > 0 ? messages[0]?.sequence : null, hasMore
         },
     };
+}
+
+export async function getUserConversations(userId: string) {
+    const conversations = await prisma.conversation.findMany({
+        where: {
+            OR: [{ buyerId: userId }, { sellerId: userId }],
+            messages: { some: {} },
+        },
+
+        orderBy: {
+            updatedAt: "desc",
+        },
+
+        select: {
+            id: true,
+
+            listing: {
+                select: {
+                    id: true,
+                    title: true,
+                    price: true,
+                    status: true
+                },
+            },
+
+            buyer: {
+                select: {
+                    id: true,
+                    name: true,
+                    profileImageUrl: true
+                },
+            },
+
+            seller: {
+                select: {
+                    id: true,
+                    name: true,
+                    profileImageUrl: true
+                },
+            },
+
+            messages: {
+                orderBy: {
+                    sequence: "desc",
+                },
+
+                take: 1,
+                select: {
+                    id: true,
+                    content: true,
+                    senderId: true,
+                    sequence: true,
+                    createdAt: true
+                },
+            },
+        },
+    });
+
+    return conversations.map((conversation) => {
+        const otherUser = conversation.buyer.id === userId ? conversation.seller : conversation.buyer;
+
+        return {
+            id: conversation.id,
+            listing: conversation.listing,
+            otherUser,
+            lastMessage: conversation.messages[0]
+        }
+    })
 }
