@@ -1,6 +1,41 @@
 import { prisma } from "../lib/prisma.js";
 import { AppError } from "../lib/error.js";
 
+function encodeConversationCursor(updatedAt: Date, id: string) {
+    return Buffer.from(
+        JSON.stringify({
+            updatedAt: updatedAt.toISOString(),
+            id,
+        }),
+    ).toString("base64url");
+}
+
+function decodeConversationCursor(cursor: string) {
+    try {
+        const decoded = JSON.parse(
+            Buffer.from(cursor, "base64url").toString("utf-8"),
+        );
+
+        if (typeof decoded.updatedAt !== "string" || typeof decoded.id !== "string") {
+            throw new Error();
+        }
+
+        const updatedAt = new Date(decoded.updatedAt);
+
+        if (Number.isNaN(updatedAt.getTime())) {
+            throw new Error();
+        }
+
+        return {
+            updatedAt,
+            id: decoded.id,
+        };
+    } catch {
+        throw new AppError("Invalid conversation cursor", 400);
+    }
+}
+
+
 export async function createConversation(listingId: string, buyerId: string) {
     const listing = await prisma.listing.findUnique({
         where: {
@@ -155,19 +190,38 @@ export async function getConversationMessages(conversationId: string, userId: st
     };
 }
 
-export async function getUserConversations(userId: string) {
+export async function getUserConversations(userId: string, limit: number, cursor?: string) {
+
+    const decodedCursor = cursor ? decodeConversationCursor(cursor) : undefined;
+
     const conversations = await prisma.conversation.findMany({
         where: {
             OR: [{ buyerId: userId }, { sellerId: userId }],
             messages: { some: {} },
         },
 
-        orderBy: {
-            updatedAt: "desc",
-        },
+        orderBy: [
+            { updatedAt: "desc" },
+            { id: "desc" }
+        ],
+
+        ...(decodedCursor
+            ? {
+                cursor: {
+                    updatedAt_id: {
+                        updatedAt: decodedCursor.updatedAt,
+                        id: decodedCursor.id,
+                    },
+                },
+                skip: 1,
+            }
+            : {}),
+
+        take: limit + 1,
 
         select: {
             id: true,
+            updatedAt: true,
 
             listing: {
                 select: {
@@ -211,7 +265,20 @@ export async function getUserConversations(userId: string) {
         },
     });
 
-    return conversations.map((conversation) => {
+    const hasMore = conversations.length > limit;
+
+    if (hasMore) {
+        conversations.pop();
+    }
+
+    const nextConversation = conversations.length > 0 ? conversations[conversations.length - 1] : null;
+
+    const nextCursor = hasMore && nextConversation ? encodeConversationCursor(
+        nextConversation.updatedAt,
+        nextConversation.id,
+    ) : null;
+
+    const result = conversations.map((conversation) => {
         const otherUser = conversation.buyer.id === userId ? conversation.seller : conversation.buyer;
 
         return {
@@ -219,6 +286,14 @@ export async function getUserConversations(userId: string) {
             listing: conversation.listing,
             otherUser,
             lastMessage: conversation.messages[0]
+        };
+    });
+
+    return {
+        conversations: result,
+        pagination: {
+            nextCursor,
+            hasMore
         }
-    })
+    };
 }

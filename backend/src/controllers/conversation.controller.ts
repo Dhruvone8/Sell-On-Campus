@@ -59,9 +59,9 @@ export async function getUserConversations(req: Request, res: Response) {
         throw new AppError("Unauthenticated", 400);
     }
 
-    const conversations = await getUserConversationsService(userId);
+    const { cursor, limit } = res.locals.validatedQuery;
 
-    return res.status(200).json({ conversations });
+    const result = await getUserConversationsService(userId, limit, cursor);
 
-
+    return res.status(200).json(result);
 }
