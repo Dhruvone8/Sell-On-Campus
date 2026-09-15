@@ -33,6 +33,8 @@ model User {
 
   notifications Notification[]
 
+  conversationParticipants ConversationParticipant[]
+
   reportsMade    Report[] @relation("Reporter")
   reportsAgainst Report[] @relation("ReportedUser")
 

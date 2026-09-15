@@ -17,3 +17,7 @@ export const userConversationsQuerySchema = z.object({
   cursor: z.string().min(1).optional(),
   limit: z.coerce.number().int().min(1).max(50).default(10),
 });
+
+export const markConversationReadSchema = z.object({
+    lastReadSequence: z.coerce.number().int().min(0),
+});
