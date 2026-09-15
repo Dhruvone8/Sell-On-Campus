@@ -71,7 +71,14 @@ export async function createConversation(listingId: string, buyerId: string) {
         data: {
             listingId,
             buyerId,
-            sellerId: listing.sellerId
+            sellerId: listing.sellerId,
+
+            participants: {
+                create: [
+                    { userId: buyerId },
+                    { userId: listing.sellerId },
+                ],
+            },
         },
     });
 }
@@ -248,6 +255,16 @@ export async function getUserConversations(userId: string, limit: number, cursor
                 },
             },
 
+            participants: {
+                where: {
+                    userId,
+                },
+
+                select: {
+                    lastReadSequence: true,
+                }
+            },
+
             messages: {
                 orderBy: {
                     sequence: "desc",
@@ -278,16 +295,35 @@ export async function getUserConversations(userId: string, limit: number, cursor
         nextConversation.id,
     ) : null;
 
-    const result = conversations.map((conversation) => {
+    const result = await Promise.all(conversations.map(async (conversation) => {
         const otherUser = conversation.buyer.id === userId ? conversation.seller : conversation.buyer;
+
+        const participant = conversation.participants[0];
+
+        if (!participant) {
+            throw new AppError("Conversation participant state not found", 500);
+        }
+
+        const unreadCount = await prisma.message.count({
+            where: {
+                conversationId: conversation.id,
+                sequence: {
+                    gt: participant.lastReadSequence,
+                },
+                senderId: {
+                    not: userId,
+                }
+            }
+        });
 
         return {
             id: conversation.id,
             listing: conversation.listing,
             otherUser,
-            lastMessage: conversation.messages[0]
+            lastMessage: conversation.messages[0],
+            unreadCount
         };
-    });
+    }));
 
     return {
         conversations: result,
@@ -296,4 +332,60 @@ export async function getUserConversations(userId: string, limit: number, cursor
             hasMore
         }
     };
+}
+
+export async function markConversationRead(conversationId: string, userId: string, lastReadSequence: number) {
+    const conversation = await prisma.conversation.findUnique({
+        where: {
+            id: conversationId,
+        },
+        select: {
+            id: true,
+            messageSequence: true
+        },
+    });
+
+    if (!conversation) {
+        throw new AppError("Conversation not found", 404);
+    }
+
+    const participant = await prisma.conversationParticipant.findUnique({
+        where: {
+            conversationId_userId: {
+                conversationId: conversation.id,
+                userId,
+            },
+        },
+
+        select: {
+            id: true,
+            lastReadSequence: true,
+        },
+    });
+
+    if (!participant) {
+        throw new AppError("You are not a participant in this conversation", 403);
+    }
+
+    if (lastReadSequence > conversation.messageSequence) {
+        throw new AppError("Cannot mark messages as read before they exist", 400);
+    }
+
+    if (lastReadSequence < participant.lastReadSequence) {
+        throw new AppError("Read sequence cannot move backwards", 400,);
+    }
+
+    if (lastReadSequence === participant.lastReadSequence) {
+        return;
+    }
+
+    return prisma.conversationParticipant.update({
+        where: {
+            id: participant.id,
+        },
+
+        data: {
+            lastReadSequence
+        },
+    });
 }

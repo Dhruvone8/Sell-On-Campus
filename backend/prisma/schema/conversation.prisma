@@ -14,6 +14,8 @@ model Conversation {
   sellerId String
   seller   User   @relation("SellerConversations", fields: [sellerId], references: [id])
 
+  participants ConversationParticipant[]
+
   messages Message[]
 
   messageSequence Int @default(0)
