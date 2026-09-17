@@ -1,4 +1,3 @@
-import { createRequire } from 'module';
 import "dotenv/config";
 import app from "./app.js";
 
