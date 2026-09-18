@@ -44,6 +44,7 @@ export async function createConversation(listingId: string, buyerId: string) {
         select: {
             id: true,
             sellerId: true,
+            status: true,
         },
     });
 
@@ -51,6 +52,10 @@ export async function createConversation(listingId: string, buyerId: string) {
 
     if (listing.sellerId == buyerId) {
         throw new AppError("You cannot start a conversation with yourself", 400);
+    }
+
+    if (listing.status === "SOLD") {
+        throw new AppError("This listing is already sold", 400);
     }
 
     const existingConversation = await prisma.conversation.findUnique({
