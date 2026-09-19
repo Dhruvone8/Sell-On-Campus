@@ -87,3 +87,31 @@ export async function getUserNotifications(userId: string, limit: number, cursor
         },
     };
 }
+
+export async function markNotificationRead(notificationId: string, userId: string) {
+    const notification = await prisma.notification.findUnique({
+        where: {
+            id: notificationId
+        },
+        select: {
+            id: true,
+            userId: true,
+            isRead: true
+        },
+    });
+
+    if(!notification || notification.userId !== userId) {
+        throw new AppError("Notification Not Found", 404);
+    }
+
+    if(notification.isRead) {
+        return;
+    }
+
+    await prisma.notification.update({
+        where: {id: notification.id},
+        data: {
+            isRead: true
+        },
+    });
+}
