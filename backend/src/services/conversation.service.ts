@@ -110,6 +110,8 @@ export async function createMessage(conversationId: string, senderId: string, co
         throw new AppError("You are not a participant in this conversation", 403)
     }
 
+    const recipientId = conversation.buyerId === senderId ? conversation.sellerId : conversation.buyerId;
+
     return prisma.$transaction(async (tx) => {
         const updatedConversation = await tx.conversation.update({
             where: {
@@ -132,6 +134,14 @@ export async function createMessage(conversationId: string, senderId: string, co
                 senderId,
                 sequence: updatedConversation.messageSequence
             },
+        });
+
+        await tx.notification.create({
+            data: {
+                message: "You have a new message",
+                userId: recipientId,
+                conversationId: conversation.id
+            }
         });
 
         await tx.conversation.update({

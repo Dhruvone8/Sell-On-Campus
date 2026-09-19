@@ -20,6 +20,8 @@ model Conversation {
 
   messageSequence Int @default(0)
 
+  notifications Notification[]
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

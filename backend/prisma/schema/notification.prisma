@@ -8,6 +8,11 @@ model Notification {
   userId String
   user   User   @relation(fields: [userId], references: [id])
 
+  conversationId String?
+  conversation   Conversation? @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@unique([createdAt, id])
 }
