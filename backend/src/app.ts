@@ -15,6 +15,10 @@ app.use(express.json());
 app.use(cookieParser());
 
 // Routes
+app.get("/api", (req, res) => {
+    res.send("SellOnCampus API is running!");
+});
+
 app.use("/api/auth", authRoutes);
 app.use("/api/listings", listingRoutes);
 app.use("/api/conversations", conversationRoutes);
