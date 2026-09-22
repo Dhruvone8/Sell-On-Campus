@@ -36,7 +36,6 @@ function decodeConversationCursor(cursor: string) {
     }
 }
 
-
 export async function createConversation(listingId: string, buyerId: string) {
     const listing = await prisma.listing.findUnique({
         where: {
@@ -137,7 +136,7 @@ export async function createMessage(conversationId: string, senderId: string, co
             },
         });
 
-        await tx.notification.create({
+        const notification = await tx.notification.create({
             data: {
                 message: "You have a new message",
                 userId: recipientId,
@@ -154,10 +153,11 @@ export async function createMessage(conversationId: string, senderId: string, co
             },
         });
 
-        return { message, recipientId };
+        return { message, notification };
     });
 
-    sendToUser(result.recipientId, { type: "message:new", data: result.message });
+    sendToUser(recipientId, { type: "message:new", data: result.message });
+    sendToUser(recipientId, { type: "notification: new", data: result.notification });
 
     return result.message;
 }
@@ -361,7 +361,9 @@ export async function markConversationRead(conversationId: string, userId: strin
         },
         select: {
             id: true,
-            messageSequence: true
+            messageSequence: true,
+            sellerId: true,
+            buyerId: true
         },
     });
 
@@ -399,7 +401,7 @@ export async function markConversationRead(conversationId: string, userId: strin
         return;
     }
 
-    return prisma.conversationParticipant.update({
+    const updatedParticipant = await prisma.conversationParticipant.update({
         where: {
             id: participant.id,
         },
@@ -408,4 +410,10 @@ export async function markConversationRead(conversationId: string, userId: strin
             lastReadSequence
         },
     });
+
+    const otherUserId = conversation.buyerId === userId ? conversation.sellerId : conversation.buyerId;
+
+    sendToUser(otherUserId, { type: "conversation:read", data: { conversationId, lastReadSequence } });
+
+    return updatedParticipant;
 }
