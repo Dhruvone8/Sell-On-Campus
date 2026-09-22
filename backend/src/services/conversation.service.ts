@@ -1,7 +1,6 @@
 import { prisma } from "../lib/prisma.js";
 import { AppError } from "../lib/error.js";
 import { sendToUser } from "../websocket/websocket.manager.js";
-import { receiveMessageOnPort } from "node:worker_threads";
 
 function encodeConversationCursor(updatedAt: Date, id: string) {
     return Buffer.from(

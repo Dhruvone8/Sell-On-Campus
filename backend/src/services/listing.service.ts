@@ -350,19 +350,3 @@ export async function getListings(
 
     return { listings: listingsWithImages, pagination: { page, limit, total, totalPages } };
 }
-
-export async function uploadListingImage(listingId: string, userId: string, file: Express.Multer.File) {
-    const listing = await prisma.listing.findUnique({
-        where: {
-            id: listingId,
-        }
-    })
-
-    if (!listing) {
-        throw new AppError("Listing Not Found", 404);
-    }
-
-    if (listing.sellerId !== userId) {
-
-    }
-}
