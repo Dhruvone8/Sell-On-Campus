@@ -1,5 +1,7 @@
 import { prisma } from "../lib/prisma.js";
 import { AppError } from "../lib/error.js";
+import { sendToUser } from "../websocket/websocket.manager.js";
+import { receiveMessageOnPort } from "node:worker_threads";
 
 function encodeConversationCursor(updatedAt: Date, id: string) {
     return Buffer.from(
@@ -112,7 +114,7 @@ export async function createMessage(conversationId: string, senderId: string, co
 
     const recipientId = conversation.buyerId === senderId ? conversation.sellerId : conversation.buyerId;
 
-    return prisma.$transaction(async (tx) => {
+    const result = await prisma.$transaction(async (tx) => {
         const updatedConversation = await tx.conversation.update({
             where: {
                 id: conversation.id,
@@ -153,8 +155,12 @@ export async function createMessage(conversationId: string, senderId: string, co
             },
         });
 
-        return message;
+        return { message, recipientId };
     });
+
+    sendToUser(result.recipientId, { type: "message:new", data: result.message });
+
+    return result.message;
 }
 
 export async function getConversationMessages(conversationId: string, userId: string, limit: number, cursor?: number) {
