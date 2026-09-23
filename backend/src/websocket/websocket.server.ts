@@ -1,13 +1,25 @@
-import { WebSocketServer } from "ws";
+import { WebSocketServer, WebSocket } from "ws";
 import type { Server } from "http";
 import { verifyAccessToken } from "../lib/auth/tokens.js";
 import { getAccessTokenFromCookie } from "./websocket.auth.js";
 import { addUserSocket, removeUserSocket } from "./websocket.manager.js";
+import { Socket } from "dgram";
+
+interface AliveWebSocket extends WebSocket {
+    isAlive: boolean;
+}
 
 export function initializeWebSocketServer(server: Server) {
     const wss = new WebSocketServer({ server });
 
-    wss.on("connection", async (socket, request) => {
+    wss.on("connection", async (socket: AliveWebSocket, request) => {
+
+        socket.isAlive = true;
+
+        socket.on("pong", () => {
+            socket.isAlive = true;
+        });
+
         try {
             const accessToken = getAccessTokenFromCookie(request.headers.cookie);
 
@@ -45,6 +57,24 @@ export function initializeWebSocketServer(server: Server) {
         } catch (error) {
             socket.close(1008, "Invalid Access Token");
         }
+    });
+
+    const heartBeatInterval = setInterval(() => {
+        wss.clients.forEach((client) => {
+            const socket = client as AliveWebSocket;
+
+            if (!socket.isAlive) {
+                socket.terminate();
+                return;
+            }
+
+            socket.isAlive = false;
+            socket.ping();
+        })
+    }, 30000)
+
+    wss.on("close", () => {
+        clearInterval(heartBeatInterval);
     });
 
     return wss;
