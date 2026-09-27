@@ -1,7 +1,6 @@
 import type { Request, Response } from 'express';
 import { AppError } from "../lib/error.js";
 import { getUserNotifications as getUserNotificationsService, markNotificationRead as markNotificationReadService } from '../services/notification.service.js';
-import { use } from 'react';
 
 export async function getUserNotifications(req: Request, res: Response) {
     const userId = req.userId;
@@ -12,7 +11,7 @@ export async function getUserNotifications(req: Request, res: Response) {
 
     const { limit, cursor } = res.locals.validatedQuery;
 
-    const result = getUserNotificationsService(userId, limit, cursor);
+    const result = await getUserNotificationsService(userId, limit, cursor);
 
     return res.status(200).json(result);
 }

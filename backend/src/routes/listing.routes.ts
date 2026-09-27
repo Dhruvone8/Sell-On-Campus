@@ -2,7 +2,8 @@ import { Router } from 'express';
 import { requireAuth } from "../middleware/auth.middleware.js";
 import { validate, validateQuery } from "../middleware/validate.middleware.js";
 import {
-    createListing, getListingById, updateListing, updateListingStatus, getMyListings, getListings
+    createListing, getListingById, updateListing, updateListingStatus, getMyListings, getListings,
+    getCategories
 } from "../controllers/listing.controller.js";
 import {
     createListingSchema, updateListingSchema, updateListingStatusSchema, paginationSchema, listingQuerySchema
@@ -13,6 +14,7 @@ const router = Router();
 
 router.get("/", validateQuery(listingQuerySchema), getListings);
 router.get("/me", requireAuth, validateQuery(paginationSchema), getMyListings);
+router.get("/categories", getCategories);
 router.get("/:id", getListingById);
 router.post("/", requireAuth, uploadListingImages, validate(createListingSchema), createListing);
 router.patch("/:id", requireAuth, validate(updateListingSchema), updateListing);
