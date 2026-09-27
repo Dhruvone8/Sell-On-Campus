@@ -1,7 +1,8 @@
 import type { Request, Response } from 'express';
 import {
     createListing as createListingService, getListingById as getListingByIdService, updateListing as updateListingService,
-    updateListingStatus as updateListingStatusService, getMyListings as getMyListingsService, getListings as getListingsService
+    updateListingStatus as updateListingStatusService, getMyListings as getMyListingsService, getListings as getListingsService,
+    getCategories as getCategoriesService
 } from '../services/listing.service.js';
 import { AppError } from '../lib/error.js';
 
@@ -175,6 +176,16 @@ export async function getListings(req: Request, res: Response) {
             return res.status(error.statusCode).json({ message: error.message })
         }
 
+        return res.status(500).json({ message: "Internal Server Error" });
+    }
+}
+
+export async function getCategories(req: Request, res: Response) {
+    try {
+        const categories = await getCategoriesService();
+        return res.status(200).json({ categories });
+    } catch (error) {
+        console.error("Get Categories Error:", error);
         return res.status(500).json({ message: "Internal Server Error" });
     }
 }

@@ -131,7 +131,17 @@ export async function getListingById(listingId: string) {
         },
         include: {
             category: true,
-            images: true
+            images: true,
+            seller: {
+                select: {
+                    id: true,
+                    name: true,
+                    department: true,
+                    year: true,
+                    profileImageUrl: true,
+                    createdAt: true
+                }
+            }
         }
     });
 
@@ -249,7 +259,17 @@ export async function getMyListings(userId: string, page: number, limit: number)
             take: limit,
             include: {
                 category: true,
-                images: true
+                images: true,
+                seller: {
+                    select: {
+                        id: true,
+                        name: true,
+                        department: true,
+                        year: true,
+                        profileImageUrl: true,
+                        createdAt: true
+                    }
+                }
             }
         }),
 
@@ -308,7 +328,8 @@ export async function getListings(
                 { title: { contains: filters.search, mode: "insensitive" } },
                 { description: { contains: filters.search, mode: "insensitive" } },
                 { brand: { contains: filters.search, mode: "insensitive" } },
-                { model: { contains: filters.search, mode: "insensitive" } }
+                { model: { contains: filters.search, mode: "insensitive" } },
+                { category: { name: { contains: filters.search, mode: "insensitive" } } }
             ]
         }),
     };
@@ -331,7 +352,17 @@ export async function getListings(
             take: limit,
             include: {
                 category: true,
-                images: true
+                images: true,
+                seller: {
+                    select: {
+                        id: true,
+                        name: true,
+                        department: true,
+                        year: true,
+                        profileImageUrl: true,
+                        createdAt: true
+                    }
+                }
             }
         }),
 
@@ -349,4 +380,10 @@ export async function getListings(
     }));
 
     return { listings: listingsWithImages, pagination: { page, limit, total, totalPages } };
+}
+
+export async function getCategories() {
+    return prisma.category.findMany({
+        orderBy: { name: "asc" }
+    });
 }
