@@ -6,7 +6,10 @@ export function getAccessTokenFromCookie(cookieHeader?: string, url?: string) {
             const [name, ...valueParts] = cookie.trim().split("=");
 
             if (name == "accessToken") {
-                return valueParts.join("=") || null;
+                const token = valueParts.join("=").trim();
+                if (token) {
+                    return token;
+                }
             }
         }
     }
