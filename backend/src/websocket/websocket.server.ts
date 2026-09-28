@@ -21,7 +21,7 @@ export function initializeWebSocketServer(server: Server) {
         });
 
         try {
-            const accessToken = getAccessTokenFromCookie(request.headers.cookie);
+            const accessToken = getAccessTokenFromCookie(request.headers.cookie, request.url);
 
             if (!accessToken) {
                 socket.close(1008, "Authentication Required");
