@@ -29,6 +29,15 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
   const listenersRef = React.useRef<Map<string, Set<WebSocketHandler>>>(new Map());
   const connectRef = React.useRef<() => void>(() => {});
 
+  // Keep ref of current auth state to avoid stale closure issues
+  const isAuthenticatedRef = React.useRef(isAuthenticated);
+  React.useEffect(() => {
+    isAuthenticatedRef.current = isAuthenticated;
+  }, [isAuthenticated]);
+
+  // Track sockets intentionally closed (logout, cleanup, or manual reconnect) to prevent unexpected reconnect triggers
+  const intentionalCloseSocketsRef = React.useRef<WeakSet<WebSocket>>(new WeakSet());
+
   // Subscribe to specific event types
   const subscribe = React.useCallback((eventType: string, handler: WebSocketHandler) => {
     // Normalize event type: remove spaces around colon
@@ -55,18 +64,46 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  // Connect to WebSocket server
-  const connect = React.useCallback(() => {
-    if (typeof window === "undefined" || !isAuthenticated) return;
+  // Intentionally disconnect and clean up active socket and pending reconnects
+  const disconnect = React.useCallback(() => {
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+    reconnectAttemptsRef.current = 0;
 
-    // Clean up existing socket if any
     if (socketRef.current) {
+      const socket = socketRef.current;
+      socketRef.current = null;
+      intentionalCloseSocketsRef.current.add(socket);
       try {
-        socketRef.current.close();
+        socket.close();
       } catch {
         // Socket already closed
       }
+    }
+  }, []);
+
+  // Connect to WebSocket server
+  const connect = React.useCallback(() => {
+    if (typeof window === "undefined" || !isAuthenticatedRef.current) return;
+
+    // Clear any pending reconnect attempt
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+
+    // Clean up existing socket intentionally before opening a new one
+    if (socketRef.current) {
+      const existingSocket = socketRef.current;
       socketRef.current = null;
+      intentionalCloseSocketsRef.current.add(existingSocket);
+      try {
+        existingSocket.close();
+      } catch {
+        // Socket already closed
+      }
     }
 
     try {
@@ -74,6 +111,7 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
       socketRef.current = socket;
 
       socket.onopen = () => {
+        if (intentionalCloseSocketsRef.current.has(socket)) return;
         setRawConnected(true);
         reconnectAttemptsRef.current = 0;
       };
@@ -101,10 +139,17 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
 
       socket.onclose = () => {
         setRawConnected(false);
-        socketRef.current = null;
+        if (socketRef.current === socket) {
+          socketRef.current = null;
+        }
+
+        // If this socket was closed intentionally (e.g., logout or cleanup), do NOT reconnect
+        if (intentionalCloseSocketsRef.current.has(socket)) {
+          return;
+        }
 
         // Auto-reconnect with exponential backoff if still authenticated
-        if (isAuthenticated) {
+        if (isAuthenticatedRef.current) {
           const delay = Math.min(1000 * Math.pow(1.5, reconnectAttemptsRef.current), 10000);
           reconnectAttemptsRef.current += 1;
           reconnectTimeoutRef.current = setTimeout(() => {
@@ -119,7 +164,7 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
     } catch (err) {
       console.warn("Could not initiate WebSocket connection:", err);
     }
-  }, [isAuthenticated]);
+  }, []);
 
   React.useEffect(() => {
     connectRef.current = connect;
@@ -129,33 +174,13 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
     if (isAuthenticated) {
       connect();
     } else {
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-      }
-      if (socketRef.current) {
-        try {
-          socketRef.current.close();
-        } catch {
-          // Socket already closed
-        }
-        socketRef.current = null;
-      }
+      disconnect();
     }
 
     return () => {
-      if (reconnectTimeoutRef.current) {
-        clearTimeout(reconnectTimeoutRef.current);
-      }
-      if (socketRef.current) {
-        try {
-          socketRef.current.close();
-        } catch {
-          // Socket already closed
-        }
-        socketRef.current = null;
-      }
+      disconnect();
     };
-  }, [isAuthenticated, connect]);
+  }, [isAuthenticated, connect, disconnect]);
 
   const isConnected = Boolean(isAuthenticated && rawConnected);
 

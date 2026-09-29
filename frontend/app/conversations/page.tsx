@@ -37,6 +37,11 @@ function ConversationsContent() {
   const [isSendingMessage, setIsSendingMessage] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
+  const conversationsRef = React.useRef<ConversationItemData[]>(conversations);
+  React.useEffect(() => {
+    conversationsRef.current = conversations;
+  }, [conversations]);
+
   // 1. Fetch current user profile to determine currentUserId
   React.useEffect(() => {
     let isMounted = true;
@@ -97,10 +102,16 @@ function ConversationsContent() {
       setConversations(list);
 
       // Handle deep linking or auto-select first conversation on desktop
-      if (deepLinkedConversationId) {
+      const isDeepLinkValid = Boolean(
+        deepLinkedConversationId && list.some((c) => c.id === deepLinkedConversationId)
+      );
+
+      if (isDeepLinkValid) {
         setSelectedConversationId(deepLinkedConversationId);
       } else if (list.length > 0 && window.innerWidth >= 768) {
-        setSelectedConversationId((prev) => prev || list[0].id);
+        setSelectedConversationId((prev) => (prev && list.some((c) => c.id === prev) ? prev : list[0].id));
+      } else {
+        setSelectedConversationId((prev) => (prev && list.some((c) => c.id === prev) ? prev : null));
       }
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : "Error loading chats";
@@ -231,8 +242,10 @@ function ConversationsContent() {
       const newMsg = raw as MessageData & { conversationId: string };
       if (!newMsg || !newMsg.conversationId) return;
 
+      const isViewing = newMsg.conversationId === selectedConversationId;
+
       // 1. If currently viewing this conversation, append live message
-      if (newMsg.conversationId === selectedConversationId) {
+      if (isViewing) {
         setMessages((prev) => {
           if (prev.some((m) => m.id === newMsg.id)) return prev;
           return [...prev, newMsg];
@@ -242,28 +255,25 @@ function ConversationsContent() {
           markAsRead(newMsg.conversationId, newMsg.sequence);
         }
       } else {
-        // Increment conversation unread count in sidebar
-        setConversations((prev) =>
-          prev.map((c) =>
-            c.id === newMsg.conversationId
-              ? { ...c, unreadCount: (c.unreadCount || 0) + 1 }
-              : c
-          )
-        );
         // Increment global navbar unread badge
         setUnreadMessagesCount((prev) => prev + 1);
       }
 
-      // 2. Update conversation snippet and bump to top of sidebar
+      // Check if conversation exists using ref (outside any state updater)
+      const existing = conversationsRef.current.find((c) => c.id === newMsg.conversationId);
+      if (!existing) {
+        fetchConversations();
+        return;
+      }
+
+      // 2. Purely update conversation snippet, unread count, and bump to top of sidebar
       setConversations((prev) => {
-        const existing = prev.find((c) => c.id === newMsg.conversationId);
-        if (!existing) {
-          fetchConversations();
-          return prev;
-        }
+        const item = prev.find((c) => c.id === newMsg.conversationId);
+        if (!item) return prev;
 
         const updatedItem: ConversationItemData = {
-          ...existing,
+          ...item,
+          unreadCount: isViewing ? item.unreadCount : (item.unreadCount || 0) + 1,
           lastMessage: {
             id: newMsg.id,
             content: newMsg.content,
@@ -322,23 +332,37 @@ function ConversationsContent() {
         }
       );
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || "Failed to send message");
+      let data: Record<string, unknown> | null = null;
+      try {
+        data = (await res.json()) as Record<string, unknown>;
+      } catch {
+        // Non-JSON response (e.g. 502/504 HTML error page)
       }
 
-      const newMsg: MessageData = data.message || data;
+      if (!res.ok) {
+        const errorMsg =
+          (data && typeof data.message === "string" ? data.message : null) ||
+          `Failed to send message (${res.status})`;
+        throw new Error(errorMsg);
+      }
 
-      // Optimistic append to messages
-      setMessages((prev) => [...prev, newMsg]);
+      const newMsg = (data?.message || data) as MessageData;
+      if (!newMsg || !newMsg.id) {
+        throw new Error("Invalid message response from server");
+      }
+
+      // Optimistic append to messages with deduplication
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === newMsg.id)) return prev;
+        return [...prev, newMsg];
+      });
 
       // Update lastMessage and bump conversation to top of list
       setConversations((prev) => {
-        const existing = prev.find((c) => c.id === selectedConversationId);
-        if (!existing) return prev;
+        const item = prev.find((c) => c.id === selectedConversationId);
+        if (!item) return prev;
         const updatedItem: ConversationItemData = {
-          ...existing,
+          ...item,
           lastMessage: {
             id: newMsg.id,
             content: newMsg.content,

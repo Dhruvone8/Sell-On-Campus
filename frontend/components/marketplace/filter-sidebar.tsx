@@ -49,10 +49,10 @@ const CONDITION_OPTIONS = [
 ];
 
 const PRICE_PRESETS = [
-  { label: "Under $25", min: "", max: "25" },
-  { label: "$25 - $75", min: "25", max: "75" },
-  { label: "$75 - $200", min: "75", max: "200" },
-  { label: "$200+", min: "200", max: "" },
+  { label: "Under ₹500", min: "", max: "500" },
+  { label: "₹500 - ₹2,000", min: "500", max: "2000" },
+  { label: "₹2,000 - ₹5,000", min: "2000", max: "5000" },
+  { label: "₹5,000+", min: "5000", max: "" },
 ];
 
 export function FilterSidebar({
@@ -131,7 +131,7 @@ export function FilterSidebar({
           <div className="grid grid-cols-2 gap-2">
             <div className="relative">
               <span className="absolute left-3 top-2 text-xs font-bold text-charcoal-400">
-                $
+                ₹
               </span>
               <input
                 type="number"
@@ -146,7 +146,7 @@ export function FilterSidebar({
             </div>
             <div className="relative">
               <span className="absolute left-3 top-2 text-xs font-bold text-charcoal-400">
-                $
+                ₹
               </span>
               <input
                 type="number"

@@ -64,7 +64,7 @@ export function EditListingContent({ id }: { id: string }) {
               const myListingIds = Array.isArray(myData.listings)
                 ? myData.listings.map((l: Listing) => l.id)
                 : [];
-              if (myListingIds.length > 0 && !myListingIds.includes(foundListing.id)) {
+              if (!myListingIds.includes(foundListing.id)) {
                 setIsNotOwner(true);
               }
             }

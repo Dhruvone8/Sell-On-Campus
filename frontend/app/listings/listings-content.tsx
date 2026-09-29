@@ -116,8 +116,9 @@ export function ListingsPageContent() {
         // If search or category query exists
         if (filters.search) {
           queryParams.set("search", filters.search);
-        } else if (filters.category) {
-          queryParams.set("search", filters.category);
+        }
+        if (filters.category) {
+          queryParams.set("category", filters.category);
         }
 
         if (filters.condition) {

@@ -184,11 +184,11 @@ export function CreateListingForm() {
 
           <div className="space-y-1.5">
             <label className="text-sm font-bold text-charcoal-900 block font-jakarta">
-              Price (USD) <span className="text-brand-500">*</span>
+              Price (₹) <span className="text-brand-500">*</span>
             </label>
             <div className="relative">
               <span className="absolute left-3.5 top-2.5 text-sm font-bold text-charcoal-400">
-                $
+                ₹
               </span>
               <input
                 type="number"
@@ -197,7 +197,7 @@ export function CreateListingForm() {
                 required
                 value={price}
                 onChange={(e) => setPrice(e.target.value)}
-                placeholder="45"
+                placeholder="450"
                 className="w-full pl-8 pr-4 py-2.5 rounded-xl bg-charcoal-50 border border-charcoal-200/80 text-sm text-charcoal-900 placeholder:text-charcoal-400 focus:bg-white focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20 transition-all font-semibold"
               />
             </div>
