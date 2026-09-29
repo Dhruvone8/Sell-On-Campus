@@ -1,26 +1,18 @@
-export function getAccessTokenFromCookie(cookieHeader?: string, url?: string) {
-    if (cookieHeader) {
-        const cookies = cookieHeader.split(";");
-
-        for (const cookie of cookies) {
-            const [name, ...valueParts] = cookie.trim().split("=");
-
-            if (name == "accessToken") {
-                const token = valueParts.join("=").trim();
-                if (token) {
-                    return token;
-                }
-            }
-        }
+export function getAccessTokenFromCookie(cookieHeader?: string): string | null {
+    if (!cookieHeader) {
+        return null;
     }
 
-    if (url && url.includes("?")) {
-        try {
-            const parsedUrl = new URL(url, "http://localhost");
-            const token = parsedUrl.searchParams.get("token") || parsedUrl.searchParams.get("accessToken");
-            if (token) return token;
-        } catch {
-            // Ignore parse errors
+    const cookies = cookieHeader.split(";");
+
+    for (const cookie of cookies) {
+        const [name, ...valueParts] = cookie.trim().split("=");
+
+        if (name === "accessToken") {
+            const token = valueParts.join("=").trim();
+            if (token) {
+                return token;
+            }
         }
     }
 

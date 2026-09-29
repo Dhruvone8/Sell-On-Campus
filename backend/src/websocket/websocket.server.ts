@@ -3,7 +3,6 @@ import type { Server } from "http";
 import { verifyAccessToken } from "../lib/auth/tokens.js";
 import { getAccessTokenFromCookie } from "./websocket.auth.js";
 import { addUserSocket, removeUserSocket } from "./websocket.manager.js";
-import { Socket } from "dgram";
 
 interface AliveWebSocket extends WebSocket {
     isAlive: boolean;
@@ -21,7 +20,7 @@ export function initializeWebSocketServer(server: Server) {
         });
 
         try {
-            const accessToken = getAccessTokenFromCookie(request.headers.cookie, request.url);
+            const accessToken = getAccessTokenFromCookie(request.headers.cookie);
 
             if (!accessToken) {
                 socket.close(1008, "Authentication Required");

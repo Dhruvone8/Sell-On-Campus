@@ -35,6 +35,7 @@ export const listingQuerySchema = z.object({
     page: z.coerce.number().int().min(1).default(1),
     limit: z.coerce.number().int().min(1).max(50).default(10),
     categoryId: z.string().min(1).optional(),
+    category: z.string().trim().min(1).max(50).optional(),
     condition: z.enum(["NEW", "LIKE_NEW", "GOOD", "FAIR"]).optional(),
     minPrice: z.coerce.number().nonnegative().optional(),
     maxPrice: z.coerce.number().nonnegative().optional(),

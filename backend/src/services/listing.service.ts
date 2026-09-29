@@ -300,6 +300,7 @@ export async function getListings(
     limit: number,
     filters: {
         categoryId?: string;
+        category?: string;
         condition?: "NEW" | "LIKE_NEW" | "GOOD" | "FAIR";
         minPrice?: number;
         maxPrice?: number;
@@ -313,6 +314,10 @@ export async function getListings(
         status: "ACTIVE" as const,
 
         ...(filters.categoryId && { categoryId: filters.categoryId }),
+
+        ...(filters.category && {
+            category: { name: { contains: filters.category, mode: "insensitive" } }
+        }),
 
         ...(filters.condition && { condition: filters.condition }),
 
