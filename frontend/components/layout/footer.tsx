@@ -5,11 +5,11 @@ import { APP_LOGO_URL } from "@/lib/constants";
 
 export function Footer() {
   return (
-    <footer className="w-full bg-white border-t border-charcoal-200/80 py-10 mt-auto">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col md:flex-row items-center justify-between gap-6 text-charcoal-600">
+    <footer className="w-full bg-white border-t border-charcoal-200/80 py-8 mt-auto">
+      <div className="w-full px-4 sm:px-6 lg:px-8 xl:px-10">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 sm:gap-6 text-charcoal-600">
           {/* Brand & Copyright */}
-          <div className="flex items-center gap-2.5">
+          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5">
             {APP_LOGO_URL && (
               <Image
                 src={APP_LOGO_URL}
@@ -29,7 +29,7 @@ export function Footer() {
           </div>
 
           {/* Navigation Links */}
-          <nav aria-label="Footer navigation" className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-xs font-medium text-charcoal-600">
+          <nav aria-label="Footer navigation" className="flex flex-wrap items-center justify-center sm:justify-end gap-4 sm:gap-6 text-xs font-medium text-charcoal-600">
             <Link
               href="/listings"
               className="hover:text-brand-500 transition-colors focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:outline-none rounded-lg px-1 py-0.5"
