@@ -59,10 +59,10 @@ export function MarketplaceControls({
 
   if (filters.minPrice || filters.maxPrice) {
     const priceText = filters.minPrice && filters.maxPrice
-      ? `$${filters.minPrice} - $${filters.maxPrice}`
+      ? `₹${filters.minPrice} - ₹${filters.maxPrice}`
       : filters.minPrice
-      ? `Over $${filters.minPrice}`
-      : `Under $${filters.maxPrice}`;
+      ? `Over ₹${filters.minPrice}`
+      : `Under ₹${filters.maxPrice}`;
     activeChips.push({
       label: priceText,
       onRemove: () => onFilterChange({ minPrice: undefined, maxPrice: undefined }),

@@ -12,7 +12,7 @@ export function cn(...inputs: unknown[]): string {
  * Formats a numeric price with a currency symbol.
  * Default is ₹ (INR) as used in the tested conversations baseline.
  */
-export function formatPrice(price: number | string | null | undefined, currency = "$"): string {
+export function formatPrice(price: number | string | null | undefined, currency = "₹"): string {
   if (price === null || price === undefined || price === "") {
     return `${currency}0`;
   }
@@ -20,7 +20,7 @@ export function formatPrice(price: number | string | null | undefined, currency 
   if (isNaN(num)) {
     return `${currency}${price}`;
   }
-  return `${currency}${num.toLocaleString("en-US")}`;
+  return `${currency}${num.toLocaleString("en-IN")}`;
 }
 
 /**

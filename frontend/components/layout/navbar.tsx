@@ -81,7 +81,7 @@ export function Navbar() {
         <div className="flex-1 flex items-center justify-start shrink-0">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 sm:gap-2.5 group transition-transform duration-200 ease-out hover:scale-[1.02] active:scale-[0.98]"
+            className="inline-flex items-center gap-2 sm:gap-2.5"
           >
             {APP_LOGO_URL && (
               <Image
