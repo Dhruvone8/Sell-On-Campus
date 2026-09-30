@@ -71,11 +71,16 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
       reconnectTimeoutRef.current = null;
     }
     reconnectAttemptsRef.current = 0;
+    setRawConnected(false);
 
     if (socketRef.current) {
       const socket = socketRef.current;
       socketRef.current = null;
       intentionalCloseSocketsRef.current.add(socket);
+      socket.onopen = null;
+      socket.onmessage = null;
+      socket.onerror = null;
+      socket.onclose = null;
       try {
         socket.close();
       } catch {
@@ -99,6 +104,10 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
       const existingSocket = socketRef.current;
       socketRef.current = null;
       intentionalCloseSocketsRef.current.add(existingSocket);
+      existingSocket.onopen = null;
+      existingSocket.onmessage = null;
+      existingSocket.onerror = null;
+      existingSocket.onclose = null;
       try {
         existingSocket.close();
       } catch {
@@ -111,12 +120,13 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
       socketRef.current = socket;
 
       socket.onopen = () => {
-        if (intentionalCloseSocketsRef.current.has(socket)) return;
+        if (socketRef.current !== socket || intentionalCloseSocketsRef.current.has(socket)) return;
         setRawConnected(true);
         reconnectAttemptsRef.current = 0;
       };
 
       socket.onmessage = (event) => {
+        if (socketRef.current !== socket || intentionalCloseSocketsRef.current.has(socket)) return;
         try {
           const parsed = JSON.parse(event.data);
           if (parsed && typeof parsed.type === "string") {
@@ -138,9 +148,9 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
       };
 
       socket.onclose = () => {
-        setRawConnected(false);
         if (socketRef.current === socket) {
           socketRef.current = null;
+          setRawConnected(false);
         }
 
         // If this socket was closed intentionally (e.g., logout or cleanup), do NOT reconnect

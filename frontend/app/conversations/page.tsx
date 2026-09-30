@@ -95,9 +95,40 @@ function ConversationsContent() {
       }
 
       const data = await res.json();
-      const list: ConversationItemData[] = Array.isArray(data.conversations)
+      let list: ConversationItemData[] = Array.isArray(data.conversations)
         ? data.conversations
         : [];
+
+      // If deep linked ID is provided and not in the first page, paginate to locate it
+      if (
+        deepLinkedConversationId &&
+        !list.some((c) => c.id === deepLinkedConversationId)
+      ) {
+        let nextCursor = data.pagination?.nextCursor;
+        let hasMore = Boolean(data.pagination?.hasMore);
+
+        while (
+          hasMore &&
+          nextCursor &&
+          !list.some((c) => c.id === deepLinkedConversationId)
+        ) {
+          const nextRes = await fetch(
+            `${apiUrl}/api/conversations?limit=50&cursor=${encodeURIComponent(nextCursor)}`,
+            {
+              method: "GET",
+              credentials: "include",
+            }
+          );
+          if (!nextRes.ok) break;
+          const nextData = await nextRes.json();
+          const nextList: ConversationItemData[] = Array.isArray(nextData.conversations)
+            ? nextData.conversations
+            : [];
+          list = [...list, ...nextList];
+          nextCursor = nextData.pagination?.nextCursor;
+          hasMore = Boolean(nextData.pagination?.hasMore);
+        }
+      }
 
       setConversations(list);
 
