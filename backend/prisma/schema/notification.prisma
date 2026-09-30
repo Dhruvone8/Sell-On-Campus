@@ -15,4 +15,5 @@ model Notification {
   updatedAt DateTime @updatedAt
 
   @@unique([createdAt, id])
+  @@index([userId, createdAt(sort: Desc)])
 }

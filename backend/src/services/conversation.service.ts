@@ -1,4 +1,5 @@
 import { prisma } from "../lib/prisma.js";
+import { Prisma } from "../generated/prisma/client.js";
 import { AppError } from "../lib/error.js";
 import { sendToUser } from "../websocket/websocket.manager.js";
 
@@ -249,6 +250,7 @@ export async function getUserConversations(userId: string, limit: number, cursor
         select: {
             id: true,
             updatedAt: true,
+            messageSequence: true,
 
             listing: {
                 select: {
@@ -315,35 +317,57 @@ export async function getUserConversations(userId: string, limit: number, cursor
         nextConversation.id,
     ) : null;
 
-    const result = await Promise.all(conversations.map(async (conversation) => {
-        const otherUser = conversation.buyer.id === userId ? conversation.seller : conversation.buyer;
+    const unreadFilters: Prisma.MessageWhereInput[] = [];
 
+    for (const conversation of conversations) {
         const participant = conversation.participants[0];
 
         if (!participant) {
             throw new AppError("Conversation participant state not found", 500);
         }
 
-        const unreadCount = await prisma.message.count({
-            where: {
+        if (conversation.messageSequence > participant.lastReadSequence) {
+            unreadFilters.push({
                 conversationId: conversation.id,
                 sequence: {
                     gt: participant.lastReadSequence,
                 },
                 senderId: {
                     not: userId,
-                }
-            }
+                },
+            });
+        }
+    }
+
+    const unreadCountMap = new Map<string, number>();
+
+    if (unreadFilters.length > 0) {
+        const unreadCounts = await prisma.message.groupBy({
+            by: ["conversationId"],
+            where: {
+                OR: unreadFilters,
+            },
+            _count: {
+                _all: true,
+            },
         });
+
+        for (const item of unreadCounts) {
+            unreadCountMap.set(item.conversationId, item._count._all);
+        }
+    }
+
+    const result = conversations.map((conversation) => {
+        const otherUser = conversation.buyer.id === userId ? conversation.seller : conversation.buyer;
 
         return {
             id: conversation.id,
             listing: conversation.listing,
             otherUser,
             lastMessage: conversation.messages[0],
-            unreadCount
+            unreadCount: unreadCountMap.get(conversation.id) ?? 0,
         };
-    }));
+    });
 
     return {
         conversations: result,
