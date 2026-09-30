@@ -2,8 +2,10 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
+import type { UserProfile } from "./types";
 
 interface AuthContextType {
+  user: UserProfile | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   unreadMessagesCount: number;
@@ -18,29 +20,35 @@ const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const [user, setUser] = React.useState<UserProfile | null>(null);
   const [isAuthenticated, setIsAuthenticated] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(true);
   const [unreadMessagesCount, setUnreadMessagesCount] = React.useState(0);
   const [unreadNotificationsCount, setUnreadNotificationsCount] = React.useState(0);
 
   const verifyAndRefreshAuth = React.useCallback(
-    async (): Promise<{ authed: boolean; unreadMessages: number; unreadNotifications: number }> => {
+    async (): Promise<{
+      authed: boolean;
+      user: UserProfile | null;
+      unreadMessages: number;
+      unreadNotifications: number;
+    }> => {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-        let response = await fetch(`${apiUrl}/api/conversations?limit=10`, {
+        let userRes = await fetch(`${apiUrl}/api/users/me`, {
           method: "GET",
           credentials: "include",
         });
 
         // If access token expired, attempt automatic refresh via HTTP-only refresh token
-        if (response.status === 401) {
+        if (userRes.status === 401) {
           try {
             const refreshRes = await fetch(`${apiUrl}/api/auth/refresh`, {
               method: "POST",
               credentials: "include",
             });
             if (refreshRes.ok) {
-              response = await fetch(`${apiUrl}/api/conversations?limit=10`, {
+              userRes = await fetch(`${apiUrl}/api/users/me`, {
                 method: "GET",
                 credentials: "include",
               });
@@ -50,23 +58,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         }
 
-        if (response.ok) {
-          const data = await response.json();
-          let totalUnreadMessages = 0;
-          if (Array.isArray(data.conversations)) {
-            totalUnreadMessages = data.conversations.reduce(
-              (acc: number, conv: { unreadCount?: number }) => acc + (conv.unreadCount || 0),
-              0
-            );
-          }
+        if (userRes.ok) {
+          const userData = await userRes.json();
+          const currentUser: UserProfile = userData.user;
 
+          let totalUnreadMessages = 0;
           let totalUnreadNotifications = 0;
+
           try {
-            const notifRes = await fetch(`${apiUrl}/api/notifications?limit=30`, {
-              method: "GET",
-              credentials: "include",
-            });
-            if (notifRes.ok) {
+            const [convRes, notifRes] = await Promise.all([
+              fetch(`${apiUrl}/api/conversations?limit=10`, {
+                method: "GET",
+                credentials: "include",
+              }).catch(() => null),
+              fetch(`${apiUrl}/api/notifications?limit=30`, {
+                method: "GET",
+                credentials: "include",
+              }).catch(() => null),
+            ]);
+
+            if (convRes && convRes.ok) {
+              const data = await convRes.json();
+              if (Array.isArray(data.conversations)) {
+                totalUnreadMessages = data.conversations.reduce(
+                  (acc: number, conv: { unreadCount?: number }) => acc + (conv.unreadCount || 0),
+                  0
+                );
+              }
+            }
+
+            if (notifRes && notifRes.ok) {
               const notifData = await notifRes.json();
               if (Array.isArray(notifData.notifications)) {
                 totalUnreadNotifications = notifData.notifications.filter(
@@ -75,19 +96,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               }
             }
           } catch {
-            // Non-blocking notification fetch error
+            // Non-blocking parallel counts error
           }
 
           return {
             authed: true,
+            user: currentUser,
             unreadMessages: totalUnreadMessages,
             unreadNotifications: totalUnreadNotifications,
           };
         }
 
-        return { authed: false, unreadMessages: 0, unreadNotifications: 0 };
+        return { authed: false, user: null, unreadMessages: 0, unreadNotifications: 0 };
       } catch {
-        return { authed: false, unreadMessages: 0, unreadNotifications: 0 };
+        return { authed: false, user: null, unreadMessages: 0, unreadNotifications: 0 };
       }
     },
     []
@@ -95,8 +117,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const checkAuth = React.useCallback(async () => {
     try {
-      const { authed, unreadMessages, unreadNotifications } = await verifyAndRefreshAuth();
+      const { authed, user: authedUser, unreadMessages, unreadNotifications } = await verifyAndRefreshAuth();
       setIsAuthenticated(authed);
+      setUser(authedUser);
       setUnreadMessagesCount(unreadMessages);
       setUnreadNotificationsCount(unreadNotifications);
     } finally {
@@ -115,6 +138,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Ignore network errors on logout
     } finally {
       setIsAuthenticated(false);
+      setUser(null);
       setUnreadMessagesCount(0);
       setUnreadNotificationsCount(0);
       router.push("/login");
@@ -126,9 +150,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let isMounted = true;
 
     async function initializeAuth() {
-      const { authed, unreadMessages, unreadNotifications } = await verifyAndRefreshAuth();
+      const { authed, user: authedUser, unreadMessages, unreadNotifications } = await verifyAndRefreshAuth();
       if (!isMounted) return;
       setIsAuthenticated(authed);
+      setUser(authedUser);
       setUnreadMessagesCount(unreadMessages);
       setUnreadNotificationsCount(unreadNotifications);
       setIsLoading(false);
@@ -144,6 +169,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   return (
     <AuthContext.Provider
       value={{
+        user,
         isAuthenticated,
         isLoading,
         unreadMessagesCount,

@@ -76,13 +76,19 @@ export function formatDate(dateString: string | Date | null | undefined): string
 }
 
 /**
- * Extracts initials from a user's name (e.g., "Alex Rivera" -> "AR").
+ * Extracts initials from a user's name (e.g., "Dhruv Singhania" -> "DS", "Dhruv" -> "D").
  */
 export function getInitials(name?: string | null): string {
   if (!name || !name.trim()) return "U";
-  const parts = name.trim().split(/\s+/);
+
+  // If an email address was passed instead of a display name
+  const cleanName = name.includes("@")
+    ? name.split("@")[0].replace(/[._-]/g, " ")
+    : name;
+
+  const parts = cleanName.trim().split(/\s+/);
   if (parts.length === 1) {
-    return parts[0].substring(0, 2).toUpperCase();
+    return parts[0].charAt(0).toUpperCase();
   }
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
 }

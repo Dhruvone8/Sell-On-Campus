@@ -71,7 +71,6 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
       reconnectTimeoutRef.current = null;
     }
     reconnectAttemptsRef.current = 0;
-    setRawConnected(false);
 
     if (socketRef.current) {
       const socket = socketRef.current;

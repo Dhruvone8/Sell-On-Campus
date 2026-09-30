@@ -92,7 +92,7 @@ function LoginForm() {
             label="College Email"
             required
             autoComplete="email"
-            placeholder="you@vitstudent.ac.in"
+            placeholder="you@vit.edu.in"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             disabled={loading}

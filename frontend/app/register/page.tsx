@@ -59,7 +59,7 @@ export default function RegisterPage() {
         return;
       }
 
-      setSuccess("Verification OTP sent! Please check your campus inbox.");
+      setSuccess("Verification OTP sent! Please check your inbox.");
       setStep("OTP");
     } catch {
       setError("Unable to connect to server. Please try again.");
@@ -273,7 +273,7 @@ export default function RegisterPage() {
               label="College Email"
               required
               autoComplete="email"
-              placeholder="you@vitstudent.ac.in"
+              placeholder="you@vit.edu.in"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={loading}

@@ -23,7 +23,7 @@ import { APP_LOGO_URL } from "@/lib/constants";
 export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { isAuthenticated, unreadMessagesCount, unreadNotificationsCount, logout } = useAuth();
+  const { user, isAuthenticated, isLoading, unreadMessagesCount, unreadNotificationsCount, logout } = useAuth();
 
   const [searchTerm, setSearchTerm] = React.useState("");
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
@@ -172,23 +172,29 @@ export function Navbar() {
         {/* Right Anchor: Authentication CTAs / Profile */}
         <div className="flex-1 flex items-center justify-end gap-2 sm:gap-3 shrink-0">
           {/* Mobile Notifications Shortcut */}
-          <Link
-            href="/notifications"
-            aria-label="Notifications"
-            className={cn(
-              "md:hidden relative min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-charcoal-600 hover:text-charcoal-900 hover:bg-charcoal-100 transition-all duration-200 ease-out active:scale-95 focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:outline-none",
-              pathname === "/notifications" && "bg-charcoal-100 text-charcoal-900"
-            )}
-          >
-            <Bell className="h-5 w-5" />
-            {unreadNotificationsCount > 0 && (
-              <span className="absolute top-1.5 right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-500 px-1 text-[9px] font-bold text-white shadow-xs">
-                {unreadNotificationsCount > 9 ? "9+" : unreadNotificationsCount}
-              </span>
-            )}
-          </Link>
+          {isAuthenticated && (
+            <Link
+              href="/notifications"
+              aria-label="Notifications"
+              className={cn(
+                "md:hidden relative min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-charcoal-600 hover:text-charcoal-900 hover:bg-charcoal-100 transition-all duration-200 ease-out active:scale-95 focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:outline-none",
+                pathname === "/notifications" && "bg-charcoal-100 text-charcoal-900"
+              )}
+            >
+              <Bell className="h-5 w-5" />
+              {unreadNotificationsCount > 0 && (
+                <span className="absolute top-1.5 right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-brand-500 px-1 text-[9px] font-bold text-white shadow-xs">
+                  {unreadNotificationsCount > 9 ? "9+" : unreadNotificationsCount}
+                </span>
+              )}
+            </Link>
+          )}
 
-          {isAuthenticated ? (
+          {isLoading ? (
+            <div className="flex items-center gap-2 p-1.5">
+              <div className="h-7 w-7 rounded-full bg-charcoal-100 ring-1 ring-charcoal-200/80 animate-pulse" />
+            </div>
+          ) : isAuthenticated ? (
             <div className="relative" ref={dropdownRef}>
               <button
                 type="button"
@@ -198,15 +204,23 @@ export function Navbar() {
                 aria-haspopup="true"
                 aria-label="User profile menu"
               >
-                <Avatar name="Student" size="sm" />
+                <Avatar
+                  name={user?.name || user?.email || "Student"}
+                  src={user?.profileImageUrl}
+                  size="sm"
+                />
                 <ChevronDown className="h-4 w-4 text-charcoal-500 hidden sm:block" />
               </button>
 
               {dropdownOpen && (
                 <div className="absolute right-0 mt-2 w-52 rounded-2xl bg-white/95 backdrop-blur-xl border border-charcoal-200/80 p-2 shadow-lg z-50 animate-in fade-in-50 zoom-in-95 duration-100">
                   <div className="px-3 py-2 border-b border-charcoal-100 mb-1">
-                    <p className="text-xs font-bold text-charcoal-900 font-jakarta">Signed In</p>
-                    <p className="text-[11px] text-charcoal-500 truncate">Verified Student</p>
+                    <p className="text-xs font-bold text-charcoal-900 font-jakarta truncate">
+                      {user?.name || "Signed In"}
+                    </p>
+                    <p className="text-[11px] text-charcoal-500 truncate">
+                      {user?.email || "Verified Student"}
+                    </p>
                   </div>
 
                   <Link
@@ -260,7 +274,7 @@ export function Navbar() {
               )}
             </div>
           ) : (
-            <div className="flex items-center gap-1.5 sm:gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2 animate-in fade-in-50 duration-200">
               <Link
                 href="/login"
                 className="px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-semibold text-charcoal-700 hover:bg-charcoal-100 hover:text-charcoal-900 transition-all duration-200 ease-out hover:scale-[1.03] active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:outline-none"

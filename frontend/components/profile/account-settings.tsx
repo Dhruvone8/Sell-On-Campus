@@ -24,7 +24,7 @@ export interface AccountSettingsProps {
 }
 
 export function AccountSettings({ user, onProfileUpdated }: AccountSettingsProps) {
-  const { logout } = useAuth();
+  const { logout, checkAuth } = useAuth();
 
   // Form State
   const [name, setName] = React.useState(user.name || "");
@@ -83,6 +83,7 @@ export function AccountSettings({ user, onProfileUpdated }: AccountSettingsProps
       setSaveSuccess("Profile updated successfully!");
       if (data.user) {
         onProfileUpdated?.(data.user);
+        await checkAuth();
       }
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : "Error saving profile";
