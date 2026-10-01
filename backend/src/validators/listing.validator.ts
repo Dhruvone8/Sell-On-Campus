@@ -14,12 +14,28 @@ export const createListingSchema = z.object({
 export const updateListingSchema = z.object({
     title: z.string().trim().min(3).max(50).optional(),
     description: z.string().trim().min(10).max(200).optional(),
-    price: z.number().nonnegative().optional(),
+    price: z.coerce.number().nonnegative().optional(),
     categoryId: z.string().min(1).optional(),
     condition: z.enum(["NEW", "LIKE_NEW", "GOOD", "FAIR"]).optional(),
-    brand: z.string().trim().max(20).nullable().optional(),
-    color: z.string().trim().max(15).nullable().optional(),
-    model: z.string().trim().max(30).nullable().optional(),
+    brand: z.preprocess((val) => (val === "" ? null : val), z.string().trim().max(20).nullable().optional()),
+    color: z.preprocess((val) => (val === "" ? null : val), z.string().trim().max(15).nullable().optional()),
+    model: z.preprocess((val) => (val === "" ? null : val), z.string().trim().max(30).nullable().optional()),
+    deletedImageIds: z.preprocess((val) => {
+        if (typeof val === "string") {
+            try { return JSON.parse(val); } catch { return [val]; }
+        }
+        return val;
+    }, z.array(z.string()).optional()),
+    imageOrder: z.preprocess((val) => {
+        if (typeof val === "string") {
+            try { return JSON.parse(val); } catch { return []; }
+        }
+        return val;
+    }, z.array(z.object({
+        type: z.enum(["existing", "new"]),
+        id: z.string().optional(),
+        index: z.number().optional()
+    })).optional()),
 }).refine((data) => Object.keys(data).length > 0, { message: "At least one field must be provided" });
 
 export const updateListingStatusSchema = z.object({

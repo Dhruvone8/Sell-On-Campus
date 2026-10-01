@@ -29,6 +29,8 @@ export function formatPrice(price: number | string | null | undefined, currency 
 export function formatRelativeTime(dateString: string | Date | null | undefined): string {
   if (!dateString) return "";
   const date = typeof dateString === "string" ? new Date(dateString) : dateString;
+  if (!date || isNaN(date.getTime())) return "";
+
   const now = new Date();
   const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
 
@@ -41,25 +43,24 @@ export function formatRelativeTime(dateString: string | Date | null | undefined)
     return `${diffInMinutes}m ago`;
   }
 
-  const diffInHours = Math.floor(diffInSeconds / 60);
-  if (diffInHours < 24) {
+  const diffInHours = Math.floor(diffInSeconds / 3600);
+  if (diffInHours < 168) {
     return `${diffInHours}h ago`;
   }
 
-  const diffInDays = Math.floor(diffInHours / 24);
-  if (diffInDays < 7) {
-    return `${diffInDays}d ago`;
-  }
-
+  const diffInDays = Math.floor(diffInSeconds / 86400);
   const diffInWeeks = Math.floor(diffInDays / 7);
   if (diffInWeeks < 4) {
     return `${diffInWeeks}w ago`;
   }
 
-  return date.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
+  const diffInMonths = Math.floor(diffInDays / 30);
+  if (diffInMonths < 12) {
+    return `${Math.max(1, diffInMonths)}mo ago`;
+  }
+
+  const diffInYears = Math.floor(diffInDays / 365);
+  return `${Math.max(1, diffInYears)}y ago`;
 }
 
 /**

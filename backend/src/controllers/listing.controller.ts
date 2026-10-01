@@ -87,7 +87,9 @@ export async function updateListing(req: Request, res: Response) {
             return res.status(400).json({ message: "Invalid listing ID" });
         }
 
-        const listing = await updateListingService(id, userId, req.body);
+        const files = (req.files as Express.Multer.File[]) || undefined;
+
+        const listing = await updateListingService(id, userId, req.body, files);
 
         return res.status(200).json({ message: "Listing updated successfully", listing });
 

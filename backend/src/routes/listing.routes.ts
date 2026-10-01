@@ -17,7 +17,7 @@ router.get("/me", requireAuth, validateQuery(paginationSchema), getMyListings);
 router.get("/categories", getCategories);
 router.get("/:id", getListingById);
 router.post("/", requireAuth, uploadListingImages, validate(createListingSchema), createListing);
-router.patch("/:id", requireAuth, validate(updateListingSchema), updateListing);
+router.patch("/:id", requireAuth, uploadListingImages, validate(updateListingSchema), updateListing);
 router.patch("/:id/status", requireAuth, validate(updateListingStatusSchema), updateListingStatus);
 
 export default router;

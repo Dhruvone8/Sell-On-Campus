@@ -41,7 +41,11 @@ type ListingsResponse = {
 const listingDetailArgs = {
     include: {
         category: true,
-        images: true,
+        images: {
+            orderBy: {
+                createdAt: "asc" as const
+            }
+        },
         seller: {
             select: {
                 id: true,
@@ -79,6 +83,12 @@ interface UpdateListingData {
     brand?: string | null;
     color?: string | null;
     model?: string | null;
+    deletedImageIds?: string[];
+    imageOrder?: Array<{
+        type: "existing" | "new";
+        id?: string;
+        index?: number;
+    }>;
 }
 
 type ListingSort =
@@ -226,10 +236,18 @@ export async function getListingById(listingId: string) {
     return result
 }
 
-export async function updateListing(listingId: string, userId: string, data: UpdateListingData) {
+export async function updateListing(
+    listingId: string,
+    userId: string,
+    data: UpdateListingData,
+    files?: Express.Multer.File[]
+) {
     const listing = await prisma.listing.findUnique({
         where: {
             id: listingId
+        },
+        include: {
+            images: true
         }
     });
 
@@ -253,21 +271,105 @@ export async function updateListing(listingId: string, userId: string, data: Upd
         }
     }
 
+    // 1. Delete requested images
+    if (data.deletedImageIds && data.deletedImageIds.length > 0) {
+        const imagesToDelete = listing.images.filter((img) =>
+            data.deletedImageIds!.includes(img.id)
+        );
+
+        for (const image of imagesToDelete) {
+            try {
+                await deleteImage(image.publicId);
+            } catch (err) {
+                console.error("Failed to delete Cloudinary image:", image.publicId, err);
+            }
+        }
+
+        if (imagesToDelete.length > 0) {
+            await prisma.listingImage.deleteMany({
+                where: {
+                    id: { in: imagesToDelete.map((img) => img.id) },
+                    listingId: listingId
+                }
+            });
+        }
+    }
+
+    // 2. Upload new images if any
+    const uploadedNewRecords: { id: string; fileIndex: number }[] = [];
+    if (files && files.length > 0) {
+        const remainingImagesCount = listing.images.filter(
+            (img) => !data.deletedImageIds?.includes(img.id)
+        ).length;
+
+        if (remainingImagesCount + files.length > 5) {
+            throw new AppError("A listing can have at most 5 photos", 400);
+        }
+
+        const uploadedImages: { secure_url: string; public_id: string; fileIndex: number }[] = [];
+        try {
+            for (const [i, file] of files.entries()) {
+                const result = await uploadImage(
+                    file.buffer,
+                    `sell-on-campus/listings/${listing.id}`
+                );
+                uploadedImages.push({ ...result, fileIndex: i });
+            }
+
+            for (const img of uploadedImages) {
+                const record = await prisma.listingImage.create({
+                    data: {
+                        imageUrl: img.secure_url,
+                        publicId: img.public_id,
+                        listingId: listing.id
+                    }
+                });
+                uploadedNewRecords.push({ id: record.id, fileIndex: img.fileIndex });
+            }
+        } catch (uploadError) {
+            for (const img of uploadedImages) {
+                try {
+                    await deleteImage(img.public_id);
+                } catch (cleanupErr) {
+                    console.error("Failed to cleanup Cloudinary image on error:", img.public_id, cleanupErr);
+                }
+            }
+            throw uploadError;
+        }
+    }
+
+    // 3. Apply custom image ordering if specified
+    if (data.imageOrder && data.imageOrder.length > 0) {
+        const baseTime = Date.now();
+        for (const [i, item] of data.imageOrder.entries()) {
+            let targetImageId: string | undefined;
+
+            if (item.type === "existing" && item.id) {
+                targetImageId = item.id;
+            } else if (item.type === "new" && item.index !== undefined) {
+                const found = uploadedNewRecords.find((rec) => rec.fileIndex === item.index);
+                if (found) targetImageId = found.id;
+            }
+
+            if (targetImageId) {
+                await prisma.listingImage.update({
+                    where: { id: targetImageId },
+                    data: {
+                        createdAt: new Date(baseTime + i * 1000)
+                    }
+                });
+            }
+        }
+    }
+
     const updateData = {
         ...(data.title !== undefined && { title: data.title }),
-
         ...(data.description !== undefined && { description: data.description }),
-
         ...(data.price !== undefined && { price: data.price }),
-
         ...(data.categoryId !== undefined && { categoryId: data.categoryId }),
-
         ...(data.condition !== undefined && { condition: data.condition }),
-
         ...("brand" in data && { brand: data.brand }),
-
         ...("color" in data && { color: data.color }),
-
         ...("model" in data && { model: data.model })
     };
 
@@ -275,13 +377,37 @@ export async function updateListing(listingId: string, userId: string, data: Upd
         where: {
             id: listingId
         },
-        data: updateData
+        data: updateData,
+        include: {
+            category: true,
+            images: {
+                orderBy: {
+                    createdAt: "asc"
+                }
+            },
+            seller: {
+                select: {
+                    id: true,
+                    name: true,
+                    department: true,
+                    year: true,
+                    profileImageUrl: true,
+                    createdAt: true
+                }
+            }
+        }
     });
 
     await deleteCache(`listing:${listingId}`);
     await deleteCache("listings:feed:p1:l10:newest");
 
-    return updatedListing;
+    return {
+        ...updatedListing,
+        images: updatedListing.images.map((image) => ({
+            id: image.id,
+            imageUrl: image.imageUrl,
+        }))
+    };
 }
 
 export async function updateListingStatus(listingId: string, userId: string, newStatus: "ACTIVE" | "RESERVED" | "SOLD") {
@@ -338,7 +464,11 @@ export async function getMyListings(userId: string, page: number, limit: number)
             take: limit,
             include: {
                 category: true,
-                images: true,
+                images: {
+                    orderBy: {
+                        createdAt: "asc"
+                    }
+                },
                 seller: {
                     select: {
                         id: true,
@@ -456,7 +586,11 @@ export async function getListings(
             take: limit,
             include: {
                 category: true,
-                images: true,
+                images: {
+                    orderBy: {
+                        createdAt: "asc"
+                    }
+                },
                 seller: {
                     select: {
                         id: true,

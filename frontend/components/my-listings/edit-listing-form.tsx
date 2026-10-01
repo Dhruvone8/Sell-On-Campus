@@ -6,7 +6,8 @@ import { useRouter } from "next/navigation";
 import { Listing, ListingCondition } from "@/lib/types";
 import { ConditionSelector } from "@/components/create-listing/condition-selector";
 import { CategorySelector } from "@/components/create-listing/category-selector";
-import { Loader2, ArrowLeft, Check, AlertCircle, Sparkles, Image as ImageIcon } from "lucide-react";
+import { EditImageManager, EditableImage } from "./edit-image-manager";
+import { Loader2, ArrowLeft, Check, AlertCircle, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -16,6 +17,16 @@ export interface EditListingFormProps {
 
 export function EditListingForm({ listing }: EditListingFormProps) {
   const router = useRouter();
+
+  // Images state
+  const [images, setImages] = React.useState<EditableImage[]>(() =>
+    (listing.images || []).map((img) => ({
+      id: img.id,
+      type: "existing",
+      url: img.imageUrl,
+    }))
+  );
+  const [deletedImageIds, setDeletedImageIds] = React.useState<string[]>([]);
 
   // Form Fields prefilled from listing
   const [title, setTitle] = React.useState(listing.title || "");
@@ -42,6 +53,10 @@ export function EditListingForm({ listing }: EditListingFormProps) {
 
   const validate = () => {
     const errors: Record<string, string> = {};
+
+    if (images.length === 0) {
+      errors.images = "Please include at least one photo for your listing.";
+    }
 
     if (!title.trim() || title.trim().length < 3) {
       errors.title = "Title must be at least 3 characters long.";
@@ -84,7 +99,16 @@ export function EditListingForm({ listing }: EditListingFormProps) {
 
     if (!validate()) {
       setTimeout(() => {
-        const errorOrder = ["title", "categoryId", "price", "description", "brand", "model", "color"];
+        const errorOrder = [
+          "images",
+          "title",
+          "categoryId",
+          "price",
+          "description",
+          "brand",
+          "model",
+          "color",
+        ];
         for (const key of errorOrder) {
           const el = document.getElementById(`edit-field-${key}`);
           if (el) {
@@ -103,33 +127,40 @@ export function EditListingForm({ listing }: EditListingFormProps) {
       setIsSubmitting(true);
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
-      const payload: {
-        title: string;
-        price: number;
-        categoryId: string;
-        condition: ListingCondition;
-        description: string;
-        brand?: string | null;
-        model?: string | null;
-        color?: string | null;
-      } = {
-        title: title.trim(),
-        price: Number(price),
-        categoryId,
-        condition,
-        description: description.trim(),
-        brand: brand.trim() || null,
-        model: model.trim() || null,
-        color: color.trim() || null,
-      };
+      const formData = new FormData();
+      formData.append("title", title.trim());
+      formData.append("price", String(Number(price)));
+      formData.append("categoryId", categoryId);
+      formData.append("condition", condition);
+      formData.append("description", description.trim());
+
+      if (brand.trim()) formData.append("brand", brand.trim());
+      if (model.trim()) formData.append("model", model.trim());
+      if (color.trim()) formData.append("color", color.trim());
+
+      // Pass deleted existing image IDs
+      formData.append("deletedImageIds", JSON.stringify(deletedImageIds));
+
+      // Append new files and construct imageOrder
+      const newImageItems = images.filter((img) => img.type === "new" && img.file);
+      newImageItems.forEach((img) => {
+        formData.append("images", img.file!);
+      });
+
+      const imageOrder = images.map((img) => {
+        if (img.type === "existing") {
+          return { type: "existing", id: img.id };
+        } else {
+          const fileIndex = newImageItems.indexOf(img);
+          return { type: "new", index: fileIndex };
+        }
+      });
+      formData.append("imageOrder", JSON.stringify(imageOrder));
 
       const res = await fetch(`${apiUrl}/api/listings/${listing.id}`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
         credentials: "include",
-        body: JSON.stringify(payload),
+        body: formData,
       });
 
       const data = await res.json();
@@ -172,40 +203,14 @@ export function EditListingForm({ listing }: EditListingFormProps) {
         </div>
       )}
 
-      {/* Existing Photos Showcase */}
-      {listing.images && listing.images.length > 0 && (
-        <div className="p-5 bg-white rounded-2xl border border-charcoal-200/80 shadow-xs space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-charcoal-900 font-jakarta flex items-center gap-1.5">
-              <ImageIcon className="w-4 h-4 text-brand-500" />
-              Listing Photos ({listing.images.length})
-            </h3>
-            <span className="text-[11px] text-charcoal-500">
-              Attached to listing
-            </span>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-3">
-            {listing.images.map((img, idx) => (
-              <div
-                key={img.id || idx}
-                className="relative aspect-square rounded-xl overflow-hidden border border-charcoal-200/70 bg-charcoal-50 group"
-              >
-                <img
-                  src={img.imageUrl}
-                  alt={`Listing photo ${idx + 1}`}
-                  className="w-full h-full object-cover"
-                />
-                {idx === 0 && (
-                  <span className="absolute top-1.5 left-1.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-brand-500 text-white shadow-xs">
-                    Cover
-                  </span>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      {/* Interactive Photo Manager */}
+      <EditImageManager
+        images={images}
+        onImagesChange={setImages}
+        onImageDeleted={(id) => setDeletedImageIds((prev) => [...prev, id])}
+        maxImages={5}
+        error={fieldErrors.images}
+      />
 
       {/* Main Details Section */}
       <div className="p-6 bg-white rounded-2xl border border-charcoal-200/80 shadow-xs space-y-6">
