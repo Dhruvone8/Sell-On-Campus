@@ -146,37 +146,21 @@ export function ListingInfoCard({ listing }: ListingInfoCardProps) {
       {/* Primary Action Button */}
       <div className="pt-2">
         {isOwner ? (
-          <div className="space-y-3">
-            <div className="p-3.5 rounded-2xl bg-amber-50/80 border border-amber-200/80 flex items-start gap-3">
-              <span className="p-1.5 rounded-xl bg-amber-500 text-white shrink-0 mt-0.5 shadow-2xs">
-                <Sparkles className="w-3.5 h-3.5 stroke-[2.5]" />
-              </span>
-              <div>
-                <p className="text-xs font-bold text-amber-950 font-jakarta">
-                  Your Campus Listing
-                </p>
-                <p className="text-[11px] text-amber-800/90 leading-relaxed mt-0.5">
-                  You are the seller of this item. Messaging yourself is disabled. You can edit details or update availability anytime.
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              <Link
-                href={`/listings/${listing.id}/edit`}
-                className="w-full h-11 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-sm shadow-brand-500/25 transition-all cursor-pointer active:scale-[0.99]"
-              >
-                <Edit3 className="w-4 h-4 stroke-[2]" />
-                <span>Edit Listing</span>
-              </Link>
-              <Link
-                href="/my-listings"
-                className="w-full h-11 rounded-xl bg-charcoal-50 hover:bg-charcoal-100 text-charcoal-800 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 border border-charcoal-200/80 transition-all cursor-pointer active:scale-[0.99]"
-              >
-                <Layers className="w-4 h-4 stroke-[2]" />
-                <span>My Listings</span>
-              </Link>
-            </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <Link
+              href={`/listings/${listing.id}/edit`}
+              className="w-full h-11 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-sm shadow-brand-500/25 transition-all cursor-pointer active:scale-[0.99]"
+            >
+              <Edit3 className="w-4 h-4 stroke-[2]" />
+              <span>Edit Listing</span>
+            </Link>
+            <Link
+              href="/my-listings"
+              className="w-full h-11 rounded-xl bg-charcoal-50 hover:bg-charcoal-100 text-charcoal-800 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 border border-charcoal-200/80 transition-all cursor-pointer active:scale-[0.99]"
+            >
+              <Layers className="w-4 h-4 stroke-[2]" />
+              <span>My Listings</span>
+            </Link>
           </div>
         ) : isSold ? (
           <button

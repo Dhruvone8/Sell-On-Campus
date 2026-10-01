@@ -1,19 +1,32 @@
 import redis from "./redis.js";
 
 export async function getCache<T>(key: string): Promise<T | null> {
-    const value = await redis.get(key);
+    try {
+        const value = await redis.get(key);
 
-    if (!value) {
+        if (!value) {
+            return null;
+        }
+
+        return JSON.parse(value) as T;
+    } catch (error) {
+        console.error(`Redis GET failed for key ${key}:`, error);
         return null;
     }
-
-    return JSON.parse(value) as T;
 }
 
-export async function setCache(key: string, value: unknown, ttlSeconds: number) {
-    await redis.set(key, JSON.stringify(value), { EX: ttlSeconds });
+export async function setCache<T>(key: string, value: T, ttl: number): Promise<void> {
+    try {
+        await redis.set(key, JSON.stringify(value), { EX: ttl });
+    } catch (error) {
+        console.error(`Redis SET failed for key ${key}:`, error);
+    }
 }
 
-export async function deleteCache(key: string) {
-    await redis.del(key);
+export async function deleteCache(key: string): Promise<void> {
+    try {
+        await redis.del(key);
+    } catch (error) {
+        console.error(`Redis DELETE failed for key ${key}:`, error);
+    }
 }
