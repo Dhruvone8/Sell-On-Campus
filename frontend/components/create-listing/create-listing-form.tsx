@@ -6,7 +6,8 @@ import { ListingCondition } from "@/lib/types";
 import { ImageUploader } from "./image-uploader";
 import { ConditionSelector } from "./condition-selector";
 import { CategorySelector } from "./category-selector";
-import { Loader2, PlusCircle, ShieldCheck, ChevronDown, ChevronUp } from "lucide-react";
+import { Loader2, PlusCircle, ShieldCheck, ChevronDown, ChevronUp, Check, AlertCircle } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export function CreateListingForm() {
   const router = useRouter();
@@ -29,6 +30,7 @@ export function CreateListingForm() {
 
   // Submission State
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [isSuccess, setIsSuccess] = React.useState(false);
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = React.useState<Record<string, string>>({});
 
@@ -74,6 +76,19 @@ export function CreateListingForm() {
     setErrorMessage(null);
 
     if (!validate()) {
+      setTimeout(() => {
+        const errorOrder = ["title", "categoryId", "price", "description", "brand", "model", "color"];
+        for (const key of errorOrder) {
+          const el = document.getElementById(`create-field-${key}`);
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "center" });
+            if ("focus" in el && typeof el.focus === "function") {
+              el.focus();
+            }
+            break;
+          }
+        }
+      }, 50);
       return;
     }
 
@@ -117,6 +132,8 @@ export function CreateListingForm() {
       const data = await res.json();
       const listingId = data.listing?.id;
 
+      setIsSuccess(true);
+
       if (listingId) {
         router.push(`/listings/${listingId}`);
       } else {
@@ -125,17 +142,18 @@ export function CreateListingForm() {
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Error creating listing";
       setErrorMessage(msg);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    } finally {
       setIsSubmitting(false);
+      setIsSuccess(false);
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
+    <form noValidate onSubmit={handleSubmit} className="space-y-8">
       {errorMessage && (
-        <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-sm font-medium">
-          {errorMessage}
+        <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700 text-sm font-medium flex items-center gap-2">
+          <AlertCircle className="w-5 h-5 shrink-0 text-red-500" />
+          <span>{errorMessage}</span>
         </div>
       )}
 
@@ -161,6 +179,7 @@ export function CreateListingForm() {
             </span>
           </div>
           <input
+            id="create-field-title"
             type="text"
             required
             maxLength={50}
@@ -176,11 +195,13 @@ export function CreateListingForm() {
 
         {/* Category & Price Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <CategorySelector
-            value={categoryId}
-            onChange={setCategoryId}
-            error={fieldErrors.categoryId}
-          />
+          <div id="create-field-categoryId">
+            <CategorySelector
+              value={categoryId}
+              onChange={setCategoryId}
+              error={fieldErrors.categoryId}
+            />
+          </div>
 
           <div className="space-y-1.5">
             <label className="text-sm font-bold text-charcoal-900 block font-jakarta">
@@ -191,6 +212,7 @@ export function CreateListingForm() {
                 ₹
               </span>
               <input
+                id="create-field-price"
                 type="number"
                 min="0"
                 step="any"
@@ -221,6 +243,7 @@ export function CreateListingForm() {
             </span>
           </div>
           <textarea
+            id="create-field-description"
             required
             rows={4}
             maxLength={200}
@@ -268,6 +291,7 @@ export function CreateListingForm() {
                 Brand
               </label>
               <input
+                id="create-field-brand"
                 type="text"
                 maxLength={20}
                 value={brand}
@@ -282,6 +306,7 @@ export function CreateListingForm() {
                 Model
               </label>
               <input
+                id="create-field-model"
                 type="text"
                 maxLength={30}
                 value={model}
@@ -296,6 +321,7 @@ export function CreateListingForm() {
                 Color
               </label>
               <input
+                id="create-field-color"
                 type="text"
                 maxLength={15}
                 value={color}
@@ -317,25 +343,45 @@ export function CreateListingForm() {
         </div>
       </div>
 
+      {/* Validation helper alert if there are errors */}
+      {Object.keys(fieldErrors).length > 0 && (
+        <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-red-50 border border-red-200/80 text-red-700 text-xs font-semibold animate-in fade-in duration-200">
+          <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
+          <span>Please complete or correct the highlighted fields above before publishing.</span>
+        </div>
+      )}
+
       {/* 5. Submit CTA */}
       <div className="flex flex-col sm:flex-row items-center justify-end gap-3 pt-2">
         <button
           type="button"
+          disabled={isSubmitting || isSuccess}
           onClick={() => router.back()}
-          className="w-full sm:w-auto px-5 py-3 rounded-xl border border-charcoal-200/80 hover:bg-charcoal-50 text-charcoal-700 font-bold text-sm transition-all cursor-pointer"
+          className="w-full sm:w-auto px-5 py-3 rounded-xl border border-charcoal-200/80 hover:bg-charcoal-50 text-charcoal-700 font-bold text-sm transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
         >
           Cancel
         </button>
 
         <button
           type="submit"
-          disabled={isSubmitting}
-          className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold text-sm shadow-md shadow-brand-500/25 transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-75 active:scale-[0.99]"
+          disabled={isSubmitting || isSuccess}
+          className={cn(
+            "w-full sm:w-auto px-8 py-3.5 rounded-xl font-bold text-sm shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]",
+            isSuccess
+              ? "bg-emerald-600 text-white shadow-emerald-600/25 cursor-default"
+              : "bg-brand-500 hover:bg-brand-600 text-white shadow-brand-500/25",
+            (isSubmitting || isSuccess) && "disabled:opacity-85 disabled:cursor-not-allowed"
+          )}
         >
-          {isSubmitting ? (
+          {isSuccess ? (
+            <>
+              <Check className="w-4 h-4 stroke-[2.5]" />
+              <span>Listing Published! Redirecting...</span>
+            </>
+          ) : isSubmitting ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
-              <span>Publishing Listing...</span>
+              <span>{files.length > 0 ? "Uploading photos & publishing..." : "Publishing Listing..."}</span>
             </>
           ) : (
             <>

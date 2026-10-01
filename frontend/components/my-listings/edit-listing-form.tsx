@@ -8,6 +8,7 @@ import { ConditionSelector } from "@/components/create-listing/condition-selecto
 import { CategorySelector } from "@/components/create-listing/category-selector";
 import { Loader2, ArrowLeft, Check, AlertCircle, Sparkles, Image as ImageIcon } from "lucide-react";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 export interface EditListingFormProps {
   listing: Listing;
@@ -34,6 +35,7 @@ export function EditListingForm({ listing }: EditListingFormProps) {
 
   // Status & Feedback
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [isSuccess, setIsSuccess] = React.useState(false);
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
   const [successMessage, setSuccessMessage] = React.useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = React.useState<Record<string, string>>({});
@@ -81,6 +83,19 @@ export function EditListingForm({ listing }: EditListingFormProps) {
     setSuccessMessage(null);
 
     if (!validate()) {
+      setTimeout(() => {
+        const errorOrder = ["title", "categoryId", "price", "description", "brand", "model", "color"];
+        for (const key of errorOrder) {
+          const el = document.getElementById(`edit-field-${key}`);
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "center" });
+            if ("focus" in el && typeof el.focus === "function") {
+              el.focus();
+            }
+            break;
+          }
+        }
+      }, 50);
       return;
     }
 
@@ -123,6 +138,7 @@ export function EditListingForm({ listing }: EditListingFormProps) {
         throw new Error(data.message || "Failed to update listing");
       }
 
+      setIsSuccess(true);
       setSuccessMessage("Listing updated successfully! Redirecting...");
       setTimeout(() => {
         router.push("/my-listings");
@@ -131,13 +147,13 @@ export function EditListingForm({ listing }: EditListingFormProps) {
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : "Something went wrong";
       setErrorMessage(errMsg);
-    } finally {
       setIsSubmitting(false);
+      setIsSuccess(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
+    <form noValidate onSubmit={handleSubmit} className="space-y-8">
       {/* Top Banner feedback */}
       {errorMessage && (
         <div className="p-4 rounded-2xl bg-red-50 border border-red-200 text-red-700 flex items-start gap-3">
@@ -214,6 +230,7 @@ export function EditListingForm({ listing }: EditListingFormProps) {
             </span>
           </div>
           <input
+            id="edit-field-title"
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
@@ -229,10 +246,12 @@ export function EditListingForm({ listing }: EditListingFormProps) {
         {/* Category & Price in two columns */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {/* Category Selector */}
-          <CategorySelector
-            value={categoryId}
-            onChange={(val) => setCategoryId(val)}
-          />
+          <div id="edit-field-categoryId">
+            <CategorySelector
+              value={categoryId}
+              onChange={(val) => setCategoryId(val)}
+            />
+          </div>
 
           {/* Price */}
           <div className="space-y-2">
@@ -244,6 +263,7 @@ export function EditListingForm({ listing }: EditListingFormProps) {
                 ₹
               </span>
               <input
+                id="edit-field-price"
                 type="number"
                 min="0"
                 step="1"
@@ -276,6 +296,7 @@ export function EditListingForm({ listing }: EditListingFormProps) {
             </span>
           </div>
           <textarea
+            id="edit-field-description"
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={4}
@@ -305,6 +326,7 @@ export function EditListingForm({ listing }: EditListingFormProps) {
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-charcoal-700">Brand</label>
             <input
+              id="edit-field-brand"
               type="text"
               maxLength={20}
               value={brand}
@@ -321,6 +343,7 @@ export function EditListingForm({ listing }: EditListingFormProps) {
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-charcoal-700">Model</label>
             <input
+              id="edit-field-model"
               type="text"
               maxLength={30}
               value={model}
@@ -337,6 +360,7 @@ export function EditListingForm({ listing }: EditListingFormProps) {
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-charcoal-700">Color</label>
             <input
+              id="edit-field-color"
               type="text"
               maxLength={15}
               value={color}
@@ -351,11 +375,22 @@ export function EditListingForm({ listing }: EditListingFormProps) {
         </div>
       </div>
 
+      {/* Validation helper alert if there are errors */}
+      {Object.keys(fieldErrors).length > 0 && (
+        <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-red-50 border border-red-200/80 text-red-700 text-xs font-semibold animate-in fade-in duration-200">
+          <AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
+          <span>Please resolve the highlighted fields above before saving changes.</span>
+        </div>
+      )}
+
       {/* Action Buttons */}
       <div className="flex items-center justify-end gap-3 pt-2">
         <Link
           href="/my-listings"
-          className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-semibold text-charcoal-700 hover:bg-charcoal-100 border border-charcoal-200 transition-colors"
+          className={cn(
+            "inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-semibold text-charcoal-700 hover:bg-charcoal-100 border border-charcoal-200 transition-colors",
+            (isSubmitting || isSuccess) && "pointer-events-none opacity-50"
+          )}
         >
           <ArrowLeft className="w-4 h-4" />
           Cancel
@@ -363,13 +398,24 @@ export function EditListingForm({ listing }: EditListingFormProps) {
 
         <button
           type="submit"
-          disabled={isSubmitting}
-          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold text-white bg-brand-500 hover:bg-brand-600 active:scale-[0.99] shadow-md shadow-brand-500/25 transition-all duration-200 disabled:opacity-50 cursor-pointer"
+          disabled={isSubmitting || isSuccess}
+          className={cn(
+            "inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold shadow-md transition-all duration-200 cursor-pointer active:scale-[0.99]",
+            isSuccess
+              ? "bg-emerald-600 text-white shadow-emerald-600/25 cursor-default"
+              : "bg-brand-500 hover:bg-brand-600 text-white shadow-brand-500/25",
+            (isSubmitting || isSuccess) && "disabled:opacity-85 disabled:cursor-not-allowed"
+          )}
         >
-          {isSubmitting ? (
+          {isSuccess ? (
+            <>
+              <Check className="w-4 h-4 stroke-[2.5]" />
+              <span>Changes Saved! Redirecting...</span>
+            </>
+          ) : isSubmitting ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
-              <span>Saving...</span>
+              <span>Saving Changes...</span>
             </>
           ) : (
             <>

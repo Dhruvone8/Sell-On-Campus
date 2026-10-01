@@ -53,6 +53,7 @@ export function StatusChanger({
 }: StatusChangerProps) {
   const [isOpen, setIsOpen] = React.useState(false);
   const [isUpdating, setIsUpdating] = React.useState(false);
+  const [updatingStatus, setUpdatingStatus] = React.useState<ListingStatus | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const dropdownRef = React.useRef<HTMLDivElement>(null);
 
@@ -120,6 +121,7 @@ export function StatusChanger({
 
     try {
       setIsUpdating(true);
+      setUpdatingStatus(newStatus);
       setError(null);
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
@@ -145,6 +147,7 @@ export function StatusChanger({
       setError(errMsg);
     } finally {
       setIsUpdating(false);
+      setUpdatingStatus(null);
     }
   };
 
@@ -211,20 +214,32 @@ export function StatusChanger({
           <div className="p-1 space-y-0.5">
             {availableTransitions.map((option) => {
               const Icon = option.icon;
+              const isOptionUpdating = isUpdating && updatingStatus === option.status;
               return (
                 <button
                   key={option.status}
                   type="button"
+                  disabled={isUpdating}
                   onClick={() => handleSelectStatus(option.status)}
                   className={cn(
                     "w-full flex items-start gap-2.5 px-3 py-2 rounded-xl text-left transition-colors cursor-pointer group",
-                    option.colorClass
+                    option.colorClass,
+                    isUpdating && "disabled:opacity-60 disabled:cursor-wait"
                   )}
                 >
-                  <Icon className="w-4 h-4 shrink-0 mt-0.5" />
+                  {isOptionUpdating ? (
+                    <Loader2 className="w-4 h-4 shrink-0 mt-0.5 animate-spin text-brand-500" />
+                  ) : (
+                    <Icon className="w-4 h-4 shrink-0 mt-0.5" />
+                  )}
                   <div className="min-w-0">
-                    <p className="text-xs font-semibold text-charcoal-900 group-hover:text-charcoal-950">
-                      {option.label}
+                    <p className="text-xs font-semibold text-charcoal-900 group-hover:text-charcoal-950 flex items-center gap-1.5">
+                      <span>{option.label}</span>
+                      {isOptionUpdating && (
+                        <span className="text-[10px] text-brand-600 font-medium animate-pulse">
+                          Updating...
+                        </span>
+                      )}
                     </p>
                     <p className="text-[11px] text-charcoal-500 line-clamp-1">
                       {option.description}
