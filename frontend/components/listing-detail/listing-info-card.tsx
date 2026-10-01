@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Listing } from "@/lib/types";
 import { formatPrice, cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
-import { MessageSquare, Loader2, Edit3, ShieldCheck, MapPin, Sparkles } from "lucide-react";
+import { MessageSquare, Loader2, Edit3, ShieldCheck, MapPin, Sparkles, Layers } from "lucide-react";
 
 export interface ListingInfoCardProps {
   listing: Listing;
@@ -21,10 +21,13 @@ const CONDITION_META: Record<string, { label: string; badgeClass: string }> = {
 
 export function ListingInfoCard({ listing }: ListingInfoCardProps) {
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const [isMessaging, setIsMessaging] = React.useState(false);
   const [messageError, setMessageError] = React.useState<string | null>(null);
-  const [isOwner, setIsOwner] = React.useState(false);
+
+  const isOwner = Boolean(
+    user && (user.id === listing.sellerId || user.id === listing.seller?.id)
+  );
 
   const isSold = listing.status === "SOLD";
   const isReserved = listing.status === "RESERVED";
@@ -32,6 +35,10 @@ export function ListingInfoCard({ listing }: ListingInfoCardProps) {
   const conditionInfo = listing.condition ? CONDITION_META[listing.condition] : null;
 
   const handleMessageSeller = async () => {
+    if (isOwner) {
+      return;
+    }
+
     setMessageError(null);
 
     if (!isAuthenticated) {
@@ -66,11 +73,7 @@ export function ListingInfoCard({ listing }: ListingInfoCardProps) {
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Error contacting seller";
-      if (msg.toLowerCase().includes("yourself") || msg.toLowerCase().includes("own")) {
-        setIsOwner(true);
-      } else {
-        setMessageError(msg);
-      }
+      setMessageError(msg);
       setIsMessaging(false);
     }
   };
@@ -83,22 +86,31 @@ export function ListingInfoCard({ listing }: ListingInfoCardProps) {
           {listing.category?.name || "Marketplace"}
         </span>
 
-        {isSold ? (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-charcoal-100 text-charcoal-600 text-xs font-bold">
-            <span className="w-1.5 h-1.5 rounded-full bg-charcoal-500" />
-            Sold
-          </span>
-        ) : isReserved ? (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 text-xs font-bold">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-            Reserved
-          </span>
-        ) : (
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            Available
-          </span>
-        )}
+        <div className="flex items-center gap-2">
+          {isOwner && (
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-brand-50 text-brand-700 border border-brand-200 text-xs font-bold">
+              <Sparkles className="w-3 h-3 stroke-[2.5]" />
+              <span>Your Listing</span>
+            </span>
+          )}
+
+          {isSold ? (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-charcoal-100 text-charcoal-600 text-xs font-bold">
+              <span className="w-1.5 h-1.5 rounded-full bg-charcoal-500" />
+              Sold
+            </span>
+          ) : isReserved ? (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 text-xs font-bold">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+              Reserved
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-xs font-bold">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              Available
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Listing Title */}
@@ -134,17 +146,37 @@ export function ListingInfoCard({ listing }: ListingInfoCardProps) {
       {/* Primary Action Button */}
       <div className="pt-2">
         {isOwner ? (
-          <div className="space-y-2">
-            <div className="p-3 rounded-xl bg-charcoal-50 border border-charcoal-200/80 text-center text-xs font-semibold text-charcoal-600">
-              You are the seller of this listing
+          <div className="space-y-3">
+            <div className="p-3.5 rounded-2xl bg-amber-50/80 border border-amber-200/80 flex items-start gap-3">
+              <span className="p-1.5 rounded-xl bg-amber-500 text-white shrink-0 mt-0.5 shadow-2xs">
+                <Sparkles className="w-3.5 h-3.5 stroke-[2.5]" />
+              </span>
+              <div>
+                <p className="text-xs font-bold text-amber-950 font-jakarta">
+                  Your Campus Listing
+                </p>
+                <p className="text-[11px] text-amber-800/90 leading-relaxed mt-0.5">
+                  You are the seller of this item. Messaging yourself is disabled. You can edit details or update availability anytime.
+                </p>
+              </div>
             </div>
-            <Link
-              href={`/profile`}
-              className="w-full h-12 rounded-xl bg-charcoal-900 hover:bg-charcoal-800 text-white text-sm font-bold flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer"
-            >
-              <Edit3 className="w-4 h-4 stroke-[2]" />
-              <span>Manage in My Listings</span>
-            </Link>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <Link
+                href={`/listings/${listing.id}/edit`}
+                className="w-full h-11 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-sm shadow-brand-500/25 transition-all cursor-pointer active:scale-[0.99]"
+              >
+                <Edit3 className="w-4 h-4 stroke-[2]" />
+                <span>Edit Listing</span>
+              </Link>
+              <Link
+                href="/my-listings"
+                className="w-full h-11 rounded-xl bg-charcoal-50 hover:bg-charcoal-100 text-charcoal-800 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 border border-charcoal-200/80 transition-all cursor-pointer active:scale-[0.99]"
+              >
+                <Layers className="w-4 h-4 stroke-[2]" />
+                <span>My Listings</span>
+              </Link>
+            </div>
           </div>
         ) : isSold ? (
           <button

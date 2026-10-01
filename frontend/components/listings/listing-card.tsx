@@ -1,11 +1,12 @@
 /* eslint-disable @next/next/no-img-element */
-"use strict";
+"use client";
 
 import * as React from "react";
 import Link from "next/link";
 import { Listing } from "@/lib/types";
 import { formatPrice, formatRelativeTime, getInitials, cn } from "@/lib/utils";
-import { Tag } from "lucide-react";
+import { Tag, Sparkles } from "lucide-react";
+import { useAuth } from "@/lib/auth-context";
 
 export interface ListingCardProps {
   listing: Listing;
@@ -27,6 +28,9 @@ export function ListingCard({
   layout = "grid",
   className,
 }: ListingCardProps) {
+  const { user } = useAuth();
+  const isOwner = Boolean(user && (user.id === listing.sellerId || user.id === listing.seller?.id));
+
   const [imageError, setImageError] = React.useState(false);
   const primaryImage = listing.images?.[0]?.imageUrl;
   const conditionMeta = listing.condition ? CONDITION_LABELS[listing.condition] : null;
@@ -77,7 +81,7 @@ export function ListingCard({
           <div className="absolute top-2.5 right-2.5 z-10">
             <span
               className={cn(
-                "inline-flex items-center px-2 py-0.5 rounded-lg text-[11px] font-bold border backdrop-blur-md shadow-xs tracking-tight",
+                "inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-semibold border backdrop-blur-md shadow-2xs tracking-tight",
                 conditionMeta.badgeClass
               )}
             >
@@ -86,9 +90,11 @@ export function ListingCard({
           </div>
         )}
 
-        {/* Floating Price Capsule (Bottom Left) */}
-        <div className="absolute bottom-2.5 left-2.5 px-3 py-1 rounded-xl bg-charcoal-900/90 backdrop-blur-md text-white font-black text-lg tracking-tight shadow-md flex items-baseline gap-1">
-          <span>{formatPrice(listing.price)}</span>
+        {/* Compact Price Capsule (Bottom Left) */}
+        <div className="absolute bottom-2 left-2 z-10">
+          <span className="inline-flex items-baseline px-2.5 py-0.5 rounded-lg bg-charcoal-900/80 backdrop-blur-md text-white font-bold text-xs sm:text-sm tracking-tight shadow-xs">
+            {formatPrice(listing.price)}
+          </span>
         </div>
 
         {/* Reserved / Sold Badge overlay */}
@@ -104,14 +110,24 @@ export function ListingCard({
       {/* Card Details */}
       <div className="p-4 sm:p-5 flex flex-col flex-1 justify-between gap-3">
         <div className="space-y-1.5">
-          {/* Category & Timestamp */}
-          <div className="flex items-center justify-between text-xs text-charcoal-500">
-            <span className="font-bold uppercase tracking-wider text-brand-600 text-[11px]">
-              {listing.category?.name || "Marketplace"}
-            </span>
-            <span className="text-charcoal-400 text-[11px]">
-              {formatRelativeTime(listing.createdAt)}
-            </span>
+          {/* Category, Timestamp & Own Listing tag */}
+          <div className="flex items-center justify-between text-xs text-charcoal-500 gap-1.5">
+            <div className="flex items-center gap-1.5 min-w-0 truncate">
+              <span className="font-bold uppercase tracking-wider text-brand-600 text-[11px] truncate">
+                {listing.category?.name || "Marketplace"}
+              </span>
+              <span className="text-charcoal-300">•</span>
+              <span className="text-charcoal-400 text-[11px] shrink-0">
+                {formatRelativeTime(listing.createdAt)}
+              </span>
+            </div>
+
+            {isOwner && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-brand-50 text-brand-700 border border-brand-200/80 shrink-0">
+                <Sparkles className="w-2.5 h-2.5 stroke-[2.5]" />
+                <span>Your Listing</span>
+              </span>
+            )}
           </div>
 
           {/* Title */}
@@ -123,7 +139,7 @@ export function ListingCard({
           {listing.description && (
             <p className={cn(
               "text-xs text-charcoal-500 leading-relaxed",
-              layout === "list" ? "line-clamp-3 sm:line-clamp-2" : "line-clamp-2"
+              layout === "list" ? "line-clamp-2" : "line-clamp-2"
             )}>
               {listing.description}
             </p>
@@ -145,12 +161,12 @@ export function ListingCard({
               </div>
             )}
             <span className="text-xs font-semibold text-charcoal-700 truncate max-w-[140px]">
-              {sellerName}
+              {isOwner ? "You (Seller)" : sellerName}
             </span>
           </div>
 
           <span className="text-[11px] font-medium text-charcoal-400">
-            Verified
+            {isOwner ? "Owner" : "Verified"}
           </span>
         </div>
       </div>
@@ -181,9 +197,11 @@ export function ListingCardSkeleton({
             ? "w-full aspect-[4/3]"
             : "w-full aspect-square"
         )}
-      />
+      >
+        <div className="absolute bottom-2 left-2 h-4 w-12 bg-charcoal-300/80 rounded-md" />
+      </div>
       <div className="p-4 sm:p-5 flex flex-col flex-1 justify-between gap-3">
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <div className="flex justify-between items-center">
             <div className="h-3 w-16 bg-charcoal-200 rounded" />
             <div className="h-3 w-12 bg-charcoal-200 rounded" />

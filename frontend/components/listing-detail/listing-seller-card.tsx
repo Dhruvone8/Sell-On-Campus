@@ -1,10 +1,11 @@
 /* eslint-disable @next/next/no-img-element */
-"use strict";
+"use client";
 
 import * as React from "react";
 import { ListingSeller } from "@/lib/types";
 import { getInitials, formatDate } from "@/lib/utils";
-import { ShieldCheck } from "lucide-react";
+import { ShieldCheck, User } from "lucide-react";
+import { useAuth } from "@/lib/auth-context";
 
 export interface ListingSellerCardProps {
   seller?: ListingSeller;
@@ -19,6 +20,11 @@ const YEAR_LABELS: Record<number, string> = {
 };
 
 export function ListingSellerCard({ seller }: ListingSellerCardProps) {
+  const { user } = useAuth();
+  const isSelf = Boolean(
+    user && seller && (user.id === seller.id || (seller.email && user.email === seller.email))
+  );
+
   const name = seller?.name || seller?.fullName || "Campus Student";
   const image = seller?.profileImageUrl || seller?.avatarUrl;
   const initials = getInitials(name);
@@ -57,7 +63,7 @@ export function ListingSellerCard({ seller }: ListingSellerCardProps) {
         <div className="flex flex-col min-w-0">
           <div className="flex items-center gap-1.5">
             <h3 className="font-bold text-charcoal-900 text-base leading-snug truncate">
-              {name}
+              {name} {isSelf && <span className="text-xs font-semibold text-brand-600">(You)</span>}
             </h3>
             <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
           </div>
@@ -68,9 +74,16 @@ export function ListingSellerCard({ seller }: ListingSellerCardProps) {
       </div>
 
       <div className="hidden sm:block shrink-0">
-        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-bold">
-          Verified
-        </span>
+        {isSelf ? (
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-brand-50 text-brand-700 text-[11px] font-bold border border-brand-200">
+            <User className="w-3 h-3 stroke-[2.5]" />
+            Your Profile
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-bold">
+            Verified
+          </span>
+        )}
       </div>
     </div>
   );
