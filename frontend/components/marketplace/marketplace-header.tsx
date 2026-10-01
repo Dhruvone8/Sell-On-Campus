@@ -13,28 +13,28 @@ export function MarketplaceHeader({
   activeFilterCount = 0,
 }: MarketplaceHeaderProps) {
   return (
-    <div className="relative w-full">
+    <div className="relative w-full overflow-hidden rounded-2xl mb-6">
       {/* Subtle Ambient Glow Orbs */}
       <div className="absolute -top-12 -left-20 w-96 h-96 bg-brand-500/5 rounded-full blur-3xl pointer-events-none -z-10" />
       <div className="absolute top-1/3 -right-24 w-80 h-80 bg-amber-500/5 rounded-full blur-3xl pointer-events-none -z-10" />
 
       {/* Campus Status Banner */}
-      <div className="w-full bg-white/85 backdrop-blur-md rounded-2xl border border-charcoal-200/70 shadow-xs p-4 sm:p-5 mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3.5">
+      <div className="w-full bg-white/85 backdrop-blur-md rounded-2xl border border-charcoal-200/70 shadow-xs p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex items-center gap-3 sm:gap-3.5 min-w-0">
           <div className="w-10 h-10 rounded-xl bg-brand-500/10 flex items-center justify-center text-brand-600 shrink-0">
             <Compass className="w-5 h-5 stroke-[2.2]" />
           </div>
-          <div>
+          <div className="min-w-0">
             <div className="flex items-center gap-2">
               <span className="font-bold text-charcoal-900 text-base sm:text-lg font-jakarta">
                 Campus Feed
               </span>
-              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-brand-50 text-brand-700 text-xs font-bold">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-brand-50 text-brand-700 text-xs font-bold shrink-0">
                 <span className="w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse" />
                 Live Stock
               </span>
             </div>
-            <p className="text-xs sm:text-sm text-charcoal-500 mt-0.5">
+            <p className="text-xs sm:text-sm text-charcoal-500 mt-0.5 truncate sm:whitespace-normal">
               Verified campus marketplace • Direct buy &amp; sell among students
             </p>
           </div>

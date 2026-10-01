@@ -64,7 +64,7 @@ export function MessageInput({
   return (
     <div
       className={cn(
-        "p-3 sm:p-4 bg-white border-t border-charcoal-200/80 space-y-2.5 shrink-0",
+        "p-3 sm:p-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-white border-t border-charcoal-200/80 space-y-2.5 shrink-0",
         className
       )}
     >

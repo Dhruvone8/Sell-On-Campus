@@ -459,7 +459,7 @@ function ConversationsContent() {
   }
 
   return (
-    <div className="h-[calc(100vh-4rem)] bg-canvas p-0 md:p-4 lg:p-6 flex flex-col overflow-hidden">
+    <div className="h-[calc(100vh-4rem-5rem)] md:h-[calc(100vh-4rem)] bg-canvas p-0 md:p-4 lg:p-6 flex flex-col overflow-hidden">
       <div className="max-w-7xl w-full mx-auto flex-1 flex md:rounded-3xl md:border md:border-charcoal-200/80 md:shadow-xs bg-white overflow-hidden">
         {/* 1. Left Sidebar: Conversation List */}
         <div

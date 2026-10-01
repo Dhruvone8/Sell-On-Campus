@@ -171,7 +171,7 @@ export function ImageUploader({
                   e.stopPropagation();
                   handleRemove(idx);
                 }}
-                className="absolute top-1.5 right-1.5 p-1 rounded-full bg-charcoal-900/80 text-white hover:bg-red-600 transition-colors shadow-sm cursor-pointer"
+                className="absolute top-1.5 right-1.5 p-1.5 min-w-[28px] min-h-[28px] flex items-center justify-center rounded-full bg-charcoal-900/80 text-white hover:bg-red-600 transition-colors shadow-sm cursor-pointer"
                 aria-label={`Remove photo ${idx + 1}`}
               >
                 <X className="w-3.5 h-3.5 stroke-[2.5]" />

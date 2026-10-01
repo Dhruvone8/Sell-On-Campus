@@ -105,7 +105,7 @@ export function AccountSettings({ user, onProfileUpdated }: AccountSettingsProps
   return (
     <div className="space-y-6">
       {/* 1. Profile Information Edit Card */}
-      <div className="bg-white rounded-3xl border border-charcoal-200/80 p-6 sm:p-8 shadow-xs space-y-6">
+      <div className="bg-white rounded-3xl border border-charcoal-200/80 p-4 sm:p-8 shadow-xs space-y-6">
         <div className="flex items-center gap-2.5 pb-4 border-b border-charcoal-100">
           <span className="p-2 rounded-xl bg-brand-50 text-brand-500">
             <Sparkles className="w-5 h-5" />
@@ -239,7 +239,7 @@ export function AccountSettings({ user, onProfileUpdated }: AccountSettingsProps
             <button
               type="submit"
               disabled={isSaving}
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-brand-500 hover:bg-brand-600 active:scale-[0.99] shadow-sm transition-all cursor-pointer disabled:opacity-50"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-brand-500 hover:bg-brand-600 active:scale-[0.99] shadow-sm transition-all cursor-pointer disabled:opacity-50"
             >
               {isSaving ? (
                 <>
@@ -258,14 +258,14 @@ export function AccountSettings({ user, onProfileUpdated }: AccountSettingsProps
       </div>
 
       {/* 2. Security & Password Section */}
-      <div className="bg-white rounded-3xl border border-charcoal-200/80 p-6 sm:p-8 shadow-xs space-y-4">
+      <div className="bg-white rounded-3xl border border-charcoal-200/80 p-4 sm:p-8 shadow-xs space-y-4">
         <div className="flex items-center gap-2.5 pb-4 border-b border-charcoal-100">
           <span className="p-2 rounded-xl bg-blue-50 text-blue-600">
             <KeyRound className="w-5 h-5" />
           </span>
           <div>
-            <h2 className="text-lg font-bold text-charcoal-900 font-jakarta">
-              Security & Authentication
+            <h2 className="text-base sm:text-lg font-bold text-charcoal-900 font-jakarta">
+              Security &amp; Authentication
             </h2>
             <p className="text-xs text-charcoal-500">
               Manage credentials and account recovery options.
@@ -273,7 +273,7 @@ export function AccountSettings({ user, onProfileUpdated }: AccountSettingsProps
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-2xl bg-charcoal-50/70 border border-charcoal-100">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-3.5 sm:p-4 rounded-2xl bg-charcoal-50/70 border border-charcoal-100">
           <div className="space-y-1">
             <p className="text-xs font-bold text-charcoal-900">Account Password</p>
             <p className="text-[11px] text-charcoal-500 leading-relaxed max-w-md">
@@ -283,7 +283,7 @@ export function AccountSettings({ user, onProfileUpdated }: AccountSettingsProps
 
           <Link
             href="/forgot-password"
-            className="inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-charcoal-800 bg-white hover:bg-charcoal-100 border border-charcoal-200 transition-colors shadow-2xs self-start sm:self-auto"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2 rounded-xl text-xs font-bold text-charcoal-800 bg-white hover:bg-charcoal-100 border border-charcoal-200 transition-colors shadow-2xs self-start sm:self-auto"
           >
             <span>Change Password</span>
           </Link>
@@ -291,7 +291,7 @@ export function AccountSettings({ user, onProfileUpdated }: AccountSettingsProps
       </div>
 
       {/* 3. Account Actions & Logout */}
-      <div className="bg-white rounded-3xl border border-charcoal-200/80 p-6 sm:p-8 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="bg-white rounded-3xl border border-charcoal-200/80 p-4 sm:p-8 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
           <p className="text-xs font-bold text-charcoal-900">Sign Out of Session</p>
           <p className="text-[11px] text-charcoal-500">
@@ -303,7 +303,7 @@ export function AccountSettings({ user, onProfileUpdated }: AccountSettingsProps
           type="button"
           disabled={isLoggingOut}
           onClick={handleLogout}
-          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-red-600 hover:bg-red-50 border border-red-200 transition-all cursor-pointer shadow-2xs self-start sm:self-auto disabled:opacity-50"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-red-600 hover:bg-red-50 border border-red-200 transition-all cursor-pointer shadow-2xs self-start sm:self-auto disabled:opacity-50"
         >
           {isLoggingOut ? (
             <Loader2 className="w-3.5 h-3.5 animate-spin" />

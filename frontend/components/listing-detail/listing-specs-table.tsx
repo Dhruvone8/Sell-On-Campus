@@ -31,18 +31,18 @@ export function ListingSpecsTable({ listing }: ListingSpecsTableProps) {
   return (
     <div className="flex flex-col gap-6">
       {/* Description & Condition Section */}
-      <div className="p-6 rounded-2xl bg-white border border-charcoal-200/70 shadow-xs flex flex-col gap-4">
-        <h2 className="text-lg font-bold text-charcoal-900 font-jakarta">
+      <div className="p-4 sm:p-6 rounded-2xl bg-white border border-charcoal-200/70 shadow-xs flex flex-col gap-4">
+        <h2 className="text-base sm:text-lg font-bold text-charcoal-900 font-jakarta">
           Description &amp; Condition
         </h2>
 
-        <div className="text-sm text-charcoal-700 leading-relaxed whitespace-pre-line">
+        <div className="text-xs sm:text-sm text-charcoal-700 leading-relaxed whitespace-pre-line">
           {listing.description}
         </div>
 
         {conditionDesc && (
-          <div className="p-4 rounded-xl bg-charcoal-50 border border-charcoal-200/60 flex flex-col gap-1">
-            <span className="text-xs font-bold text-charcoal-900 uppercase tracking-wider">
+          <div className="p-3.5 sm:p-4 rounded-xl bg-charcoal-50 border border-charcoal-200/60 flex flex-col gap-1">
+            <span className="text-[11px] sm:text-xs font-bold text-charcoal-900 uppercase tracking-wider">
               Condition Note ({listing.condition.replace("_", " ")})
             </span>
             <p className="text-xs text-charcoal-600 leading-relaxed">
@@ -51,14 +51,14 @@ export function ListingSpecsTable({ listing }: ListingSpecsTableProps) {
           </div>
         )}
 
-        <div className="p-3.5 rounded-xl bg-brand-50/60 border border-brand-100 flex items-center justify-between text-xs text-brand-800">
+        <div className="p-3 sm:p-3.5 rounded-xl bg-brand-50/60 border border-brand-100 flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs text-brand-800">
           <span>Campus meetup recommended</span>
           <span className="font-bold">Test before completing exchange</span>
         </div>
       </div>
 
       {/* Item Specifications Table */}
-      <div className="p-6 rounded-2xl bg-white border border-charcoal-200/70 shadow-xs flex flex-col gap-4">
+      <div className="p-4 sm:p-6 rounded-2xl bg-white border border-charcoal-200/70 shadow-xs flex flex-col gap-4">
         <h2 className="text-lg font-bold text-charcoal-900 font-jakarta">
           Specifications
         </h2>

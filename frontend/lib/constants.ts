@@ -45,11 +45,22 @@ const rawFaviconUrl =
 
 export const APP_FAVICON_URL = rawFaviconUrl;
 
-export const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+export const API_URL =
+  typeof window !== "undefined" &&
+  window.location.hostname !== "localhost" &&
+  window.location.hostname !== "127.0.0.1" &&
+  (process.env.NEXT_PUBLIC_API_URL?.includes("localhost") || !process.env.NEXT_PUBLIC_API_URL)
+    ? `${window.location.protocol}//${window.location.hostname}:5000`
+    : process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
 
 export const WS_URL =
-  process.env.NEXT_PUBLIC_WS_URL ||
-  (API_URL.startsWith("https")
-    ? API_URL.replace(/^https/, "wss")
-    : API_URL.replace(/^http/, "ws"));
+  typeof window !== "undefined" &&
+  window.location.hostname !== "localhost" &&
+  window.location.hostname !== "127.0.0.1" &&
+  (process.env.NEXT_PUBLIC_WS_URL?.includes("localhost") || !process.env.NEXT_PUBLIC_WS_URL)
+    ? `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.hostname}:5000`
+    : process.env.NEXT_PUBLIC_WS_URL ||
+      (API_URL.startsWith("https")
+        ? API_URL.replace(/^https/, "wss")
+        : API_URL.replace(/^http/, "ws"));
 

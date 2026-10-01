@@ -78,10 +78,10 @@ export function Navbar() {
     <header className="fixed top-0 left-0 right-0 z-50 glass-header">
       <div className="w-full h-16 px-3 sm:px-6 lg:px-8 xl:px-10 flex items-center justify-between">
         {/* Left Anchor: Brand / Logo */}
-        <div className="flex-1 flex items-center justify-start shrink-0">
+        <div className="flex-1 flex items-center justify-start shrink-0 min-w-0">
           <Link
             href="/"
-            className="inline-flex items-center gap-2 sm:gap-2.5"
+            className="inline-flex items-center gap-1.5 sm:gap-2.5 shrink-0"
           >
             {APP_LOGO_URL && (
               <Image
@@ -91,10 +91,10 @@ export function Navbar() {
                 height={38}
                 priority
                 unoptimized
-                className="h-8.5 w-8.5 sm:h-9.5 sm:w-9.5 object-contain shrink-0 mix-blend-multiply"
+                className="h-8 w-8 sm:h-9.5 sm:w-9.5 object-contain shrink-0 mix-blend-multiply"
               />
             )}
-            <span className="text-lg sm:text-xl font-bold tracking-tight text-charcoal-900 leading-none">
+            <span className="text-base min-[360px]:text-lg sm:text-xl font-bold tracking-tight text-charcoal-900 leading-none">
               Sell<span className="text-brand-500">On</span>Campus
             </span>
           </Link>
@@ -274,16 +274,16 @@ export function Navbar() {
               )}
             </div>
           ) : (
-            <div className="flex items-center gap-1.5 sm:gap-2 animate-in fade-in-50 duration-200">
+            <div className="flex items-center gap-1 min-[360px]:gap-2 shrink-0 animate-in fade-in-50 duration-200">
               <Link
                 href="/login"
-                className="px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs sm:text-sm font-semibold text-charcoal-700 hover:bg-charcoal-100 hover:text-charcoal-900 transition-all duration-200 ease-out hover:scale-[1.03] active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:outline-none"
+                className="px-2 min-[360px]:px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-[11px] min-[360px]:text-xs sm:text-sm font-semibold text-charcoal-700 hover:bg-charcoal-100 hover:text-charcoal-900 transition-all duration-200 ease-out hover:scale-[1.03] active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:outline-none shrink-0"
               >
                 Sign in
               </Link>
               <Link
                 href="/register"
-                className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-charcoal-900 hover:bg-charcoal-800 text-white text-xs sm:text-sm font-semibold shadow-xs transition-all duration-200 ease-out hover:scale-[1.04] active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:outline-none"
+                className="px-2.5 min-[360px]:px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-charcoal-900 hover:bg-charcoal-800 text-white text-[11px] min-[360px]:text-xs sm:text-sm font-semibold shadow-xs transition-all duration-200 ease-out hover:scale-[1.04] active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:outline-none shrink-0"
               >
                 Register
               </Link>

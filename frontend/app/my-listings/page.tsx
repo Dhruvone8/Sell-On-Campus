@@ -194,7 +194,7 @@ export default function MyListingsPage() {
 
           <Link
             href="/listings/create"
-            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 min-h-[40px] rounded-xl text-sm font-bold text-white bg-brand-500 hover:bg-brand-600 active:scale-[0.99] shadow-md shadow-brand-500/25 transition-all duration-200 self-start sm:self-auto cursor-pointer focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:outline-none"
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 min-h-[40px] rounded-xl text-sm font-bold text-white bg-brand-500 hover:bg-brand-600 active:scale-[0.99] shadow-md shadow-brand-500/25 transition-all duration-200 cursor-pointer focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:outline-none"
           >
             <PlusCircle className="w-4 h-4" />
             <span>Create New Listing</span>
