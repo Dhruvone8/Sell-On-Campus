@@ -70,10 +70,10 @@ export function MarketplaceControls({
   }
 
   return (
-    <div className="bg-white/85 backdrop-blur-md rounded-2xl border border-charcoal-200/70 shadow-xs p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="bg-white/85 backdrop-blur-md rounded-2xl border border-charcoal-200/70 shadow-xs p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
       {/* Left: Count & Active Chips */}
       <div className="flex flex-wrap items-center gap-2">
-        <span className="font-bold text-charcoal-900 text-sm sm:text-base font-jakarta">
+        <span className="font-bold text-charcoal-900 text-xs sm:text-base font-jakarta">
           Showing {totalItems} {totalItems === 1 ? "item" : "items"}
         </span>
 
@@ -84,14 +84,14 @@ export function MarketplaceControls({
               {activeChips.map((chip, idx) => (
                 <span
                   key={idx}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-charcoal-100 text-charcoal-800 text-xs font-semibold"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-charcoal-100 text-charcoal-800 text-xs font-semibold max-w-[180px] sm:max-w-xs"
                 >
-                  <span>{chip.label}</span>
+                  <span className="truncate">{chip.label}</span>
                   <button
                     type="button"
                     onClick={chip.onRemove}
                     aria-label={`Remove filter ${chip.label}`}
-                    className="hover:text-brand-600 transition-colors cursor-pointer"
+                    className="hover:text-brand-600 transition-colors cursor-pointer shrink-0"
                   >
                     <X className="w-3 h-3 stroke-[2.5]" />
                   </button>
@@ -103,7 +103,7 @@ export function MarketplaceControls({
       </div>
 
       {/* Right: Sort Dropdown & View Mode Toggle */}
-      <div className="flex items-center gap-2.5 sm:gap-3 self-end sm:self-auto shrink-0">
+      <div className="flex items-center justify-between sm:justify-end gap-2.5 sm:gap-3 w-full sm:w-auto shrink-0 pt-1 sm:pt-0 border-t border-charcoal-100 sm:border-0">
         {/* Sort Select */}
         <div className="relative flex items-center">
           <select

@@ -33,10 +33,10 @@ export function ProfileHeader({
   const initials = getInitials(user.name || "Campus Student");
 
   return (
-    <div className="bg-white rounded-3xl border border-charcoal-200/80 p-6 sm:p-8 shadow-xs space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-6">
+    <div className="bg-white rounded-3xl border border-charcoal-200/80 p-4 sm:p-8 shadow-xs space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-5 sm:gap-6">
         {/* Left: Avatar & Identity Details */}
-        <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-5">
+        <div className="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-4 sm:gap-5">
           {/* Avatar Box */}
           <div className="relative shrink-0">
             {user.profileImageUrl ? (
@@ -61,7 +61,7 @@ export function ProfileHeader({
           {/* Text details */}
           <div className="space-y-2">
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-              <h1 className="text-2xl sm:text-3xl font-black text-charcoal-900 font-jakarta tracking-tight">
+              <h1 className="text-xl sm:text-3xl font-black text-charcoal-900 font-jakarta tracking-tight">
                 {user.name}
               </h1>
               <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
@@ -98,7 +98,7 @@ export function ProfileHeader({
         <button
           type="button"
           onClick={onEditClick}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-charcoal-700 bg-charcoal-50 hover:bg-charcoal-100 border border-charcoal-200/80 transition-all active:scale-[0.98] cursor-pointer shadow-2xs self-center sm:self-start shrink-0"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-charcoal-700 bg-charcoal-50 hover:bg-charcoal-100 border border-charcoal-200/80 transition-all active:scale-[0.98] cursor-pointer shadow-2xs self-center sm:self-start shrink-0"
         >
           <Pencil className="w-3.5 h-3.5 text-brand-500" />
           <span>Edit Profile</span>
@@ -107,38 +107,38 @@ export function ProfileHeader({
 
       {/* Overview Metrics Cards */}
       <div className="grid grid-cols-3 gap-2 sm:gap-4 pt-4 border-t border-charcoal-100">
-        <div className="bg-canvas rounded-2xl p-2.5 sm:p-4 text-center border border-charcoal-100">
+        <div className="bg-canvas rounded-2xl p-2 sm:p-4 text-center border border-charcoal-100">
           <div className="flex items-center justify-center gap-1 text-charcoal-400 mb-1">
             <Package className="w-3.5 h-3.5" />
-            <span className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider truncate">
+            <span className="text-[9px] min-[360px]:text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider truncate">
               Total Items
             </span>
           </div>
-          <p className="text-lg sm:text-2xl font-black text-charcoal-900 font-jakarta">
+          <p className="text-base min-[360px]:text-lg sm:text-2xl font-black text-charcoal-900 font-jakarta">
             {totalListings}
           </p>
         </div>
 
-        <div className="bg-canvas rounded-2xl p-2.5 sm:p-4 text-center border border-charcoal-100">
+        <div className="bg-canvas rounded-2xl p-2 sm:p-4 text-center border border-charcoal-100">
           <div className="flex items-center justify-center gap-1 text-emerald-600 mb-1">
             <Tag className="w-3.5 h-3.5" />
-            <span className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider truncate">
+            <span className="text-[9px] min-[360px]:text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider truncate">
               Active
             </span>
           </div>
-          <p className="text-lg sm:text-2xl font-black text-emerald-700 font-jakarta">
+          <p className="text-base min-[360px]:text-lg sm:text-2xl font-black text-emerald-700 font-jakarta">
             {activeListings}
           </p>
         </div>
 
-        <div className="bg-canvas rounded-2xl p-2.5 sm:p-4 text-center border border-charcoal-100">
+        <div className="bg-canvas rounded-2xl p-2 sm:p-4 text-center border border-charcoal-100">
           <div className="flex items-center justify-center gap-1 text-charcoal-500 mb-1">
             <CheckCircle className="w-3.5 h-3.5" />
-            <span className="text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider truncate">
+            <span className="text-[9px] min-[360px]:text-[10px] sm:text-[11px] font-semibold uppercase tracking-wider truncate">
               Sold
             </span>
           </div>
-          <p className="text-lg sm:text-2xl font-black text-charcoal-700 font-jakarta">
+          <p className="text-base min-[360px]:text-lg sm:text-2xl font-black text-charcoal-700 font-jakarta">
             {soldListings}
           </p>
         </div>

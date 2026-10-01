@@ -49,7 +49,7 @@ export function ListingBreadcrumbs({
 
       <ChevronRight className="w-3.5 h-3.5 text-charcoal-300 shrink-0" />
 
-      <span className="text-charcoal-900 font-semibold truncate max-w-xs sm:max-w-md">
+      <span className="min-w-0 flex-1 truncate max-w-[120px] min-[360px]:max-w-[180px] sm:max-w-md text-charcoal-900 font-semibold">
         {listingTitle}
       </span>
     </nav>

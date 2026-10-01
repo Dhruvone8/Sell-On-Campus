@@ -79,7 +79,7 @@ export function ListingInfoCard({ listing }: ListingInfoCardProps) {
   };
 
   return (
-    <div className="p-6 rounded-2xl bg-white border border-charcoal-200/70 shadow-xs flex flex-col gap-4">
+    <div className="p-4 sm:p-6 rounded-2xl bg-white border border-charcoal-200/70 shadow-xs flex flex-col gap-4">
       {/* Category Tag & Status Pill */}
       <div className="flex items-center justify-between">
         <span className="text-xs font-bold uppercase tracking-wider text-charcoal-500">
@@ -114,20 +114,20 @@ export function ListingInfoCard({ listing }: ListingInfoCardProps) {
       </div>
 
       {/* Listing Title */}
-      <h1 className="text-2xl sm:text-3xl font-bold text-charcoal-900 tracking-tight leading-snug font-jakarta">
+      <h1 className="text-xl min-[360px]:text-2xl sm:text-3xl font-bold text-charcoal-900 tracking-tight leading-snug font-jakarta">
         {listing.title}
       </h1>
 
       {/* Price & Condition */}
-      <div className="flex items-baseline justify-between pt-1">
-        <span className="text-3xl sm:text-4xl font-extrabold text-brand-600 tracking-tight leading-none font-jakarta">
+      <div className="flex flex-wrap items-baseline justify-between gap-2 pt-1">
+        <span className="text-2xl min-[360px]:text-3xl sm:text-4xl font-extrabold text-brand-600 tracking-tight leading-none font-jakarta">
           {formatPrice(listing.price)}
         </span>
 
         {conditionInfo && (
           <span
             className={cn(
-              "px-3 py-1 rounded-xl text-xs font-bold border shadow-2xs",
+              "px-2.5 sm:px-3 py-1 rounded-xl text-xs font-bold border shadow-2xs",
               conditionInfo.badgeClass
             )}
           >

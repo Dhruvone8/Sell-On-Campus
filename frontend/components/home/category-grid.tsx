@@ -71,20 +71,20 @@ export function CategoryGrid() {
         </Link>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3.5 sm:gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
         {CATEGORIES.map((cat) => {
           const Icon = cat.icon;
           return (
             <Link
               key={cat.name}
               href={`/listings?search=${encodeURIComponent(cat.name.split(" ")[0])}`}
-              className="p-4 rounded-2xl bg-white hover:bg-charcoal-50/80 transition-all duration-200 border border-charcoal-200/70 shadow-xs hover:shadow-md flex flex-col justify-between group hover:-translate-y-0.5 cursor-pointer"
+              className="p-3 sm:p-4 rounded-2xl bg-white hover:bg-charcoal-50/80 transition-all duration-200 border border-charcoal-200/70 shadow-xs hover:shadow-md flex flex-col justify-between group hover:-translate-y-0.5 cursor-pointer"
             >
-              <div className="h-11 w-11 rounded-xl bg-charcoal-100 group-hover:bg-brand-500 group-hover:text-white text-charcoal-700 flex items-center justify-center transition-colors mb-4">
+              <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-xl bg-charcoal-100 group-hover:bg-brand-500 group-hover:text-white text-charcoal-700 flex items-center justify-center transition-colors mb-3 sm:mb-4">
                 <Icon className="w-5 h-5 stroke-[2]" />
               </div>
               <div>
-                <span className="block font-bold text-charcoal-900 text-sm sm:text-base leading-snug group-hover:text-brand-600 transition-colors">
+                <span className="block font-bold text-charcoal-900 text-xs sm:text-base leading-snug group-hover:text-brand-600 transition-colors">
                   {cat.name}
                 </span>
               </div>

@@ -213,7 +213,7 @@ export function EditListingForm({ listing }: EditListingFormProps) {
       />
 
       {/* Main Details Section */}
-      <div className="p-6 bg-white rounded-2xl border border-charcoal-200/80 shadow-xs space-y-6">
+      <div className="p-4 sm:p-6 bg-white rounded-2xl border border-charcoal-200/80 shadow-xs space-y-6">
         <div>
           <h2 className="text-base font-bold text-charcoal-900 font-jakarta flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-brand-500" />
@@ -389,11 +389,11 @@ export function EditListingForm({ listing }: EditListingFormProps) {
       )}
 
       {/* Action Buttons */}
-      <div className="flex items-center justify-end gap-3 pt-2">
+      <div className="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-end gap-3 pt-2">
         <Link
           href="/my-listings"
           className={cn(
-            "inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-semibold text-charcoal-700 hover:bg-charcoal-100 border border-charcoal-200 transition-colors",
+            "w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-xl text-sm font-semibold text-charcoal-700 hover:bg-charcoal-100 border border-charcoal-200 transition-colors",
             (isSubmitting || isSuccess) && "pointer-events-none opacity-50"
           )}
         >
@@ -405,7 +405,7 @@ export function EditListingForm({ listing }: EditListingFormProps) {
           type="submit"
           disabled={isSubmitting || isSuccess}
           className={cn(
-            "inline-flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold shadow-md transition-all duration-200 cursor-pointer active:scale-[0.99]",
+            "w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold shadow-md transition-all duration-200 cursor-pointer active:scale-[0.99]",
             isSuccess
               ? "bg-emerald-600 text-white shadow-emerald-600/25 cursor-default"
               : "bg-brand-500 hover:bg-brand-600 text-white shadow-brand-500/25",

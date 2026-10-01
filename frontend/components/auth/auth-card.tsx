@@ -36,10 +36,10 @@ export function AuthCard({
             />
           )}
         </Link>
-        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-charcoal-900">
+        <h1 className="text-xl sm:text-3xl font-extrabold tracking-tight text-charcoal-900">
           {title}
         </h1>
-        <p className="mt-1.5 text-sm text-charcoal-500 leading-normal max-w-sm mx-auto">
+        <p className="mt-1.5 text-xs sm:text-sm text-charcoal-500 leading-normal max-w-sm mx-auto">
           {subtitle}
         </p>
       </div>
@@ -47,7 +47,7 @@ export function AuthCard({
       {/* Glassmorphic Form Container */}
       <div
         className={cn(
-          "rounded-3xl border border-charcoal-200/80 bg-white/90 p-6 sm:p-8 shadow-xl shadow-charcoal-900/[0.04] backdrop-blur-xl transition-all",
+          "rounded-3xl border border-charcoal-200/80 bg-white/90 p-4 min-[360px]:p-6 sm:p-8 shadow-xl shadow-charcoal-900/[0.04] backdrop-blur-xl transition-all",
           className
         )}
       >

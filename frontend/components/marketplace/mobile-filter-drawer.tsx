@@ -35,7 +35,7 @@ export function MobileFilterDrawer({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 lg:hidden flex justify-end">
+    <div className="fixed inset-0 z-[60] lg:hidden flex justify-end">
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-charcoal-950/40 backdrop-blur-sm transition-opacity"
@@ -44,7 +44,7 @@ export function MobileFilterDrawer({
       />
 
       {/* Slide-over Container */}
-      <div className="relative w-full max-w-sm bg-white h-full shadow-2xl flex flex-col z-10 overflow-hidden">
+      <div className="relative w-full max-w-[88vw] sm:max-w-sm bg-white h-full shadow-2xl flex flex-col z-10 overflow-hidden">
         {/* Header */}
         <div className="p-4 border-b border-charcoal-200/80 flex items-center justify-between bg-white shrink-0">
           <div className="flex items-center gap-2">
