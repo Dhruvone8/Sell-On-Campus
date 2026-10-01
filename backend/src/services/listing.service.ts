@@ -2,6 +2,60 @@ import { prisma } from "../lib/prisma.js"
 import { Prisma } from "../generated/prisma/client.js";
 import { AppError } from "../lib/error.js";
 import { uploadImage, deleteImage } from "./cloudinary.service.js"
+import { getCache, setCache, deleteCache } from "../lib/cache/cache.js"
+
+type ListingWithRelations = Prisma.ListingGetPayload<{
+    include: {
+        category: true;
+        images: true;
+        seller: {
+            select: {
+                id: true;
+                name: true;
+                department: true;
+                year: true;
+                profileImageUrl: true;
+                createdAt: true;
+            };
+        };
+    };
+}>;
+
+type ListingResponse = Omit<ListingWithRelations, "images"> & {
+    images: {
+        id: string;
+        imageUrl: string;
+    }[];
+};
+
+type ListingsResponse = {
+    listings: ListingResponse[];
+    pagination: {
+        page: number;
+        limit: number;
+        total: number;
+        totalPages: number;
+    };
+};
+
+const listingDetailArgs = {
+    include: {
+        category: true,
+        images: true,
+        seller: {
+            select: {
+                id: true,
+                name: true,
+                department: true,
+                year: true,
+                profileImageUrl: true,
+                createdAt: true,
+            },
+        },
+    },
+} satisfies Prisma.ListingDefaultArgs;
+
+type ListingDetail = Prisma.ListingGetPayload<typeof listingDetailArgs>;
 
 interface CreateListingData {
     sellerId: string;
@@ -62,7 +116,7 @@ export async function createListing(data: CreateListingData) {
     }[] = [];
 
     try {
-        // Phase 1: upload ALL images to Cloudinary
+        // Phase 1: Upload ALL images to Cloudinary
         if (data.files && data.files.length > 0) {
             for (const file of data.files) {
                 const result = await uploadImage(
@@ -75,7 +129,7 @@ export async function createListing(data: CreateListingData) {
         }
 
         // Phase 2: ALL uploads succeeded.
-        // Now create ListingImage records.
+        // create ListingImage records.
         const imageRecords = await Promise.all(
             uploadedImages.map((image) =>
                 prisma.listingImage.create({
@@ -87,6 +141,8 @@ export async function createListing(data: CreateListingData) {
                 })
             )
         );
+
+        await deleteCache("listings:feed:p1:l10:newest");
 
         return {
             ...listing,
@@ -125,6 +181,14 @@ export async function createListing(data: CreateListingData) {
 }
 
 export async function getListingById(listingId: string) {
+    const cachedKey = `listing:${listingId}`;
+
+    const cachedListing = await getCache<ListingDetail>(cachedKey);
+
+    if (cachedListing) {
+        return cachedListing;
+    }
+
     const listing = await prisma.listing.findUnique({
         where: {
             id: listingId
@@ -149,12 +213,17 @@ export async function getListingById(listingId: string) {
         throw new AppError("Listing not Found", 404);
     }
 
-    return {
-        ...listing, images: listing.images.map((image) => ({
+    const result = {
+        ...listing,
+        images: listing.images.map((image) => ({
             id: image.id,
-            imageUrl: image.imageUrl
-        }))
-    }
+            imageUrl: image.imageUrl,
+        })),
+    };
+
+    await setCache(cachedKey, result, 60 * 10)
+
+    return result
 }
 
 export async function updateListing(listingId: string, userId: string, data: UpdateListingData) {
@@ -202,12 +271,17 @@ export async function updateListing(listingId: string, userId: string, data: Upd
         ...("model" in data && { model: data.model })
     };
 
-    return prisma.listing.update({
+    const updatedListing = await prisma.listing.update({
         where: {
             id: listingId
         },
         data: updateData
     });
+
+    await deleteCache(`listing:${listingId}`);
+    await deleteCache("listings:feed:p1:l10:newest");
+
+    return updatedListing;
 }
 
 export async function updateListingStatus(listingId: string, userId: string, newStatus: "ACTIVE" | "RESERVED" | "SOLD") {
@@ -234,14 +308,19 @@ export async function updateListingStatus(listingId: string, userId: string, new
         throw new AppError(`Cannot change status from ${listing.status} to ${newStatus}`, 400);
     }
 
-    return prisma.listing.update({
+    const updatedListing = await prisma.listing.update({
         where: {
             id: listingId,
         },
         data: {
             status: newStatus
         }
-    })
+    });
+
+    await deleteCache(`listing:${listingId}`);
+    await deleteCache("listings:feed:p1:l10:newest");
+
+    return updatedListing;
 }
 
 export async function getMyListings(userId: string, page: number, limit: number) {
@@ -308,6 +387,26 @@ export async function getListings(
     },
     sort: ListingSort
 ) {
+    const isDefaultFeed =
+        page === 1 &&
+        limit === 10 &&
+        sort === "newest" &&
+        !filters.categoryId &&
+        !filters.category &&
+        !filters.condition &&
+        filters.minPrice === undefined &&
+        filters.maxPrice === undefined &&
+        !filters.search;
+
+    const cacheKey = "listings:feed:p1:l10:newest";
+
+    if (isDefaultFeed) {
+        const cachedListings = await getCache<ListingsResponse>(cacheKey);
+
+        if (cachedListings) {
+            return cachedListings;
+        }
+    }
     const skip = (page - 1) * limit;
 
     const where: Prisma.ListingWhereInput = {
@@ -384,11 +483,39 @@ export async function getListings(
         }))
     }));
 
-    return { listings: listingsWithImages, pagination: { page, limit, total, totalPages } };
+    const result: ListingsResponse = {
+        listings: listingsWithImages,
+        pagination: {
+            page,
+            limit,
+            total,
+            totalPages
+        }
+    };
+
+    if (isDefaultFeed) {
+        await setCache(cacheKey, result, 60);
+    }
+
+    return result;
 }
 
 export async function getCategories() {
-    return prisma.category.findMany({
-        orderBy: { name: "asc" }
+    const cacheKey = "categories:all";
+
+    const cachedCategories = await getCache<
+        Awaited<ReturnType<typeof prisma.category.findMany>>
+    >(cacheKey);
+
+    if (cachedCategories) return cachedCategories;
+
+    const categories = await prisma.category.findMany({
+        orderBy: {
+            name: "asc"
+        }
     });
+
+    await setCache(cacheKey, categories, 60 * 60 * 24);
+
+    return categories;
 }
