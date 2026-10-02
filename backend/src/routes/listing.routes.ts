@@ -9,6 +9,7 @@ import {
     createListingSchema, updateListingSchema, updateListingStatusSchema, paginationSchema, listingQuerySchema
 } from "../validators/listing.validator.js"
 import { uploadListingImages } from "../middleware/upload.middleware.js";
+import { listingRateLimiters } from "../utils/rate-limit.util.js";
 
 const router = Router();
 
@@ -16,7 +17,7 @@ router.get("/", validateQuery(listingQuerySchema), getListings);
 router.get("/me", requireAuth, validateQuery(paginationSchema), getMyListings);
 router.get("/categories", getCategories);
 router.get("/:id", getListingById);
-router.post("/", requireAuth, uploadListingImages, validate(createListingSchema), createListing);
+router.post("/", requireAuth, listingRateLimiters.createListing, uploadListingImages, validate(createListingSchema), createListing);
 router.patch("/:id", requireAuth, uploadListingImages, validate(updateListingSchema), updateListing);
 router.patch("/:id/status", requireAuth, validate(updateListingStatusSchema), updateListingStatus);
 
