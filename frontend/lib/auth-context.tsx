@@ -67,7 +67,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
           try {
             const [convRes, notifRes] = await Promise.all([
-              fetch(`${API_URL}/api/conversations?limit=10`, {
+              fetch(`${API_URL}/api/conversations?limit=20`, {
                 method: "GET",
                 credentials: "include",
               }).catch(() => null),

@@ -17,18 +17,35 @@ import {
 import { useAuth } from "@/lib/auth-context";
 import { Avatar } from "@/components/ui/avatar";
 import { NotificationPopover } from "@/components/notifications/notification-popover";
+import { useSocket } from "@/lib/socket-context";
 import { cn } from "@/lib/utils";
 import { APP_LOGO_URL } from "@/lib/constants";
 
 export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, isAuthenticated, isLoading, unreadMessagesCount, unreadNotificationsCount, logout } = useAuth();
+  const { user, isAuthenticated, isLoading, unreadMessagesCount, unreadNotificationsCount, setUnreadMessagesCount, logout } = useAuth();
+  const { subscribe } = useSocket();
 
   const [searchTerm, setSearchTerm] = React.useState("");
   const [dropdownOpen, setDropdownOpen] = React.useState(false);
   const searchInputRef = React.useRef<HTMLInputElement>(null);
   const dropdownRef = React.useRef<HTMLDivElement>(null);
+
+  // Keep navbar Messages badge updated when receiving messages while outside /conversations
+  React.useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const unsubscribe = subscribe("message:new", () => {
+      if (!pathname.startsWith("/conversations")) {
+        setUnreadMessagesCount((prev) => prev + 1);
+      }
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, [isAuthenticated, subscribe, pathname, setUnreadMessagesCount]);
 
   // Close dropdown on outside click
   React.useEffect(() => {

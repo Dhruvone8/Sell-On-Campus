@@ -51,7 +51,7 @@ export function Footer() {
               Messages
             </Link>
             <Link
-              href="/login"
+              href="/my-listings"
               className="hover:text-brand-500 transition-colors focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:outline-none rounded-lg px-1 py-0.5"
             >
               Account

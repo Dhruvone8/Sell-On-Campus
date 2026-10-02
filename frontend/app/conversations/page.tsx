@@ -104,11 +104,35 @@ function ConversationsContent() {
           )
         : [];
 
-      setConversations(list);
+      // Determine which conversation is or will be active
+      let targetSelectedId: string | null = null;
+      if (deepLinkedConversationId) {
+        targetSelectedId = deepLinkedConversationId;
+      } else if (list.length > 0 && window.innerWidth >= 768) {
+        targetSelectedId =
+          selectedConversationId && list.some((c) => c.id === selectedConversationId)
+            ? selectedConversationId
+            : list[0].id;
+      }
+
+      // Immediately sync global unread count: active conversation unread is treated as 0
+      const totalUnread = list.reduce(
+        (acc: number, c: ConversationItemData) =>
+          acc + (c.id === targetSelectedId ? 0 : c.unreadCount || 0),
+        0
+      );
+      setUnreadMessagesCount(totalUnread);
+
+      // In the local list, clear unreadCount for the actively opened conversation
+      const sanitizedList = targetSelectedId
+        ? list.map((c) => (c.id === targetSelectedId ? { ...c, unreadCount: 0 } : c))
+        : list;
+
+      setConversations(sanitizedList);
 
       // Handle deep linked conversation
       if (deepLinkedConversationId) {
-        const inList = list.find((c) => c.id === deepLinkedConversationId);
+        const inList = sanitizedList.find((c) => c.id === deepLinkedConversationId);
         if (inList) {
           setSelectedConversationId(deepLinkedConversationId);
           setCurrentPendingConversation(null);
@@ -127,7 +151,7 @@ function ConversationsContent() {
               if (singleData.conversation) {
                 if (singleData.conversation.lastMessage) {
                   setConversations((prev) => [
-                    singleData.conversation,
+                    { ...singleData.conversation, unreadCount: 0 },
                     ...prev.filter((c) => c.id !== deepLinkedConversationId),
                   ]);
                   setCurrentPendingConversation(null);
@@ -139,25 +163,25 @@ function ConversationsContent() {
               }
             } else {
               setSelectedConversationId(
-                list.length > 0 && window.innerWidth >= 768 ? list[0].id : null
+                sanitizedList.length > 0 && window.innerWidth >= 768 ? sanitizedList[0].id : null
               );
               setCurrentPendingConversation(null);
             }
           } catch {
             setSelectedConversationId(
-              list.length > 0 && window.innerWidth >= 768 ? list[0].id : null
+              sanitizedList.length > 0 && window.innerWidth >= 768 ? sanitizedList[0].id : null
             );
             setCurrentPendingConversation(null);
           }
         }
-      } else if (list.length > 0 && window.innerWidth >= 768) {
+      } else if (sanitizedList.length > 0 && window.innerWidth >= 768) {
         setSelectedConversationId((prev) =>
-          prev && list.some((c) => c.id === prev) ? prev : list[0].id
+          prev && sanitizedList.some((c) => c.id === prev) ? prev : sanitizedList[0].id
         );
         setCurrentPendingConversation(null);
       } else {
         setSelectedConversationId((prev) =>
-          prev && list.some((c) => c.id === prev) ? prev : null
+          prev && sanitizedList.some((c) => c.id === prev) ? prev : null
         );
         setCurrentPendingConversation(null);
       }
@@ -196,6 +220,18 @@ function ConversationsContent() {
   // 3. Mark conversation read
   const markAsRead = React.useCallback(
     async (conversationId: string, lastSequence: number) => {
+      // Find how many unread messages this conversation currently has and deduct from global state
+      setConversations((prev) => {
+        const target = prev.find((c) => c.id === conversationId);
+        const unreadToDeduct = target?.unreadCount || 0;
+        if (unreadToDeduct > 0) {
+          setUnreadMessagesCount((count) => Math.max(0, count - unreadToDeduct));
+        }
+        return prev.map((c) =>
+          c.id === conversationId ? { ...c, unreadCount: 0 } : c
+        );
+      });
+
       try {
         const apiUrl = API_URL;
         await fetch(`${apiUrl}/api/conversations/${conversationId}/read`, {
@@ -206,16 +242,11 @@ function ConversationsContent() {
           credentials: "include",
           body: JSON.stringify({ lastReadSequence: lastSequence }),
         });
-
-        // Locally clear unread count for this conversation
-        setConversations((prev) =>
-          prev.map((c) => (c.id === conversationId ? { ...c, unreadCount: 0 } : c))
-        );
       } catch {
         // Read receipt failure shouldn't disrupt messaging
       }
     },
-    []
+    [setUnreadMessagesCount]
   );
 
   // 4. Fetch messages for active conversation
@@ -321,7 +352,7 @@ function ConversationsContent() {
 
         const updatedItem: ConversationItemData = {
           ...item,
-          unreadCount: isViewing ? item.unreadCount : (item.unreadCount || 0) + 1,
+          unreadCount: isViewing ? 0 : (item.unreadCount || 0) + 1,
           lastMessage: {
             id: newMsg.id,
             content: newMsg.content,
@@ -500,6 +531,17 @@ function ConversationsContent() {
             conversations={conversations}
             selectedId={selectedConversationId}
             onSelect={(id) => {
+              // Immediately clear unread badge for the clicked conversation and deduct from global count
+              setConversations((prev) => {
+                const target = prev.find((c) => c.id === id);
+                const unreadToDeduct = target?.unreadCount || 0;
+                if (unreadToDeduct > 0) {
+                  setUnreadMessagesCount((count) => Math.max(0, count - unreadToDeduct));
+                }
+                return prev.map((c) =>
+                  c.id === id ? { ...c, unreadCount: 0 } : c
+                );
+              });
               setSelectedConversationId(id);
               setCurrentPendingConversation(null);
               router.replace(`/conversations?conversationId=${id}`);
