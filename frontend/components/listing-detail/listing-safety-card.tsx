@@ -1,22 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { ShieldCheck, Flag } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 
 export interface ListingSafetyCardProps {
-  listingId: string;
+  listingId?: string;
 }
 
 export function ListingSafetyCard({ listingId }: ListingSafetyCardProps) {
-  const [reported, setReported] = React.useState(false);
-
-  const handleReport = () => {
-    setReported(true);
-    setTimeout(() => {
-      alert(`Listing #${listingId.slice(0, 8)} reported for review by campus moderation.`);
-    }, 100);
-  };
-
   return (
     <div className="p-5 rounded-2xl bg-amber-50/70 border border-amber-200/70 shadow-xs flex flex-col gap-3">
       <div className="flex items-start gap-3">
@@ -29,19 +20,6 @@ export function ListingSafetyCard({ listingId }: ListingSafetyCardProps) {
             Always meet in well-lit, high-traffic campus zones like the student center, library lobby, or dorm common area. Test items before concluding your exchange.
           </p>
         </div>
-      </div>
-
-      <div className="pt-2 border-t border-amber-200/50 flex items-center justify-between">
-        <span className="text-[11px] text-amber-700">Notice an issue with this listing?</span>
-        <button
-          type="button"
-          onClick={handleReport}
-          disabled={reported}
-          className="inline-flex items-center gap-1 text-[11px] font-bold text-amber-800 hover:text-red-600 transition-colors cursor-pointer disabled:opacity-60"
-        >
-          <Flag className="w-3 h-3" />
-          <span>{reported ? "Reported" : "Report"}</span>
-        </button>
       </div>
     </div>
   );

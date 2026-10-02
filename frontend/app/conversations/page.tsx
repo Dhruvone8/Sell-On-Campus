@@ -31,6 +31,8 @@ function ConversationsContent() {
   const [selectedConversationId, setSelectedConversationId] = React.useState<
     string | null
   >(null);
+  const [currentPendingConversation, setCurrentPendingConversation] =
+    React.useState<ConversationItemData | null>(null);
   const [messages, setMessages] = React.useState<MessageData[]>([]);
 
   const [isLoadingConversations, setIsLoadingConversations] = React.useState(true);
@@ -96,54 +98,92 @@ function ConversationsContent() {
       }
 
       const data = await res.json();
-      let list: ConversationItemData[] = Array.isArray(data.conversations)
-        ? data.conversations
+      const list: ConversationItemData[] = Array.isArray(data.conversations)
+        ? (data.conversations as ConversationItemData[]).filter(
+            (c: ConversationItemData) => Boolean(c.lastMessage)
+          )
         : [];
 
-      // If deep linked ID is provided and not in the first page, paginate to locate it
-      if (
-        deepLinkedConversationId &&
-        !list.some((c) => c.id === deepLinkedConversationId)
-      ) {
-        let nextCursor = data.pagination?.nextCursor;
-        let hasMore = Boolean(data.pagination?.hasMore);
-
-        while (
-          hasMore &&
-          nextCursor &&
-          !list.some((c) => c.id === deepLinkedConversationId)
-        ) {
-          const nextRes = await fetch(
-            `${apiUrl}/api/conversations?limit=50&cursor=${encodeURIComponent(nextCursor)}`,
-            {
-              method: "GET",
-              credentials: "include",
-            }
-          );
-          if (!nextRes.ok) break;
-          const nextData = await nextRes.json();
-          const nextList: ConversationItemData[] = Array.isArray(nextData.conversations)
-            ? nextData.conversations
-            : [];
-          list = [...list, ...nextList];
-          nextCursor = nextData.pagination?.nextCursor;
-          hasMore = Boolean(nextData.pagination?.hasMore);
-        }
+      // Determine which conversation is or will be active
+      let targetSelectedId: string | null = null;
+      if (deepLinkedConversationId) {
+        targetSelectedId = deepLinkedConversationId;
+      } else if (list.length > 0 && window.innerWidth >= 768) {
+        targetSelectedId =
+          selectedConversationId && list.some((c) => c.id === selectedConversationId)
+            ? selectedConversationId
+            : list[0].id;
       }
 
-      setConversations(list);
-
-      // Handle deep linking or auto-select first conversation on desktop
-      const isDeepLinkValid = Boolean(
-        deepLinkedConversationId && list.some((c) => c.id === deepLinkedConversationId)
+      // Immediately sync global unread count: active conversation unread is treated as 0
+      const totalUnread = list.reduce(
+        (acc: number, c: ConversationItemData) =>
+          acc + (c.id === targetSelectedId ? 0 : c.unreadCount || 0),
+        0
       );
+      setUnreadMessagesCount(totalUnread);
 
-      if (isDeepLinkValid) {
-        setSelectedConversationId(deepLinkedConversationId);
-      } else if (list.length > 0 && window.innerWidth >= 768) {
-        setSelectedConversationId((prev) => (prev && list.some((c) => c.id === prev) ? prev : list[0].id));
+      // In the local list, clear unreadCount for the actively opened conversation
+      const sanitizedList = targetSelectedId
+        ? list.map((c) => (c.id === targetSelectedId ? { ...c, unreadCount: 0 } : c))
+        : list;
+
+      setConversations(sanitizedList);
+
+      // Handle deep linked conversation
+      if (deepLinkedConversationId) {
+        const inList = sanitizedList.find((c) => c.id === deepLinkedConversationId);
+        if (inList) {
+          setSelectedConversationId(deepLinkedConversationId);
+          setCurrentPendingConversation(null);
+        } else {
+          // Fetch single conversation details so user can start chatting
+          try {
+            const singleRes = await fetch(
+              `${apiUrl}/api/conversations/${deepLinkedConversationId}`,
+              {
+                method: "GET",
+                credentials: "include",
+              }
+            );
+            if (singleRes.ok) {
+              const singleData = await singleRes.json();
+              if (singleData.conversation) {
+                if (singleData.conversation.lastMessage) {
+                  setConversations((prev) => [
+                    { ...singleData.conversation, unreadCount: 0 },
+                    ...prev.filter((c) => c.id !== deepLinkedConversationId),
+                  ]);
+                  setCurrentPendingConversation(null);
+                } else {
+                  // Keep empty conversation out of list, but active in message panel
+                  setCurrentPendingConversation(singleData.conversation);
+                }
+                setSelectedConversationId(deepLinkedConversationId);
+              }
+            } else {
+              setSelectedConversationId(
+                sanitizedList.length > 0 && window.innerWidth >= 768 ? sanitizedList[0].id : null
+              );
+              setCurrentPendingConversation(null);
+            }
+          } catch {
+            setSelectedConversationId(
+              sanitizedList.length > 0 && window.innerWidth >= 768 ? sanitizedList[0].id : null
+            );
+            setCurrentPendingConversation(null);
+          }
+        }
+      } else if (sanitizedList.length > 0 && window.innerWidth >= 768) {
+        setSelectedConversationId((prev) =>
+          prev && sanitizedList.some((c) => c.id === prev) ? prev : sanitizedList[0].id
+        );
+        setCurrentPendingConversation(null);
       } else {
-        setSelectedConversationId((prev) => (prev && list.some((c) => c.id === prev) ? prev : null));
+        setSelectedConversationId((prev) =>
+          prev && sanitizedList.some((c) => c.id === prev) ? prev : null
+        );
+        setCurrentPendingConversation(null);
       }
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : "Error loading chats";
@@ -180,6 +220,18 @@ function ConversationsContent() {
   // 3. Mark conversation read
   const markAsRead = React.useCallback(
     async (conversationId: string, lastSequence: number) => {
+      // Find how many unread messages this conversation currently has and deduct from global state
+      setConversations((prev) => {
+        const target = prev.find((c) => c.id === conversationId);
+        const unreadToDeduct = target?.unreadCount || 0;
+        if (unreadToDeduct > 0) {
+          setUnreadMessagesCount((count) => Math.max(0, count - unreadToDeduct));
+        }
+        return prev.map((c) =>
+          c.id === conversationId ? { ...c, unreadCount: 0 } : c
+        );
+      });
+
       try {
         const apiUrl = API_URL;
         await fetch(`${apiUrl}/api/conversations/${conversationId}/read`, {
@@ -190,16 +242,11 @@ function ConversationsContent() {
           credentials: "include",
           body: JSON.stringify({ lastReadSequence: lastSequence }),
         });
-
-        // Locally clear unread count for this conversation
-        setConversations((prev) =>
-          prev.map((c) => (c.id === conversationId ? { ...c, unreadCount: 0 } : c))
-        );
       } catch {
         // Read receipt failure shouldn't disrupt messaging
       }
     },
-    []
+    [setUnreadMessagesCount]
   );
 
   // 4. Fetch messages for active conversation
@@ -305,7 +352,7 @@ function ConversationsContent() {
 
         const updatedItem: ConversationItemData = {
           ...item,
-          unreadCount: isViewing ? item.unreadCount : (item.unreadCount || 0) + 1,
+          unreadCount: isViewing ? 0 : (item.unreadCount || 0) + 1,
           lastMessage: {
             id: newMsg.id,
             content: newMsg.content,
@@ -391,7 +438,11 @@ function ConversationsContent() {
 
       // Update lastMessage and bump conversation to top of list
       setConversations((prev) => {
-        const item = prev.find((c) => c.id === selectedConversationId);
+        const item =
+          prev.find((c) => c.id === selectedConversationId) ||
+          (currentPendingConversation?.id === selectedConversationId
+            ? currentPendingConversation
+            : null);
         if (!item) return prev;
         const updatedItem: ConversationItemData = {
           ...item,
@@ -406,6 +457,7 @@ function ConversationsContent() {
         const others = prev.filter((c) => c.id !== selectedConversationId);
         return [updatedItem, ...others];
       });
+      setCurrentPendingConversation(null);
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : "Error sending message";
       setError(errMsg);
@@ -416,8 +468,14 @@ function ConversationsContent() {
 
   // Currently selected conversation object
   const activeConversation = React.useMemo(() => {
-    return conversations.find((c) => c.id === selectedConversationId) || null;
-  }, [conversations, selectedConversationId]);
+    if (!selectedConversationId) return null;
+    const found = conversations.find((c) => c.id === selectedConversationId);
+    if (found) return found;
+    if (currentPendingConversation?.id === selectedConversationId) {
+      return currentPendingConversation;
+    }
+    return null;
+  }, [conversations, selectedConversationId, currentPendingConversation]);
 
   // Auth loading gate
   if (isAuthLoading) {
@@ -472,7 +530,22 @@ function ConversationsContent() {
           <ConversationList
             conversations={conversations}
             selectedId={selectedConversationId}
-            onSelect={(id) => setSelectedConversationId(id)}
+            onSelect={(id) => {
+              // Immediately clear unread badge for the clicked conversation and deduct from global count
+              setConversations((prev) => {
+                const target = prev.find((c) => c.id === id);
+                const unreadToDeduct = target?.unreadCount || 0;
+                if (unreadToDeduct > 0) {
+                  setUnreadMessagesCount((count) => Math.max(0, count - unreadToDeduct));
+                }
+                return prev.map((c) =>
+                  c.id === id ? { ...c, unreadCount: 0 } : c
+                );
+              });
+              setSelectedConversationId(id);
+              setCurrentPendingConversation(null);
+              router.replace(`/conversations?conversationId=${id}`);
+            }}
             isLoading={isLoadingConversations}
           />
         </div>
@@ -493,7 +566,11 @@ function ConversationsContent() {
             isLoadingMessages={isLoadingMessages}
             isSending={isSendingMessage}
             onSendMessage={handleSendMessage}
-            onBack={() => setSelectedConversationId(null)}
+            onBack={() => {
+              setSelectedConversationId(null);
+              setCurrentPendingConversation(null);
+              router.replace("/conversations");
+            }}
             error={error}
             isConnected={isConnected}
           />

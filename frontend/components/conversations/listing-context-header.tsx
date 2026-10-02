@@ -57,7 +57,7 @@ export function ListingContextHeader({
     >
       <div className="flex items-center justify-between gap-3">
         {/* Left: Back button (mobile) + Peer Student Info */}
-        <div className="flex items-center gap-2.5 min-w-0">
+        <div className="flex items-center gap-3 min-w-0">
           {onBack && (
             <button
               type="button"
@@ -75,50 +75,33 @@ export function ListingContextHeader({
               <img
                 src={otherUser.profileImageUrl}
                 alt={otherUser.name}
-                className="w-9 h-9 rounded-xl object-cover ring-1 ring-charcoal-200"
+                className="w-10 h-10 rounded-xl object-cover ring-1 ring-charcoal-200"
               />
             ) : (
-              <div className="w-9 h-9 rounded-xl bg-brand-50 border border-brand-200/70 flex items-center justify-center text-brand-600 font-bold text-xs font-jakarta">
+              <div className="w-10 h-10 rounded-xl bg-brand-50 border border-brand-200/70 flex items-center justify-center text-brand-600 font-bold text-xs font-jakarta">
                 {initials}
               </div>
             )}
           </div>
 
-          {/* Peer Name & Badge */}
-          <div className="min-w-0">
-            <div className="flex items-center gap-1.5">
+          {/* Peer Name & Subtitle */}
+          <div className="min-w-0 space-y-0.5">
+            <div className="flex items-center gap-1.5 min-w-0">
               <h3 className="text-sm font-bold text-charcoal-900 font-jakarta truncate">
                 {otherUser.name}
               </h3>
-              <span className="hidden sm:inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                <CheckCircle className="w-2.5 h-2.5" />
-                Verified
+              <span
+                className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/70 shrink-0"
+                title="Verified student seller"
+              >
+                <CheckCircle className="w-3 h-3 text-emerald-600 stroke-[2.2]" />
+                <span className="hidden sm:inline">Verified</span>
               </span>
             </div>
-            <div className="flex items-center gap-2">
-              <p className="text-[11px] text-charcoal-500 font-medium truncate">
-                Campus Marketplace Chat
-              </p>
-              {isConnected !== undefined && (
-                <span
-                  className={cn(
-                    "inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded-full border shrink-0",
-                    isConnected
-                      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                      : "bg-charcoal-100 text-charcoal-500 border-charcoal-200"
-                  )}
-                  title={isConnected ? "Realtime live connection active" : "Reconnecting..."}
-                >
-                  <span
-                    className={cn(
-                      "w-1.5 h-1.5 rounded-full",
-                      isConnected ? "bg-emerald-500 animate-pulse" : "bg-charcoal-400"
-                    )}
-                  />
-                  <span>{isConnected ? "Live" : "Offline"}</span>
-                </span>
-              )}
-            </div>
+
+            <p className="text-[11px] text-charcoal-500 font-medium truncate">
+              Campus Marketplace Chat
+            </p>
           </div>
         </div>
 
