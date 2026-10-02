@@ -8,6 +8,7 @@ import { AuthCard } from "@/components/auth/auth-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert } from "@/components/ui/alert";
+import { API_URL } from "@/lib/constants";
 
 export default function ResetPasswordPage() {
   const router = useRouter();
@@ -60,8 +61,7 @@ export default function ResetPasswordPage() {
 
     setLoading(true);
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-      const response = await fetch(`${apiUrl}/api/auth/reset-password`, {
+      const response = await fetch(`${API_URL}/api/auth/reset-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert } from "@/components/ui/alert";
 import { useAuth } from "@/lib/auth-context";
+import { API_URL } from "@/lib/constants";
 
 function LoginForm() {
   const router = useRouter();
@@ -30,8 +31,7 @@ function LoginForm() {
     setLoading(true);
 
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-      const response = await fetch(`${apiUrl}/api/auth/login`, {
+      const response = await fetch(`${API_URL}/api/auth/login`, {
         method: "POST",
         credentials: "include",
         headers: {

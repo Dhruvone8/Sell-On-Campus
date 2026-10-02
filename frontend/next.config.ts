@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 import os from "os";
 
 function getLocalIpAddresses(): string[] {
-  const addresses: string[] = ["localhost", "127.0.0.1", "10.146.77.186", "*.local"];
+  const addresses: string[] = ["localhost", "127.0.0.1", "*.local"];
   try {
     const interfaces = os.networkInterfaces();
     for (const name of Object.keys(interfaces)) {

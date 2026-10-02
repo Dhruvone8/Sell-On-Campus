@@ -9,6 +9,7 @@ import { OtpInput } from "@/components/auth/otp-input";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Alert } from "@/components/ui/alert";
+import { API_URL } from "@/lib/constants";
 
 type Step = "EMAIL" | "OTP";
 
@@ -23,7 +24,7 @@ export default function ForgotPasswordPage() {
   const [error, setError] = React.useState("");
   const [success, setSuccess] = React.useState("");
 
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+  const apiUrl = API_URL;
 
   // Step 1: Request Password Reset OTP
   async function handleRequestOtp(e: React.FormEvent) {

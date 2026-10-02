@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Listing, GetListingsResponse } from "@/lib/types";
 import { ListingCard } from "@/components/listings/listing-card";
 import { ArrowRight } from "lucide-react";
+import { API_URL } from "@/lib/constants";
 
 export interface RelatedListingsProps {
   categoryName?: string;
@@ -23,7 +24,7 @@ export function RelatedListings({
 
     async function fetchRelated() {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+        const apiUrl = API_URL;
         const queryParams = new URLSearchParams();
         queryParams.set("limit", "5");
         queryParams.set("sort", "newest");

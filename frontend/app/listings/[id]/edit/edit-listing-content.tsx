@@ -7,6 +7,7 @@ import { Listing } from "@/lib/types";
 import { useAuth } from "@/lib/auth-context";
 import { EditListingForm } from "@/components/my-listings/edit-listing-form";
 import { Loader2, ArrowLeft, AlertCircle, LogIn, ShieldAlert } from "lucide-react";
+import { API_URL } from "@/lib/constants";
 
 export function EditListingContent({ id }: { id: string }) {
   const router = useRouter();
@@ -30,7 +31,7 @@ export function EditListingContent({ id }: { id: string }) {
         setError(null);
         setIsNotOwner(false);
 
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+        const apiUrl = API_URL;
 
         // 1. Fetch listing details
         const res = await fetch(`${apiUrl}/api/listings/${id}`, {

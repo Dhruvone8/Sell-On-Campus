@@ -8,6 +8,7 @@ import { ConditionSelector } from "./condition-selector";
 import { CategorySelector } from "./category-selector";
 import { Loader2, PlusCircle, ShieldCheck, ChevronDown, ChevronUp, Check, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { API_URL } from "@/lib/constants";
 
 export function CreateListingForm() {
   const router = useRouter();
@@ -94,7 +95,7 @@ export function CreateListingForm() {
 
     try {
       setIsSubmitting(true);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+      const apiUrl = API_URL;
 
       const formData = new FormData();
       formData.append("title", title.trim());

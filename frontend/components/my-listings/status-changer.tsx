@@ -4,6 +4,7 @@ import * as React from "react";
 import { ListingStatus } from "@/lib/types";
 import { Loader2, CheckCircle2, Bookmark, Check, ChevronDown, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { API_URL } from "@/lib/constants";
 
 export interface StatusChangerProps {
   listingId: string;
@@ -123,7 +124,7 @@ export function StatusChanger({
       setIsUpdating(true);
       setUpdatingStatus(newStatus);
       setError(null);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+      const apiUrl = API_URL;
 
       const res = await fetch(`${apiUrl}/api/listings/${listingId}/status`, {
         method: "PATCH",

@@ -16,6 +16,7 @@ import {
   Tag,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { API_URL } from "@/lib/constants";
 
 type TabFilter = "ALL" | "ACTIVE" | "RESERVED" | "SOLD";
 
@@ -34,7 +35,7 @@ export default function MyListingsPage() {
   const fetchMyListings = React.useCallback(async () => {
     try {
       setFetchError(null);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+      const apiUrl = API_URL;
 
       const res = await fetch(`${apiUrl}/api/listings/me?limit=50`, {
         method: "GET",

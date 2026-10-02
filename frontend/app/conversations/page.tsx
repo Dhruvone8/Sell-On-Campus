@@ -14,6 +14,7 @@ import {
 } from "@/components/conversations/message-panel";
 import { Loader2, LogIn } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { API_URL } from "@/lib/constants";
 
 function ConversationsContent() {
   const router = useRouter();
@@ -51,7 +52,7 @@ function ConversationsContent() {
       if (!isMounted || !isAuthenticated) return;
 
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+        const apiUrl = API_URL;
         const res = await fetch(`${apiUrl}/api/users/me`, {
           credentials: "include",
         });
@@ -79,7 +80,7 @@ function ConversationsContent() {
   const fetchConversations = React.useCallback(async () => {
     try {
       setError(null);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+      const apiUrl = API_URL;
 
       const res = await fetch(`${apiUrl}/api/conversations?limit=50`, {
         method: "GET",
@@ -180,7 +181,7 @@ function ConversationsContent() {
   const markAsRead = React.useCallback(
     async (conversationId: string, lastSequence: number) => {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+        const apiUrl = API_URL;
         await fetch(`${apiUrl}/api/conversations/${conversationId}/read`, {
           method: "PATCH",
           headers: {
@@ -218,7 +219,7 @@ function ConversationsContent() {
         setIsLoadingMessages(true);
         setError(null);
 
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+        const apiUrl = API_URL;
         const res = await fetch(
           `${apiUrl}/api/conversations/${selectedConversationId}/messages?limit=50`,
           {
@@ -349,7 +350,7 @@ function ConversationsContent() {
     try {
       setIsSendingMessage(true);
       setError(null);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+      const apiUrl = API_URL;
 
       const res = await fetch(
         `${apiUrl}/api/conversations/${selectedConversationId}/messages`,

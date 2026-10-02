@@ -18,6 +18,7 @@ import {
   Tag,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { API_URL } from "@/lib/constants";
 
 type ProfileTab = "LISTINGS" | "SETTINGS";
 type ListingFilter = "ALL" | "ACTIVE" | "RESERVED" | "SOLD";
@@ -38,7 +39,7 @@ export default function ProfilePage() {
   const loadProfileData = React.useCallback(async () => {
     try {
       setError(null);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+      const apiUrl = API_URL;
 
       // 1. Fetch user profile
       const userRes = await fetch(`${apiUrl}/api/users/me`, {

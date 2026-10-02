@@ -24,9 +24,12 @@ export function formatPrice(price: number | string | null | undefined, currency 
 }
 
 /**
- * Formats an ISO date into a human-friendly relative recency string (e.g. "5m ago", "2h ago").
+ * Formats an ISO date into a human-friendly relative recency string (e.g. "5m ago", "2h ago", "1d ago", "2w ago", "1mo ago").
  */
-export function formatRelativeTime(dateString: string | Date | null | undefined): string {
+export function formatRelativeTime(
+  dateString: string | Date | null | undefined,
+  options?: { verbose?: boolean }
+): string {
   if (!dateString) return "";
   const date = typeof dateString === "string" ? new Date(dateString) : dateString;
   if (!date || isNaN(date.getTime())) return "";
@@ -40,27 +43,44 @@ export function formatRelativeTime(dateString: string | Date | null | undefined)
 
   const diffInMinutes = Math.floor(diffInSeconds / 60);
   if (diffInMinutes < 60) {
-    return `${diffInMinutes}m ago`;
+    return options?.verbose
+      ? `${diffInMinutes} minute${diffInMinutes === 1 ? "" : "s"} ago`
+      : `${diffInMinutes}m ago`;
   }
 
   const diffInHours = Math.floor(diffInSeconds / 3600);
-  if (diffInHours < 168) {
-    return `${diffInHours}h ago`;
+  if (diffInHours < 24) {
+    return options?.verbose
+      ? `${diffInHours} hour${diffInHours === 1 ? "" : "s"} ago`
+      : `${diffInHours}h ago`;
   }
 
   const diffInDays = Math.floor(diffInSeconds / 86400);
+  if (diffInDays < 7) {
+    return options?.verbose
+      ? `${diffInDays} day${diffInDays === 1 ? "" : "s"} ago`
+      : `${diffInDays}d ago`;
+  }
+
   const diffInWeeks = Math.floor(diffInDays / 7);
-  if (diffInWeeks < 4) {
-    return `${diffInWeeks}w ago`;
+  if (diffInDays < 30) {
+    return options?.verbose
+      ? `${diffInWeeks} week${diffInWeeks === 1 ? "" : "s"} ago`
+      : `${diffInWeeks}w ago`;
   }
 
   const diffInMonths = Math.floor(diffInDays / 30);
   if (diffInMonths < 12) {
-    return `${Math.max(1, diffInMonths)}mo ago`;
+    const m = Math.max(1, diffInMonths);
+    return options?.verbose
+      ? `${m} month${m === 1 ? "" : "s"} ago`
+      : `${m}mo ago`;
   }
 
-  const diffInYears = Math.floor(diffInDays / 365);
-  return `${Math.max(1, diffInYears)}y ago`;
+  const diffInYears = Math.max(1, Math.floor(diffInDays / 365));
+  return options?.verbose
+    ? `${diffInYears} year${diffInYears === 1 ? "" : "s"} ago`
+    : `${diffInYears}y ago`;
 }
 
 /**

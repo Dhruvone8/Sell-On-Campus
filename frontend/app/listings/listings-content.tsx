@@ -12,6 +12,7 @@ import {
   MarketplacePagination,
   FilterValues,
 } from "@/components/marketplace";
+import { API_URL } from "@/lib/constants";
 
 export function ListingsPageContent() {
   const router = useRouter();
@@ -106,7 +107,7 @@ export function ListingsPageContent() {
       setIsLoading(true);
 
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+        const apiUrl = API_URL;
         const queryParams = new URLSearchParams();
 
         queryParams.set("page", String(currentPage));

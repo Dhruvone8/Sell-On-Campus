@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Listing, GetListingsResponse } from "@/lib/types";
 import { ListingCard, ListingCardSkeleton } from "@/components/listings/listing-card";
 import { ArrowRight, PackageOpen, PlusCircle } from "lucide-react";
+import { API_URL } from "@/lib/constants";
 
 export function RecentListings() {
   const [listings, setListings] = React.useState<Listing[]>([]);
@@ -16,7 +17,7 @@ export function RecentListings() {
 
     async function fetchRecent() {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+        const apiUrl = API_URL;
         const res = await fetch(`${apiUrl}/api/listings?limit=8&sort=newest`, {
           // Standard credentials if session exists
           credentials: "include",

@@ -17,6 +17,7 @@ import {
   Sparkles,
   Camera,
 } from "lucide-react";
+import { API_URL } from "@/lib/constants";
 
 export interface AccountSettingsProps {
   user: UserProfile;
@@ -51,7 +52,7 @@ export function AccountSettings({ user, onProfileUpdated }: AccountSettingsProps
 
     try {
       setIsSaving(true);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+      const apiUrl = API_URL;
 
       const payload: {
         name: string;

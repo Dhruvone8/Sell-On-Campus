@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Category } from "@/lib/types";
 import { ChevronsUpDown } from "lucide-react";
+import { API_URL } from "@/lib/constants";
 
 export interface CategorySelectorProps {
   value: string;
@@ -33,7 +34,7 @@ export function CategorySelector({
 
     async function loadCategories() {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+        const apiUrl = API_URL;
         const res = await fetch(`${apiUrl}/api/listings/categories`, {
           headers: { Accept: "application/json" },
         });

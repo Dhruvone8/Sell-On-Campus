@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import type { UserProfile } from "./types";
+import { API_URL } from "./constants";
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -34,8 +35,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       unreadNotifications: number;
     }> => {
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-        let userRes = await fetch(`${apiUrl}/api/users/me`, {
+        let userRes = await fetch(`${API_URL}/api/users/me`, {
           method: "GET",
           credentials: "include",
         });
@@ -43,12 +43,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // If access token expired, attempt automatic refresh via HTTP-only refresh token
         if (userRes.status === 401) {
           try {
-            const refreshRes = await fetch(`${apiUrl}/api/auth/refresh`, {
+            const refreshRes = await fetch(`${API_URL}/api/auth/refresh`, {
               method: "POST",
               credentials: "include",
             });
             if (refreshRes.ok) {
-              userRes = await fetch(`${apiUrl}/api/users/me`, {
+              userRes = await fetch(`${API_URL}/api/users/me`, {
                 method: "GET",
                 credentials: "include",
               });
@@ -67,11 +67,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
           try {
             const [convRes, notifRes] = await Promise.all([
-              fetch(`${apiUrl}/api/conversations?limit=10`, {
+              fetch(`${API_URL}/api/conversations?limit=10`, {
                 method: "GET",
                 credentials: "include",
               }).catch(() => null),
-              fetch(`${apiUrl}/api/notifications?limit=30`, {
+              fetch(`${API_URL}/api/notifications?limit=30`, {
                 method: "GET",
                 credentials: "include",
               }).catch(() => null),
@@ -129,8 +129,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const logout = React.useCallback(async () => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-      await fetch(`${apiUrl}/api/auth/logout`, {
+      await fetch(`${API_URL}/api/auth/logout`, {
         method: "POST",
         credentials: "include",
       });

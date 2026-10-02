@@ -14,6 +14,7 @@ import {
 } from "@/components/listing-detail";
 import { ArrowLeft, PackageX } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { API_URL } from "@/lib/constants";
 
 export interface ListingDetailContentProps {
   id: string;
@@ -34,7 +35,7 @@ export function ListingDetailContent({ id }: ListingDetailContentProps) {
       setError(null);
 
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+        const apiUrl = API_URL;
         const res = await fetch(`${apiUrl}/api/listings/${id}`, {
           credentials: "include",
           headers: {

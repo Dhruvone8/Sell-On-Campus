@@ -10,6 +10,7 @@ import { EditImageManager, EditableImage } from "./edit-image-manager";
 import { Loader2, ArrowLeft, Check, AlertCircle, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { API_URL } from "@/lib/constants";
 
 export interface EditListingFormProps {
   listing: Listing;
@@ -125,7 +126,7 @@ export function EditListingForm({ listing }: EditListingFormProps) {
 
     try {
       setIsSubmitting(true);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+      const apiUrl = API_URL;
 
       const formData = new FormData();
       formData.append("title", title.trim());

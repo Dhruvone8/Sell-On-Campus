@@ -7,6 +7,7 @@ import { Listing } from "@/lib/types";
 import { formatPrice, cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { MessageSquare, Loader2, Edit3, ShieldCheck, MapPin, Sparkles, Layers } from "lucide-react";
+import { API_URL } from "@/lib/constants";
 
 export interface ListingInfoCardProps {
   listing: Listing;
@@ -48,7 +49,7 @@ export function ListingInfoCard({ listing }: ListingInfoCardProps) {
 
     try {
       setIsMessaging(true);
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+      const apiUrl = API_URL;
       const res = await fetch(`${apiUrl}/api/conversations`, {
         method: "POST",
         headers: {
