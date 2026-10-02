@@ -2,7 +2,7 @@ import type { Request, Response } from "express";
 import {
     createConversation as createConversationService, createMessage as createMessageService,
     getConversationMessages as getConversationMessagesService, getUserConversations as getUserConversationsService,
-    markConversationRead as markConversationReadService
+    getConversationById as getConversationByIdService, markConversationRead as markConversationReadService
 } from "../services/conversation.service.js";
 import { AppError } from "../lib/error.js";
 
@@ -84,4 +84,21 @@ export async function markConversationRead(req: Request, res: Response) {
     await markConversationReadService(conversationId, userId, lastReadSequence);
 
     return res.status(200).json({ message: "Conversation marked as read" });
+}
+
+export async function getConversationById(req: Request, res: Response) {
+    const userId = req.userId;
+    const { conversationId } = req.params;
+
+    if (!userId) {
+        throw new AppError("Unauthenticated", 401);
+    }
+
+    if (typeof conversationId !== "string") {
+        throw new AppError("Invalid Conversation Id", 400);
+    }
+
+    const conversation = await getConversationByIdService(conversationId, userId);
+
+    return res.status(200).json({ conversation });
 }

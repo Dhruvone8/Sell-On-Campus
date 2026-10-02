@@ -31,6 +31,8 @@ function ConversationsContent() {
   const [selectedConversationId, setSelectedConversationId] = React.useState<
     string | null
   >(null);
+  const [currentPendingConversation, setCurrentPendingConversation] =
+    React.useState<ConversationItemData | null>(null);
   const [messages, setMessages] = React.useState<MessageData[]>([]);
 
   const [isLoadingConversations, setIsLoadingConversations] = React.useState(true);
@@ -96,54 +98,68 @@ function ConversationsContent() {
       }
 
       const data = await res.json();
-      let list: ConversationItemData[] = Array.isArray(data.conversations)
-        ? data.conversations
+      const list: ConversationItemData[] = Array.isArray(data.conversations)
+        ? (data.conversations as ConversationItemData[]).filter(
+            (c: ConversationItemData) => Boolean(c.lastMessage)
+          )
         : [];
-
-      // If deep linked ID is provided and not in the first page, paginate to locate it
-      if (
-        deepLinkedConversationId &&
-        !list.some((c) => c.id === deepLinkedConversationId)
-      ) {
-        let nextCursor = data.pagination?.nextCursor;
-        let hasMore = Boolean(data.pagination?.hasMore);
-
-        while (
-          hasMore &&
-          nextCursor &&
-          !list.some((c) => c.id === deepLinkedConversationId)
-        ) {
-          const nextRes = await fetch(
-            `${apiUrl}/api/conversations?limit=50&cursor=${encodeURIComponent(nextCursor)}`,
-            {
-              method: "GET",
-              credentials: "include",
-            }
-          );
-          if (!nextRes.ok) break;
-          const nextData = await nextRes.json();
-          const nextList: ConversationItemData[] = Array.isArray(nextData.conversations)
-            ? nextData.conversations
-            : [];
-          list = [...list, ...nextList];
-          nextCursor = nextData.pagination?.nextCursor;
-          hasMore = Boolean(nextData.pagination?.hasMore);
-        }
-      }
 
       setConversations(list);
 
-      // Handle deep linking or auto-select first conversation on desktop
-      const isDeepLinkValid = Boolean(
-        deepLinkedConversationId && list.some((c) => c.id === deepLinkedConversationId)
-      );
-
-      if (isDeepLinkValid) {
-        setSelectedConversationId(deepLinkedConversationId);
+      // Handle deep linked conversation
+      if (deepLinkedConversationId) {
+        const inList = list.find((c) => c.id === deepLinkedConversationId);
+        if (inList) {
+          setSelectedConversationId(deepLinkedConversationId);
+          setCurrentPendingConversation(null);
+        } else {
+          // Fetch single conversation details so user can start chatting
+          try {
+            const singleRes = await fetch(
+              `${apiUrl}/api/conversations/${deepLinkedConversationId}`,
+              {
+                method: "GET",
+                credentials: "include",
+              }
+            );
+            if (singleRes.ok) {
+              const singleData = await singleRes.json();
+              if (singleData.conversation) {
+                if (singleData.conversation.lastMessage) {
+                  setConversations((prev) => [
+                    singleData.conversation,
+                    ...prev.filter((c) => c.id !== deepLinkedConversationId),
+                  ]);
+                  setCurrentPendingConversation(null);
+                } else {
+                  // Keep empty conversation out of list, but active in message panel
+                  setCurrentPendingConversation(singleData.conversation);
+                }
+                setSelectedConversationId(deepLinkedConversationId);
+              }
+            } else {
+              setSelectedConversationId(
+                list.length > 0 && window.innerWidth >= 768 ? list[0].id : null
+              );
+              setCurrentPendingConversation(null);
+            }
+          } catch {
+            setSelectedConversationId(
+              list.length > 0 && window.innerWidth >= 768 ? list[0].id : null
+            );
+            setCurrentPendingConversation(null);
+          }
+        }
       } else if (list.length > 0 && window.innerWidth >= 768) {
-        setSelectedConversationId((prev) => (prev && list.some((c) => c.id === prev) ? prev : list[0].id));
+        setSelectedConversationId((prev) =>
+          prev && list.some((c) => c.id === prev) ? prev : list[0].id
+        );
+        setCurrentPendingConversation(null);
       } else {
-        setSelectedConversationId((prev) => (prev && list.some((c) => c.id === prev) ? prev : null));
+        setSelectedConversationId((prev) =>
+          prev && list.some((c) => c.id === prev) ? prev : null
+        );
+        setCurrentPendingConversation(null);
       }
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : "Error loading chats";
@@ -391,7 +407,11 @@ function ConversationsContent() {
 
       // Update lastMessage and bump conversation to top of list
       setConversations((prev) => {
-        const item = prev.find((c) => c.id === selectedConversationId);
+        const item =
+          prev.find((c) => c.id === selectedConversationId) ||
+          (currentPendingConversation?.id === selectedConversationId
+            ? currentPendingConversation
+            : null);
         if (!item) return prev;
         const updatedItem: ConversationItemData = {
           ...item,
@@ -406,6 +426,7 @@ function ConversationsContent() {
         const others = prev.filter((c) => c.id !== selectedConversationId);
         return [updatedItem, ...others];
       });
+      setCurrentPendingConversation(null);
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : "Error sending message";
       setError(errMsg);
@@ -416,8 +437,14 @@ function ConversationsContent() {
 
   // Currently selected conversation object
   const activeConversation = React.useMemo(() => {
-    return conversations.find((c) => c.id === selectedConversationId) || null;
-  }, [conversations, selectedConversationId]);
+    if (!selectedConversationId) return null;
+    const found = conversations.find((c) => c.id === selectedConversationId);
+    if (found) return found;
+    if (currentPendingConversation?.id === selectedConversationId) {
+      return currentPendingConversation;
+    }
+    return null;
+  }, [conversations, selectedConversationId, currentPendingConversation]);
 
   // Auth loading gate
   if (isAuthLoading) {
@@ -472,7 +499,11 @@ function ConversationsContent() {
           <ConversationList
             conversations={conversations}
             selectedId={selectedConversationId}
-            onSelect={(id) => setSelectedConversationId(id)}
+            onSelect={(id) => {
+              setSelectedConversationId(id);
+              setCurrentPendingConversation(null);
+              router.replace(`/conversations?conversationId=${id}`);
+            }}
             isLoading={isLoadingConversations}
           />
         </div>
@@ -493,7 +524,11 @@ function ConversationsContent() {
             isLoadingMessages={isLoadingMessages}
             isSending={isSendingMessage}
             onSendMessage={handleSendMessage}
-            onBack={() => setSelectedConversationId(null)}
+            onBack={() => {
+              setSelectedConversationId(null);
+              setCurrentPendingConversation(null);
+              router.replace("/conversations");
+            }}
             error={error}
             isConnected={isConnected}
           />

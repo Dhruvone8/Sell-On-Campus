@@ -158,7 +158,7 @@ export async function createMessage(conversationId: string, senderId: string, co
     });
 
     sendToUser(recipientId, { type: "message:new", data: result.message });
-    sendToUser(recipientId, { type: "notification: new", data: result.notification });
+    sendToUser(recipientId, { type: "notification:new", data: result.notification });
 
     return result.message;
 }
@@ -323,7 +323,7 @@ export async function getUserConversations(userId: string, limit: number, cursor
         const participant = conversation.participants[0];
 
         if (!participant) {
-            throw new AppError("Conversation participant state not found", 500);
+            continue;
         }
 
         if (conversation.messageSequence > participant.lastReadSequence) {
@@ -364,7 +364,7 @@ export async function getUserConversations(userId: string, limit: number, cursor
             id: conversation.id,
             listing: conversation.listing,
             otherUser,
-            lastMessage: conversation.messages[0],
+            lastMessage: conversation.messages[0] ?? null,
             unreadCount: unreadCountMap.get(conversation.id) ?? 0,
         };
     });
@@ -440,4 +440,103 @@ export async function markConversationRead(conversationId: string, userId: strin
     sendToUser(otherUserId, { type: "conversation:read", data: { conversationId, lastReadSequence } });
 
     return updatedParticipant;
+}
+
+export async function getConversationById(conversationId: string, userId: string) {
+    const conversation = await prisma.conversation.findUnique({
+        where: {
+            id: conversationId,
+        },
+        select: {
+            id: true,
+            updatedAt: true,
+            messageSequence: true,
+            buyerId: true,
+            sellerId: true,
+
+            listing: {
+                select: {
+                    id: true,
+                    title: true,
+                    price: true,
+                    status: true,
+                },
+            },
+
+            buyer: {
+                select: {
+                    id: true,
+                    name: true,
+                    profileImageUrl: true,
+                },
+            },
+
+            seller: {
+                select: {
+                    id: true,
+                    name: true,
+                    profileImageUrl: true,
+                },
+            },
+
+            participants: {
+                where: {
+                    userId,
+                },
+                select: {
+                    lastReadSequence: true,
+                },
+            },
+
+            messages: {
+                orderBy: {
+                    sequence: "desc",
+                },
+                take: 1,
+                select: {
+                    id: true,
+                    content: true,
+                    senderId: true,
+                    sequence: true,
+                    createdAt: true,
+                },
+            },
+        },
+    });
+
+    if (!conversation) {
+        throw new AppError("Conversation not found", 404);
+    }
+
+    const isParticipant = conversation.buyerId === userId || conversation.sellerId === userId;
+    if (!isParticipant) {
+        throw new AppError("You are not a participant in this conversation", 403);
+    }
+
+    const participant = conversation.participants[0];
+    let unreadCount = 0;
+
+    if (participant && conversation.messageSequence > participant.lastReadSequence) {
+        unreadCount = await prisma.message.count({
+            where: {
+                conversationId: conversation.id,
+                sequence: {
+                    gt: participant.lastReadSequence,
+                },
+                senderId: {
+                    not: userId,
+                },
+            },
+        });
+    }
+
+    const otherUser = conversation.buyer.id === userId ? conversation.seller : conversation.buyer;
+
+    return {
+        id: conversation.id,
+        listing: conversation.listing,
+        otherUser,
+        lastMessage: conversation.messages[0] ?? null,
+        unreadCount,
+    };
 }
