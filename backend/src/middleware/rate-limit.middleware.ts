@@ -8,6 +8,16 @@ interface RateLimitOptions {
     keyGenerator?: (req: Request) => string;
 }
 
+const rateLimitScript = `
+    local count = redis.call("INCR", KEYS[1])
+
+    if count == 1 then
+        redis.call("EXPIRE", KEYS[1], ARGV[1])
+    end
+
+    return count
+`;
+
 export function rateLimit(options: RateLimitOptions): RequestHandler {
     const { windowSeconds, maxRequests, keyPrefix,
         keyGenerator = (req: Request) => req.ip || "unknown" } = options;
@@ -18,11 +28,13 @@ export function rateLimit(options: RateLimitOptions): RequestHandler {
         const key = `rate-limit:${keyPrefix}:${identifier}`;
 
         try {
-            const count = await redis.incr(key);
-
-            if (count === 1) {
-                await redis.expire(key, windowSeconds);
-            }
+            const count = await redis.eval(
+                rateLimitScript,
+                {
+                    keys: [key],
+                    arguments: [String(windowSeconds)]
+                }
+            ) as number;
 
             const remaining = Math.max(maxRequests - count, 0);
 
@@ -30,6 +42,10 @@ export function rateLimit(options: RateLimitOptions): RequestHandler {
             res.setHeader("X-RateLimit-Remaining", remaining);
 
             if (count > maxRequests) {
+                const retryAfter = await redis.ttl(key);
+
+                res.setHeader("Retry-After", Math.max(retryAfter, 1));
+
                 res.status(429).json({
                     message: "Too many requests. Please try again later."
                 });
@@ -46,4 +62,4 @@ export function rateLimit(options: RateLimitOptions): RequestHandler {
         }
     }
 }
-
+
