@@ -4,11 +4,14 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import type { UserProfile } from "./types";
 import { API_URL } from "./constants";
+import { useAuthStore } from "./stores/auth.store";
+import { useInboxStore } from "./stores/inbox.store";
 
 interface AuthContextType {
   user: UserProfile | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  // Kept for backward-compatibility; prefer useInboxStore() in new code
   unreadMessagesCount: number;
   setUnreadMessagesCount: React.Dispatch<React.SetStateAction<number>>;
   unreadNotificationsCount: number;
@@ -21,11 +24,43 @@ const AuthContext = React.createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+
+  // ── Zustand store setters ──────────────────────────────────────────────
+  const setAuthUser = useAuthStore((s) => s.setUser);
+  const setAuthIsAuthenticated = useAuthStore((s) => s.setIsAuthenticated);
+  const setAuthIsLoading = useAuthStore((s) => s.setIsLoading);
+  const resetAuth = useAuthStore((s) => s.reset);
+  const bumpSessionGeneration = useAuthStore((s) => s.bumpSessionGeneration);
+
+  const storeUnreadMessages = useInboxStore((s) => s.unreadMessagesCount);
+  const storeSetUnreadMessages = useInboxStore((s) => s.setUnreadMessagesCount);
+  const storeUnreadNotifications = useInboxStore((s) => s.unreadNotificationsCount);
+  const storeSetUnreadNotifications = useInboxStore((s) => s.setUnreadNotificationsCount);
+  const resetInbox = useInboxStore((s) => s.reset);
+
+  // ── Local React state (mirrors store; keeps context interface stable) ──
   const [user, setUser] = React.useState<UserProfile | null>(null);
   const [isAuthenticated, setIsAuthenticated] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(true);
-  const [unreadMessagesCount, setUnreadMessagesCount] = React.useState(0);
-  const [unreadNotificationsCount, setUnreadNotificationsCount] = React.useState(0);
+
+  // Sync local state up to the auth store so any component reading the store
+  // stays up to date without subscribing to the context.
+  React.useEffect(() => { setAuthUser(user); }, [user, setAuthUser]);
+  React.useEffect(() => { setAuthIsAuthenticated(isAuthenticated); }, [isAuthenticated, setAuthIsAuthenticated]);
+  React.useEffect(() => { setAuthIsLoading(isLoading); }, [isLoading, setAuthIsLoading]);
+
+  // ── Badge-count wrappers that keep both context and store in sync ──────
+  const setUnreadMessagesCount: React.Dispatch<React.SetStateAction<number>> =
+    React.useCallback(
+      (value) => storeSetUnreadMessages(value as number | ((prev: number) => number)),
+      [storeSetUnreadMessages]
+    );
+
+  const setUnreadNotificationsCount: React.Dispatch<React.SetStateAction<number>> =
+    React.useCallback(
+      (value) => storeSetUnreadNotifications(value as number | ((prev: number) => number)),
+      [storeSetUnreadNotifications]
+    );
 
   const verifyAndRefreshAuth = React.useCallback(
     async (): Promise<{
@@ -125,7 +160,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [verifyAndRefreshAuth]);
+  }, [verifyAndRefreshAuth, setUnreadMessagesCount, setUnreadNotificationsCount]);
 
   const logout = React.useCallback(async () => {
     try {
@@ -136,14 +171,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch {
       // Ignore network errors on logout
     } finally {
+      // Bump generation FIRST — invalidates all in-flight fetch callbacks before
+      // we clear the store, so stale responses can't repopulate it after the reset.
+      bumpSessionGeneration();
       setIsAuthenticated(false);
       setUser(null);
       setUnreadMessagesCount(0);
       setUnreadNotificationsCount(0);
+      resetAuth();
+      resetInbox();
       router.push("/login");
       router.refresh();
     }
-  }, [router]);
+  }, [router, setUnreadMessagesCount, setUnreadNotificationsCount, resetAuth, resetInbox, bumpSessionGeneration]);
 
   React.useEffect(() => {
     let isMounted = true;
@@ -163,6 +203,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       isMounted = false;
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [verifyAndRefreshAuth]);
 
   return (
@@ -171,9 +212,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         user,
         isAuthenticated,
         isLoading,
-        unreadMessagesCount,
+        unreadMessagesCount: storeUnreadMessages,
         setUnreadMessagesCount,
-        unreadNotificationsCount,
+        unreadNotificationsCount: storeUnreadNotifications,
         setUnreadNotificationsCount,
         checkAuth,
         logout,

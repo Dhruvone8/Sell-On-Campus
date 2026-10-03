@@ -3,6 +3,8 @@
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import { useAuthStore } from "@/lib/stores/auth.store";
+import { useInboxStore } from "@/lib/stores/inbox.store";
 import { useSocket } from "@/lib/socket-context";
 import {
   ConversationItemData,
@@ -21,27 +23,44 @@ function ConversationsContent() {
   const searchParams = useSearchParams();
   const deepLinkedConversationId = searchParams.get("conversationId") || searchParams.get("id");
 
-  const { isAuthenticated, isLoading: isAuthLoading, setUnreadMessagesCount } = useAuth();
+  const { isAuthenticated, isLoading: isAuthLoading } = useAuth();
   const { isConnected, subscribe } = useSocket();
 
+  // ── Store selectors ──────────────────────────────────────────────────────
+  const conversations        = useInboxStore((s) => s.conversations);
+  const selectedConversationId = useInboxStore((s) => s.selectedConversationId);
+  const currentPendingConversation = useInboxStore((s) => s.currentPendingConversation);
+  const messages             = useInboxStore((s) => s.messages);
+  const isLoadingConversations = useInboxStore((s) => s.isLoadingConversations);
+  const isLoadingMessages    = useInboxStore((s) => s.isLoadingMessages);
+  const isSendingMessage     = useInboxStore((s) => s.isSendingMessage);
+  const peerLastReadSequence = useInboxStore((s) => s.peerLastReadSequence);
+  const initialUserLastReadSequence = useInboxStore((s) => s.initialUserLastReadSequence);
+
+  // ── Store actions ─────────────────────────────────────────────────────────
+  const setConversations          = useInboxStore((s) => s.setConversations);
+  const setIsLoadingConversations = useInboxStore((s) => s.setIsLoadingConversations);
+  const updateConversationUnread  = useInboxStore((s) => s.updateConversationUnread);
+  const upsertConversation        = useInboxStore((s) => s.upsertConversation);
+  const setSelectedConversationId = useInboxStore((s) => s.setSelectedConversationId);
+  const setCurrentPendingConversation = useInboxStore((s) => s.setCurrentPendingConversation);
+  const setMessages               = useInboxStore((s) => s.setMessages);
+  const appendMessage             = useInboxStore((s) => s.appendMessage);
+  const setIsLoadingMessages      = useInboxStore((s) => s.setIsLoadingMessages);
+  const setIsSendingMessage       = useInboxStore((s) => s.setIsSendingMessage);
+  const setPeerLastReadSequence   = useInboxStore((s) => s.setPeerLastReadSequence);
+  const setInitialUserLastReadSequence = useInboxStore((s) => s.setInitialUserLastReadSequence);
+  const resetActiveChat           = useInboxStore((s) => s.resetActiveChat);
+  const setUnreadMessagesCount    = useInboxStore((s) => s.setUnreadMessagesCount);
+
+  // currentUserId is fetched from /api/users/me and kept in local state — it's a
+  // derived value of the auth session, not inbox data.
   const [currentUserId, setCurrentUserId] = React.useState<string | null>(null);
-  const [conversations, setConversations] = React.useState<ConversationItemData[]>(
-    []
-  );
-  const [selectedConversationId, setSelectedConversationId] = React.useState<
-    string | null
-  >(null);
-  const [currentPendingConversation, setCurrentPendingConversation] =
-    React.useState<ConversationItemData | null>(null);
-  const [messages, setMessages] = React.useState<MessageData[]>([]);
 
-  const [isLoadingConversations, setIsLoadingConversations] = React.useState(true);
-  const [isLoadingMessages, setIsLoadingMessages] = React.useState(false);
-  const [isSendingMessage, setIsSendingMessage] = React.useState(false);
+  // ── Local-only UI state (not shared, stays local) ────────────────────────
   const [error, setError] = React.useState<string | null>(null);
-  const [peerLastReadSequence, setPeerLastReadSequence] = React.useState<number>(0);
-  const [initialUserLastReadSequence, setInitialUserLastReadSequence] = React.useState<number | undefined>(undefined);
 
+  // Keep a ref so WebSocket handlers can read the live list without stale closures
   const conversationsRef = React.useRef<ConversationItemData[]>(conversations);
   React.useEffect(() => {
     conversationsRef.current = conversations;
@@ -56,8 +75,7 @@ function ConversationsContent() {
       if (!isMounted || !isAuthenticated) return;
 
       try {
-        const apiUrl = API_URL;
-        const res = await fetch(`${apiUrl}/api/users/me`, {
+        const res = await fetch(`${API_URL}/api/users/me`, {
           credentials: "include",
         });
         if (res.ok && isMounted) {
@@ -82,14 +100,21 @@ function ConversationsContent() {
 
   // 2. Fetch conversations list
   const fetchConversations = React.useCallback(async () => {
+    // Capture session generation BEFORE the first await.
+    // If logout fires while we're waiting, the generation will have incremented
+    // and every post-await guard below will bail out before writing stale data.
+    const gen = useAuthStore.getState().sessionGeneration;
+
     try {
       setError(null);
-      const apiUrl = API_URL;
 
-      const res = await fetch(`${apiUrl}/api/conversations?limit=50`, {
+      const res = await fetch(`${API_URL}/api/conversations?limit=50`, {
         method: "GET",
         credentials: "include",
       });
+
+      // ── Session guard ───────────────────────────────────────────────────
+      if (useAuthStore.getState().sessionGeneration !== gen) return;
 
       if (!res.ok) {
         if (res.status === 401) {
@@ -100,6 +125,10 @@ function ConversationsContent() {
       }
 
       const data = await res.json();
+
+      // ── Session guard ───────────────────────────────────────────────────
+      if (useAuthStore.getState().sessionGeneration !== gen) return;
+
       const list: ConversationItemData[] = Array.isArray(data.conversations)
         ? (data.conversations as ConversationItemData[]).filter(
             (c: ConversationItemData) => Boolean(c.lastMessage)
@@ -142,20 +171,25 @@ function ConversationsContent() {
           // Fetch single conversation details so user can start chatting
           try {
             const singleRes = await fetch(
-              `${apiUrl}/api/conversations/${deepLinkedConversationId}`,
+              `${API_URL}/api/conversations/${deepLinkedConversationId}`,
               {
                 method: "GET",
                 credentials: "include",
               }
             );
+
+            // ── Session guard ─────────────────────────────────────────────
+            if (useAuthStore.getState().sessionGeneration !== gen) return;
+
             if (singleRes.ok) {
               const singleData = await singleRes.json();
+
+              // ── Session guard ───────────────────────────────────────────
+              if (useAuthStore.getState().sessionGeneration !== gen) return;
+
               if (singleData.conversation) {
                 if (singleData.conversation.lastMessage) {
-                  setConversations((prev) => [
-                    { ...singleData.conversation, unreadCount: 0 },
-                    ...prev.filter((c) => c.id !== deepLinkedConversationId),
-                  ]);
+                  upsertConversation({ ...singleData.conversation, unreadCount: 0 });
                   setCurrentPendingConversation(null);
                 } else {
                   // Keep empty conversation out of list, but active in message panel
@@ -170,6 +204,7 @@ function ConversationsContent() {
               setCurrentPendingConversation(null);
             }
           } catch {
+            if (useAuthStore.getState().sessionGeneration !== gen) return;
             setSelectedConversationId(
               sanitizedList.length > 0 && window.innerWidth >= 768 ? sanitizedList[0].id : null
             );
@@ -177,23 +212,39 @@ function ConversationsContent() {
           }
         }
       } else if (sanitizedList.length > 0 && window.innerWidth >= 768) {
-        setSelectedConversationId((prev) =>
-          prev && sanitizedList.some((c) => c.id === prev) ? prev : sanitizedList[0].id
+        setSelectedConversationId(
+          selectedConversationId && sanitizedList.some((c) => c.id === selectedConversationId)
+            ? selectedConversationId
+            : sanitizedList[0].id
         );
         setCurrentPendingConversation(null);
       } else {
-        setSelectedConversationId((prev) =>
-          prev && sanitizedList.some((c) => c.id === prev) ? prev : null
+        setSelectedConversationId(
+          selectedConversationId && sanitizedList.some((c) => c.id === selectedConversationId)
+            ? selectedConversationId
+            : null
         );
         setCurrentPendingConversation(null);
       }
     } catch (err: unknown) {
+      if (useAuthStore.getState().sessionGeneration !== gen) return;
       const errMsg = err instanceof Error ? err.message : "Error loading chats";
       setError(errMsg);
     } finally {
-      setIsLoadingConversations(false);
+      if (useAuthStore.getState().sessionGeneration === gen) {
+        setIsLoadingConversations(false);
+      }
     }
-  }, [deepLinkedConversationId]);
+  }, [
+    deepLinkedConversationId,
+    selectedConversationId,
+    setConversations,
+    setIsLoadingConversations,
+    setSelectedConversationId,
+    setCurrentPendingConversation,
+    setUnreadMessagesCount,
+    upsertConversation,
+  ]);
 
   React.useEffect(() => {
     let isMounted = true;
@@ -217,30 +268,23 @@ function ConversationsContent() {
     return () => {
       isMounted = false;
     };
-  }, [isAuthLoading, isAuthenticated, fetchConversations]);
+  }, [isAuthLoading, isAuthenticated, fetchConversations, setIsLoadingConversations]);
 
   // 3. Mark conversation read
   const markAsRead = React.useCallback(
     async (conversationId: string, lastSequence: number) => {
       // Find how many unread messages this conversation currently has and deduct from global state
-      setConversations((prev) => {
-        const target = prev.find((c) => c.id === conversationId);
-        const unreadToDeduct = target?.unreadCount || 0;
-        if (unreadToDeduct > 0) {
-          setUnreadMessagesCount((count) => Math.max(0, count - unreadToDeduct));
-        }
-        return prev.map((c) =>
-          c.id === conversationId ? { ...c, unreadCount: 0 } : c
-        );
-      });
+      const target = conversationsRef.current.find((c) => c.id === conversationId);
+      const unreadToDeduct = target?.unreadCount || 0;
+      if (unreadToDeduct > 0) {
+        setUnreadMessagesCount((count) => Math.max(0, count - unreadToDeduct));
+      }
+      updateConversationUnread(conversationId, 0);
 
       try {
-        const apiUrl = API_URL;
-        await fetch(`${apiUrl}/api/conversations/${conversationId}/read`, {
+        await fetch(`${API_URL}/api/conversations/${conversationId}/read`, {
           method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           credentials: "include",
           body: JSON.stringify({ lastReadSequence: lastSequence }),
         });
@@ -248,7 +292,7 @@ function ConversationsContent() {
         // Read receipt failure shouldn't disrupt messaging
       }
     },
-    [setUnreadMessagesCount]
+    [setUnreadMessagesCount, updateConversationUnread]
   );
 
   // 4. Fetch messages for active conversation
@@ -257,9 +301,7 @@ function ConversationsContent() {
 
     async function fetchMessages() {
       if (!selectedConversationId) {
-        setMessages([]);
-        setPeerLastReadSequence(0);
-        setInitialUserLastReadSequence(undefined);
+        resetActiveChat();
         return;
       }
 
@@ -270,9 +312,8 @@ function ConversationsContent() {
         setIsLoadingMessages(true);
         setError(null);
 
-        const apiUrl = API_URL;
         const res = await fetch(
-          `${apiUrl}/api/conversations/${selectedConversationId}/messages?limit=50`,
+          `${API_URL}/api/conversations/${selectedConversationId}/messages?limit=50`,
           {
             method: "GET",
             credentials: "include",
@@ -325,7 +366,15 @@ function ConversationsContent() {
     return () => {
       isMounted = false;
     };
-  }, [selectedConversationId, markAsRead]);
+  }, [
+    selectedConversationId,
+    markAsRead,
+    resetActiveChat,
+    setMessages,
+    setIsLoadingMessages,
+    setPeerLastReadSequence,
+    setInitialUserLastReadSequence,
+  ]);
 
   // 4b. Real-time WebSocket Listeners for incoming messages and read receipts
   React.useEffect(() => {
@@ -337,10 +386,7 @@ function ConversationsContent() {
 
       // 1. If currently viewing this conversation, append live message
       if (isViewing) {
-        setMessages((prev) => {
-          if (prev.some((m) => m.id === newMsg.id)) return prev;
-          return [...prev, newMsg];
-        });
+        appendMessage(newMsg);
         // Automatically mark as read
         if (newMsg.sequence) {
           markAsRead(newMsg.conversationId, newMsg.sequence);
@@ -357,11 +403,9 @@ function ConversationsContent() {
         return;
       }
 
-      // 2. Purely update conversation snippet, unread count, and bump to top of sidebar
-      setConversations((prev) => {
-        const item = prev.find((c) => c.id === newMsg.conversationId);
-        if (!item) return prev;
-
+      // 2. Update conversation snippet, unread count, and bump to top of sidebar
+      const item = conversationsRef.current.find((c) => c.id === newMsg.conversationId);
+      if (item) {
         const updatedItem: ConversationItemData = {
           ...item,
           unreadCount: isViewing ? 0 : (item.unreadCount || 0) + 1,
@@ -373,9 +417,8 @@ function ConversationsContent() {
             createdAt: newMsg.createdAt,
           },
         };
-        const others = prev.filter((c) => c.id !== newMsg.conversationId);
-        return [updatedItem, ...others];
-      });
+        upsertConversation(updatedItem);
+      }
     });
 
     // Listener for read receipts
@@ -388,11 +431,7 @@ function ConversationsContent() {
         setPeerLastReadSequence(data.lastReadSequence);
       }
 
-      setConversations((prev) =>
-        prev.map((c) =>
-          c.id === data.conversationId ? { ...c, unreadCount: 0 } : c
-        )
-      );
+      updateConversationUnread(data.conversationId, 0);
     });
 
     return () => {
@@ -405,6 +444,10 @@ function ConversationsContent() {
     markAsRead,
     fetchConversations,
     setUnreadMessagesCount,
+    appendMessage,
+    upsertConversation,
+    updateConversationUnread,
+    setPeerLastReadSequence,
   ]);
 
   // 5. Send message
@@ -414,15 +457,12 @@ function ConversationsContent() {
     try {
       setIsSendingMessage(true);
       setError(null);
-      const apiUrl = API_URL;
 
       const res = await fetch(
-        `${apiUrl}/api/conversations/${selectedConversationId}/messages`,
+        `${API_URL}/api/conversations/${selectedConversationId}/messages`,
         {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
           credentials: "include",
           body: JSON.stringify({ content }),
         }
@@ -448,19 +488,15 @@ function ConversationsContent() {
       }
 
       // Optimistic append to messages with deduplication
-      setMessages((prev) => {
-        if (prev.some((m) => m.id === newMsg.id)) return prev;
-        return [...prev, newMsg];
-      });
+      appendMessage(newMsg);
 
       // Update lastMessage and bump conversation to top of list
-      setConversations((prev) => {
-        const item =
-          prev.find((c) => c.id === selectedConversationId) ||
-          (currentPendingConversation?.id === selectedConversationId
-            ? currentPendingConversation
-            : null);
-        if (!item) return prev;
+      const item =
+        conversations.find((c) => c.id === selectedConversationId) ||
+        (currentPendingConversation?.id === selectedConversationId
+          ? currentPendingConversation
+          : null);
+      if (item) {
         const updatedItem: ConversationItemData = {
           ...item,
           lastMessage: {
@@ -471,9 +507,8 @@ function ConversationsContent() {
             createdAt: newMsg.createdAt,
           },
         };
-        const others = prev.filter((c) => c.id !== selectedConversationId);
-        return [updatedItem, ...others];
-      });
+        upsertConversation(updatedItem);
+      }
       setCurrentPendingConversation(null);
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : "Error sending message";
@@ -548,17 +583,13 @@ function ConversationsContent() {
             conversations={conversations}
             selectedId={selectedConversationId}
             onSelect={(id) => {
-              // Immediately clear unread badge for the clicked conversation and deduct from global count
-              setConversations((prev) => {
-                const target = prev.find((c) => c.id === id);
-                const unreadToDeduct = target?.unreadCount || 0;
-                if (unreadToDeduct > 0) {
-                  setUnreadMessagesCount((count) => Math.max(0, count - unreadToDeduct));
-                }
-                return prev.map((c) =>
-                  c.id === id ? { ...c, unreadCount: 0 } : c
-                );
-              });
+              // Immediately clear unread badge for the clicked conversation
+              const target = conversations.find((c) => c.id === id);
+              const unreadToDeduct = target?.unreadCount || 0;
+              if (unreadToDeduct > 0) {
+                setUnreadMessagesCount((count) => Math.max(0, count - unreadToDeduct));
+              }
+              updateConversationUnread(id, 0);
               setSelectedConversationId(id);
               setCurrentPendingConversation(null);
               router.replace(`/conversations?conversationId=${id}`);

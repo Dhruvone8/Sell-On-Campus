@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Bell, CheckCheck, ArrowRight, Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import { useInboxStore } from "@/lib/stores/inbox.store";
 import { useSocket } from "@/lib/socket-context";
 import { NotificationItem, NotificationData } from "./notification-item";
 import { API_URL } from "@/lib/constants";
@@ -12,7 +13,9 @@ import { cn } from "@/lib/utils";
 
 export function NotificationPopover() {
   const pathname = usePathname();
-  const { isAuthenticated, unreadNotificationsCount, setUnreadNotificationsCount } = useAuth();
+  const { isAuthenticated } = useAuth();
+  const unreadNotificationsCount = useInboxStore((s) => s.unreadNotificationsCount);
+  const setUnreadNotificationsCount = useInboxStore((s) => s.setUnreadNotificationsCount);
   const { subscribe } = useSocket();
 
   const [isOpen, setIsOpen] = React.useState(false);

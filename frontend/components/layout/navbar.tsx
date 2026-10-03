@@ -15,6 +15,7 @@ import {
   ShoppingBag,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import { useInboxStore } from "@/lib/stores/inbox.store";
 import { Avatar } from "@/components/ui/avatar";
 import { NotificationPopover } from "@/components/notifications/notification-popover";
 import { useSocket } from "@/lib/socket-context";
@@ -24,7 +25,10 @@ import { APP_LOGO_URL } from "@/lib/constants";
 export function Navbar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, isAuthenticated, isLoading, unreadMessagesCount, unreadNotificationsCount, setUnreadMessagesCount, logout } = useAuth();
+  const { user, isAuthenticated, isLoading, logout } = useAuth();
+  const unreadMessagesCount = useInboxStore((s) => s.unreadMessagesCount);
+  const unreadNotificationsCount = useInboxStore((s) => s.unreadNotificationsCount);
+  const setUnreadMessagesCount = useInboxStore((s) => s.setUnreadMessagesCount);
   const { subscribe } = useSocket();
 
   const [searchTerm, setSearchTerm] = React.useState("");

@@ -5,11 +5,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Home, ShoppingBag, Plus, MessageSquare, User } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import { useInboxStore } from "@/lib/stores/inbox.store";
 import { cn } from "@/lib/utils";
 
 export function MobileNav() {
   const pathname = usePathname();
-  const { isAuthenticated, unreadMessagesCount } = useAuth();
+  const { isAuthenticated } = useAuth();
+  const unreadMessagesCount = useInboxStore((s) => s.unreadMessagesCount);
 
   const navItems = [
     {
