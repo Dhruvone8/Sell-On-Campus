@@ -39,6 +39,8 @@ function ConversationsContent() {
   const [isLoadingMessages, setIsLoadingMessages] = React.useState(false);
   const [isSendingMessage, setIsSendingMessage] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [peerLastReadSequence, setPeerLastReadSequence] = React.useState<number>(0);
+  const [initialUserLastReadSequence, setInitialUserLastReadSequence] = React.useState<number | undefined>(undefined);
 
   const conversationsRef = React.useRef<ConversationItemData[]>(conversations);
   React.useEffect(() => {
@@ -256,6 +258,8 @@ function ConversationsContent() {
     async function fetchMessages() {
       if (!selectedConversationId) {
         setMessages([]);
+        setPeerLastReadSequence(0);
+        setInitialUserLastReadSequence(undefined);
         return;
       }
 
@@ -286,6 +290,14 @@ function ConversationsContent() {
 
         if (isMounted) {
           setMessages(loadedMessages);
+
+          // Capture read sequence info from API response
+          if (typeof data.peerLastReadSequence === "number") {
+            setPeerLastReadSequence(data.peerLastReadSequence);
+          }
+          if (typeof data.userLastReadSequence === "number") {
+            setInitialUserLastReadSequence(data.userLastReadSequence);
+          }
 
           // Mark conversation as read with highest sequence
           if (loadedMessages.length > 0) {
@@ -370,6 +382,11 @@ function ConversationsContent() {
     const unsubReadReceipt = subscribe("conversation:read", (raw: unknown) => {
       const data = raw as { conversationId: string; lastReadSequence: number };
       if (!data || !data.conversationId) return;
+
+      // Update peer's read sequence for live read receipt checkmarks
+      if (data.conversationId === selectedConversationId) {
+        setPeerLastReadSequence(data.lastReadSequence);
+      }
 
       setConversations((prev) =>
         prev.map((c) =>
@@ -573,6 +590,8 @@ function ConversationsContent() {
             }}
             error={error}
             isConnected={isConnected}
+            peerLastReadSequence={peerLastReadSequence}
+            initialUserLastReadSequence={initialUserLastReadSequence}
           />
         </div>
       </div>

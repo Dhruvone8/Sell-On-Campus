@@ -17,6 +17,30 @@ export type MessageData = {
   createdAt: string;
 };
 
+/** Format a date into a WhatsApp-style day label: Today, Yesterday, or "3 Oct 2026" */
+function formatDateLabel(date: Date): string {
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const target = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const diffMs = today.getTime() - target.getTime();
+  const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return "Today";
+  if (diffDays === 1) return "Yesterday";
+
+  return date.toLocaleDateString(undefined, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+}
+
+/** Get a YYYY-MM-DD string for grouping */
+function toDateKey(dateStr: string): string {
+  const d = new Date(dateStr);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 export interface MessagePanelProps {
   conversation: ConversationItemData | null;
   messages: MessageData[];
@@ -27,6 +51,8 @@ export interface MessagePanelProps {
   onBack?: () => void;
   error?: string | null;
   isConnected?: boolean;
+  peerLastReadSequence?: number;
+  initialUserLastReadSequence?: number;
   className?: string;
 }
 
@@ -40,6 +66,8 @@ export function MessagePanel({
   onBack,
   error,
   isConnected,
+  peerLastReadSequence,
+  initialUserLastReadSequence,
   className,
 }: MessagePanelProps) {
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
@@ -48,6 +76,21 @@ export function MessagePanel({
   React.useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoadingMessages]);
+
+  // Find the index of the first unread incoming message for the divider
+  const unreadDividerIndex = React.useMemo(() => {
+    if (initialUserLastReadSequence === undefined || initialUserLastReadSequence === null) return -1;
+    for (let i = 0; i < messages.length; i++) {
+      const msg = messages[i];
+      const isIncoming = currentUserId
+        ? msg.senderId !== currentUserId
+        : msg.senderId === conversation?.otherUser.id;
+      if (isIncoming && msg.sequence > initialUserLastReadSequence) {
+        return i;
+      }
+    }
+    return -1;
+  }, [messages, initialUserLastReadSequence, currentUserId, conversation?.otherUser.id]);
 
   if (!conversation) {
     return (
@@ -114,19 +157,46 @@ export function MessagePanel({
           </div>
         ) : (
           <>
-            {messages.map((msg) => {
+            {messages.map((msg, index) => {
               // Current user if sender matches currentUserId OR sender is NOT otherUser.id
               const isCurrentUser = currentUserId
                 ? msg.senderId === currentUserId
                 : msg.senderId !== conversation.otherUser.id;
 
+              // Show unread divider before the first unread incoming message
+              const showUnreadDivider = index === unreadDividerIndex;
+
+              // Date separator: show when the day changes from the previous message
+              const currentDateKey = toDateKey(msg.createdAt);
+              const prevDateKey = index > 0 ? toDateKey(messages[index - 1].createdAt) : null;
+              const showDateSeparator = index === 0 || currentDateKey !== prevDateKey;
+
               return (
-                <MessageBubble
-                  key={msg.id}
-                  content={msg.content}
-                  createdAt={msg.createdAt}
-                  isCurrentUser={isCurrentUser}
-                />
+                <React.Fragment key={msg.id}>
+                  {showDateSeparator && (
+                    <div className="flex items-center justify-center my-4 select-none">
+                      <span className="text-[10px] font-semibold text-charcoal-500 bg-charcoal-100/80 border border-charcoal-200/60 px-3 py-1 rounded-full shadow-2xs">
+                        {formatDateLabel(new Date(msg.createdAt))}
+                      </span>
+                    </div>
+                  )}
+                  {showUnreadDivider && (
+                    <div className="flex items-center gap-3 my-3 select-none">
+                      <div className="flex-1 h-px bg-brand-300/60" />
+                      <span className="text-[10px] font-bold text-brand-500 uppercase tracking-wider px-2">
+                        Unread Messages
+                      </span>
+                      <div className="flex-1 h-px bg-brand-300/60" />
+                    </div>
+                  )}
+                  <MessageBubble
+                    content={msg.content}
+                    createdAt={msg.createdAt}
+                    isCurrentUser={isCurrentUser}
+                    sequence={msg.sequence}
+                    peerLastReadSequence={peerLastReadSequence}
+                  />
+                </React.Fragment>
               );
             })}
             <div ref={messagesEndRef} />
