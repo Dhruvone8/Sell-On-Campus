@@ -172,6 +172,12 @@ export async function getConversationMessages(conversationId: string, userId: st
             id: true,
             buyerId: true,
             sellerId: true,
+            participants: {
+                select: {
+                    userId: true,
+                    lastReadSequence: true,
+                },
+            },
         },
     });
 
@@ -211,10 +217,16 @@ export async function getConversationMessages(conversationId: string, userId: st
 
     messages.reverse();
 
+    // Extract read sequences for both participants
+    const userParticipant = conversation.participants.find(p => p.userId === userId);
+    const peerParticipant = conversation.participants.find(p => p.userId !== userId);
+
     return {
         messages, pagination: {
             nextCursor: messages.length > 0 ? messages[0]?.sequence : null, hasMore
         },
+        userLastReadSequence: userParticipant?.lastReadSequence ?? 0,
+        peerLastReadSequence: peerParticipant?.lastReadSequence ?? 0,
     };
 }
 

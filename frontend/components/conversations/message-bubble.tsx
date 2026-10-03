@@ -2,11 +2,14 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { Check, CheckCheck } from "lucide-react";
 
 export interface MessageBubbleProps {
   content: string;
   createdAt: string;
   isCurrentUser: boolean;
+  sequence?: number;
+  peerLastReadSequence?: number;
   className?: string;
 }
 
@@ -14,6 +17,8 @@ export function MessageBubble({
   content,
   createdAt,
   isCurrentUser,
+  sequence,
+  peerLastReadSequence,
   className,
 }: MessageBubbleProps) {
   const formattedTime = React.useMemo(() => {
@@ -24,6 +29,13 @@ export function MessageBubble({
       return "";
     }
   }, [createdAt]);
+
+  // Determine read status for outgoing messages
+  const isReadByPeer =
+    isCurrentUser &&
+    sequence !== undefined &&
+    peerLastReadSequence !== undefined &&
+    sequence <= peerLastReadSequence;
 
   return (
     <div
@@ -47,13 +59,21 @@ export function MessageBubble({
 
         <div
           className={cn(
-            "flex items-center text-[10px] font-medium justify-end",
+            "flex items-center gap-1 text-[10px] font-medium justify-end",
             isCurrentUser ? "text-brand-100" : "text-charcoal-400"
           )}
         >
           <span>{formattedTime}</span>
+          {isCurrentUser && sequence !== undefined && (
+            isReadByPeer ? (
+              <CheckCheck className="w-3.5 h-3.5 text-white/90" />
+            ) : (
+              <Check className="w-3.5 h-3.5 text-brand-200/80" />
+            )
+          )}
         </div>
       </div>
     </div>
   );
 }
+
