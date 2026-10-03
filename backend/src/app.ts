@@ -18,7 +18,7 @@ app.set("trust proxy", 1);
 
 app.use(
     cors({
-        origin: (origin, callback) => {
+        origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
             if (!origin) return callback(null, true);
 
             if (isAllowedOrigin(origin)) {
@@ -39,7 +39,7 @@ app.use(cookieParser());
 app.use("/api", verifyMutationOrigin);
 
 // Routes
-app.get("/api", (_req, res) => {
+app.get("/api", (_req: Request, res: Response) => {
     res.send("SellOnCampus API is running!");
 });
 

@@ -15,6 +15,14 @@
   "dependencies": {
     "@prisma/adapter-pg": "^7.9.1",
     "@prisma/client": "^7.9.1",
+    "@types/cookie-parser": "^1.4.10",
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/multer": "^2.2.0",
+    "@types/node": "^26.2.0",
+    "@types/nodemailer": "^8.0.1",
+    "@types/pg": "^8.23.1",
+    "@types/ws": "^8.18.1",
     "argon2": "^0.45.1",
     "cloudinary": "^2.11.0",
     "cookie-parser": "^1.4.7",
@@ -26,21 +34,13 @@
     "multer": "^2.3.0",
     "nodemailer": "^9.0.5",
     "pg": "^8.23.0",
+    "prisma": "^7.9.1",
     "redis": "^6.3.0",
+    "typescript": "^7.0.2",
     "ws": "^8.21.3",
     "zod": "^4.5.4"
   },
   "devDependencies": {
-    "@types/cookie-parser": "^1.4.10",
-    "@types/cors": "^2.8.19",
-    "@types/express": "^5.0.6",
-    "@types/multer": "^2.2.0",
-    "@types/node": "^26.2.0",
-    "@types/nodemailer": "^8.0.1",
-    "@types/pg": "^8.23.1",
-    "@types/ws": "^8.18.1",
-    "prisma": "^7.9.1",
-    "tsx": "^4.23.12",
-    "typescript": "^7.0.2"
+    "tsx": "^4.23.12"
   }
 }
