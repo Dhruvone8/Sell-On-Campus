@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import { useAuthStore } from "@/lib/stores/auth.store";
 import { useInboxStore } from "@/lib/stores/inbox.store";
 import { useSocket } from "@/lib/socket-context";
 import {
@@ -99,6 +100,11 @@ function ConversationsContent() {
 
   // 2. Fetch conversations list
   const fetchConversations = React.useCallback(async () => {
+    // Capture session generation BEFORE the first await.
+    // If logout fires while we're waiting, the generation will have incremented
+    // and every post-await guard below will bail out before writing stale data.
+    const gen = useAuthStore.getState().sessionGeneration;
+
     try {
       setError(null);
 
@@ -106,6 +112,9 @@ function ConversationsContent() {
         method: "GET",
         credentials: "include",
       });
+
+      // ── Session guard ───────────────────────────────────────────────────
+      if (useAuthStore.getState().sessionGeneration !== gen) return;
 
       if (!res.ok) {
         if (res.status === 401) {
@@ -116,6 +125,10 @@ function ConversationsContent() {
       }
 
       const data = await res.json();
+
+      // ── Session guard ───────────────────────────────────────────────────
+      if (useAuthStore.getState().sessionGeneration !== gen) return;
+
       const list: ConversationItemData[] = Array.isArray(data.conversations)
         ? (data.conversations as ConversationItemData[]).filter(
             (c: ConversationItemData) => Boolean(c.lastMessage)
@@ -164,8 +177,16 @@ function ConversationsContent() {
                 credentials: "include",
               }
             );
+
+            // ── Session guard ─────────────────────────────────────────────
+            if (useAuthStore.getState().sessionGeneration !== gen) return;
+
             if (singleRes.ok) {
               const singleData = await singleRes.json();
+
+              // ── Session guard ───────────────────────────────────────────
+              if (useAuthStore.getState().sessionGeneration !== gen) return;
+
               if (singleData.conversation) {
                 if (singleData.conversation.lastMessage) {
                   upsertConversation({ ...singleData.conversation, unreadCount: 0 });
@@ -183,6 +204,7 @@ function ConversationsContent() {
               setCurrentPendingConversation(null);
             }
           } catch {
+            if (useAuthStore.getState().sessionGeneration !== gen) return;
             setSelectedConversationId(
               sanitizedList.length > 0 && window.innerWidth >= 768 ? sanitizedList[0].id : null
             );
@@ -205,10 +227,13 @@ function ConversationsContent() {
         setCurrentPendingConversation(null);
       }
     } catch (err: unknown) {
+      if (useAuthStore.getState().sessionGeneration !== gen) return;
       const errMsg = err instanceof Error ? err.message : "Error loading chats";
       setError(errMsg);
     } finally {
-      setIsLoadingConversations(false);
+      if (useAuthStore.getState().sessionGeneration === gen) {
+        setIsLoadingConversations(false);
+      }
     }
   }, [
     deepLinkedConversationId,

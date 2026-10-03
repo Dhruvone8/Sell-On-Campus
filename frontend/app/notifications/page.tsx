@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { Bell, CheckCheck, ChevronRight, Inbox, Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import { useAuthStore } from "@/lib/stores/auth.store";
 import { useInboxStore } from "@/lib/stores/inbox.store";
 import { useNotificationsStore } from "@/lib/stores/notifications.store";
 import { useSocket } from "@/lib/socket-context";
@@ -48,6 +49,10 @@ export default function NotificationsPage() {
       return;
     }
 
+    // Capture session generation BEFORE first await — guards against stale
+    // responses repopulating the store after logout or account switch.
+    const gen = useAuthStore.getState().sessionGeneration;
+
     try {
       setIsLoading(true);
       const res = await fetch(`${API_URL}/api/notifications?limit=25`, {
@@ -55,8 +60,15 @@ export default function NotificationsPage() {
         credentials: "include",
       });
 
+      // ── Session guard ─────────────────────────────────────────────────
+      if (useAuthStore.getState().sessionGeneration !== gen) return;
+
       if (res.ok) {
         const data = await res.json();
+
+        // ── Session guard ───────────────────────────────────────────────
+        if (useAuthStore.getState().sessionGeneration !== gen) return;
+
         if (Array.isArray(data.notifications)) {
           setNotifications(data.notifications);
           const unread = data.notifications.filter((n: NotificationData) => !n.isRead).length;
@@ -68,9 +80,12 @@ export default function NotificationsPage() {
         }
       }
     } catch (err) {
+      if (useAuthStore.getState().sessionGeneration !== gen) return;
       console.error("Failed to load notifications:", err);
     } finally {
-      setIsLoading(false);
+      if (useAuthStore.getState().sessionGeneration === gen) {
+        setIsLoading(false);
+      }
     }
   }, [isAuthenticated, setUnreadNotificationsCount, setNotifications, setIsLoading, setNextCursor, setHasMore]);
 
@@ -108,6 +123,9 @@ export default function NotificationsPage() {
   // Load more notifications using cursor
   const handleLoadMore = async () => {
     if (!nextCursor || isLoadingMore) return;
+
+    // Capture generation before the await — same stale-write guard as fetchNotifications.
+    const gen = useAuthStore.getState().sessionGeneration;
     setIsLoadingMore(true);
 
     try {
@@ -119,8 +137,15 @@ export default function NotificationsPage() {
         }
       );
 
+      // ── Session guard ───────────────────────────────────────────────────
+      if (useAuthStore.getState().sessionGeneration !== gen) return;
+
       if (res.ok) {
         const data = await res.json();
+
+        // ── Session guard ─────────────────────────────────────────────────
+        if (useAuthStore.getState().sessionGeneration !== gen) return;
+
         if (Array.isArray(data.notifications)) {
           appendNotifications(data.notifications);
         }
@@ -130,9 +155,12 @@ export default function NotificationsPage() {
         }
       }
     } catch (err) {
+      if (useAuthStore.getState().sessionGeneration !== gen) return;
       console.error("Failed to load more notifications:", err);
     } finally {
-      setIsLoadingMore(false);
+      if (useAuthStore.getState().sessionGeneration === gen) {
+        setIsLoadingMore(false);
+      }
     }
   };
 

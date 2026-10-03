@@ -30,6 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const setAuthIsAuthenticated = useAuthStore((s) => s.setIsAuthenticated);
   const setAuthIsLoading = useAuthStore((s) => s.setIsLoading);
   const resetAuth = useAuthStore((s) => s.reset);
+  const bumpSessionGeneration = useAuthStore((s) => s.bumpSessionGeneration);
 
   const storeUnreadMessages = useInboxStore((s) => s.unreadMessagesCount);
   const storeSetUnreadMessages = useInboxStore((s) => s.setUnreadMessagesCount);
@@ -170,6 +171,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch {
       // Ignore network errors on logout
     } finally {
+      // Bump generation FIRST — invalidates all in-flight fetch callbacks before
+      // we clear the store, so stale responses can't repopulate it after the reset.
+      bumpSessionGeneration();
       setIsAuthenticated(false);
       setUser(null);
       setUnreadMessagesCount(0);
@@ -179,7 +183,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       router.push("/login");
       router.refresh();
     }
-  }, [router, setUnreadMessagesCount, setUnreadNotificationsCount, resetAuth, resetInbox]);
+  }, [router, setUnreadMessagesCount, setUnreadNotificationsCount, resetAuth, resetInbox, bumpSessionGeneration]);
 
   React.useEffect(() => {
     let isMounted = true;
