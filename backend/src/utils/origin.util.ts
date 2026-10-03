@@ -27,15 +27,13 @@ export function isAllowedOrigin(origin?: string): boolean {
         return true;
     }
 
-    // Allow Vercel deployment domains if matches preview/production patterns
+    // Always allow sell-on-campus Vercel domains
     if (
-        /^https:\/\/[a-z0-9-]+(\.vercel\.app)$/i.test(normalized) ||
-        /^https:\/\/[a-z0-9-]+-[a-z0-9-]+\.vercel\.app$/i.test(normalized)
+        normalized === "https://sell-on-campus.vercel.app" ||
+        /^https:\/\/sell-on-campus[a-z0-9-]*\.vercel\.app$/i.test(normalized) ||
+        process.env.ALLOW_ALL_VERCEL_DOMAINS === "true"
     ) {
-        // If ALLOW_VERCEL_PREVIEWS is enabled or it matches configured origins
-        if (process.env.ALLOW_ALL_VERCEL_DOMAINS === "true") {
-            return true;
-        }
+        return true;
     }
 
     // Allow local development origins in non-production
