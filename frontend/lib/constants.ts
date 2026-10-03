@@ -45,15 +45,14 @@ const rawFaviconUrl =
 
 export const APP_FAVICON_URL = rawFaviconUrl;
 
-export const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  (typeof window !== "undefined" &&
-   (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
-    ? "http://localhost:5000"
-    : "https://sell-on-campus-api.onrender.com");
+const rawApiUrl = process.env.NEXT_PUBLIC_API_URL?.trim().replace(/\/+$/, "");
+
+export const API_URL = rawApiUrl || "http://localhost:5000";
+
+const rawWsUrl = process.env.NEXT_PUBLIC_WS_URL?.trim().replace(/\/+$/, "");
 
 export const WS_URL =
-  process.env.NEXT_PUBLIC_WS_URL ||
+  rawWsUrl ||
   (API_URL.startsWith("https")
     ? API_URL.replace(/^https/, "wss")
     : API_URL.replace(/^http/, "ws"));

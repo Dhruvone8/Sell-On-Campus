@@ -27,13 +27,14 @@ export function isAllowedOrigin(origin?: string): boolean {
         return true;
     }
 
-    // Always allow sell-on-campus Vercel domains
-    if (
-        normalized === "https://sell-on-campus.vercel.app" ||
-        /^https:\/\/sell-on-campus[a-z0-9-]*\.vercel\.app$/i.test(normalized) ||
-        process.env.ALLOW_ALL_VERCEL_DOMAINS === "true"
-    ) {
-        return true;
+    // Optional: Allow Vercel preview deployments if explicitly enabled via environment variable
+    if (process.env.ALLOW_VERCEL_PREVIEWS === "true") {
+        if (
+            /^https:\/\/[a-z0-9-]+(\.vercel\.app)$/i.test(normalized) ||
+            /^https:\/\/[a-z0-9-]+-[a-z0-9-]+\.vercel\.app$/i.test(normalized)
+        ) {
+            return true;
+        }
     }
 
     // Allow local development origins in non-production
