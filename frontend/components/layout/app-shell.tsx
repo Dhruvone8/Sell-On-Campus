@@ -8,6 +8,8 @@ import { Footer } from "./footer";
 import { AuthProvider } from "@/lib/auth-context";
 import { SocketProvider } from "@/lib/socket-context";
 
+import { cn } from "@/lib/utils";
+
 export interface AppShellProps {
   children: React.ReactNode;
 }
@@ -25,7 +27,9 @@ export function AppShell({ children }: AppShellProps) {
       <SocketProvider>
         <div className="min-h-screen flex flex-col bg-canvas text-charcoal-900">
           <Navbar />
-          <main className="flex-1 pt-16 pb-20 md:pb-0">{children}</main>
+          <main className={cn("flex-1 pt-16", isMessageView ? "pb-0" : "pb-20 md:pb-0")}>
+            {children}
+          </main>
           {!hideFooter && <Footer />}
           <MobileNav />
         </div>

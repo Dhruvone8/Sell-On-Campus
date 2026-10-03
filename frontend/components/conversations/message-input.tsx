@@ -97,8 +97,9 @@ export function MessageInput({
             onChange={handleInput}
             onKeyDown={handleKeyDown}
             disabled={disabled || isSending}
-            placeholder="Type a message... (Press Enter to send)"
-            className="w-full px-4 py-2.5 rounded-2xl bg-charcoal-50 border border-charcoal-200/80 focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 text-xs sm:text-sm text-charcoal-900 outline-none transition-all placeholder:text-charcoal-400 resize-none max-h-32 leading-relaxed"
+            placeholder="Type a message..."
+            aria-label="Type a message"
+            className="w-full px-4 py-2.5 rounded-2xl bg-charcoal-50 border border-charcoal-200/80 focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 text-sm text-charcoal-900 outline-none transition-all placeholder:text-charcoal-400 resize-none max-h-32 leading-relaxed"
           />
         </div>
 
@@ -107,6 +108,7 @@ export function MessageInput({
           disabled={!content.trim() || isSending || disabled}
           className="h-10 w-10 sm:h-11 sm:w-11 rounded-xl bg-brand-500 hover:bg-brand-600 text-white flex items-center justify-center transition-all shadow-sm active:scale-95 disabled:opacity-40 disabled:pointer-events-none cursor-pointer shrink-0"
           title="Send message"
+          aria-label="Send message"
         >
           {isSending ? (
             <Loader2 className="w-4 h-4 animate-spin" />

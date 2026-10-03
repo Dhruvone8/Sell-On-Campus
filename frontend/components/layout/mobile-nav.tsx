@@ -12,6 +12,12 @@ export function MobileNav() {
   const pathname = usePathname();
   const { isAuthenticated } = useAuth();
   const unreadMessagesCount = useInboxStore((s) => s.unreadMessagesCount);
+  const selectedConversationId = useInboxStore((s) => s.selectedConversationId);
+
+  // When a 1-on-1 conversation is open on mobile, hide the global bottom tab bar
+  if (pathname.startsWith("/conversations") && selectedConversationId) {
+    return null;
+  }
 
   const navItems = [
     {

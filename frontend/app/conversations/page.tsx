@@ -60,11 +60,16 @@ function ConversationsContent() {
   // ── Local-only UI state (not shared, stays local) ────────────────────────
   const [error, setError] = React.useState<string | null>(null);
 
-  // Keep a ref so WebSocket handlers can read the live list without stale closures
+  // Keep a ref so WebSocket handlers and fetcher can read the live list and deepLinkedId without stale closures
   const conversationsRef = React.useRef<ConversationItemData[]>(conversations);
   React.useEffect(() => {
     conversationsRef.current = conversations;
   }, [conversations]);
+
+  const deepLinkedConversationIdRef = React.useRef(deepLinkedConversationId);
+  React.useEffect(() => {
+    deepLinkedConversationIdRef.current = deepLinkedConversationId;
+  }, [deepLinkedConversationId]);
 
   // 1. Fetch current user profile to determine currentUserId
   React.useEffect(() => {
@@ -99,7 +104,7 @@ function ConversationsContent() {
   }, [isAuthLoading, isAuthenticated]);
 
   // 2. Fetch conversations list
-  const fetchConversations = React.useCallback(async () => {
+  const fetchConversations = React.useCallback(async (targetIdOverride?: string) => {
     // Capture session generation BEFORE the first await.
     // If logout fires while we're waiting, the generation will have incremented
     // and every post-await guard below will bail out before writing stale data.
@@ -135,15 +140,20 @@ function ConversationsContent() {
           )
         : [];
 
-      // Determine which conversation is or will be active
+      // Determine which conversation is or will be active without stale closure
+      const currentSelectedId = useInboxStore.getState().selectedConversationId;
+      const targetParamId = targetIdOverride ?? deepLinkedConversationIdRef.current;
+
       let targetSelectedId: string | null = null;
-      if (deepLinkedConversationId) {
-        targetSelectedId = deepLinkedConversationId;
-      } else if (list.length > 0 && window.innerWidth >= 768) {
+      if (targetParamId) {
+        targetSelectedId = targetParamId;
+      } else if (list.length > 0 && typeof window !== "undefined" && window.innerWidth >= 768) {
         targetSelectedId =
-          selectedConversationId && list.some((c) => c.id === selectedConversationId)
-            ? selectedConversationId
+          currentSelectedId && list.some((c) => c.id === currentSelectedId)
+            ? currentSelectedId
             : list[0].id;
+      } else if (currentSelectedId && list.some((c) => c.id === currentSelectedId)) {
+        targetSelectedId = currentSelectedId;
       }
 
       // Immediately sync global unread count: active conversation unread is treated as 0
@@ -162,16 +172,16 @@ function ConversationsContent() {
       setConversations(sanitizedList);
 
       // Handle deep linked conversation
-      if (deepLinkedConversationId) {
-        const inList = sanitizedList.find((c) => c.id === deepLinkedConversationId);
+      if (targetParamId) {
+        const inList = sanitizedList.find((c) => c.id === targetParamId);
         if (inList) {
-          setSelectedConversationId(deepLinkedConversationId);
+          setSelectedConversationId(targetParamId);
           setCurrentPendingConversation(null);
         } else {
           // Fetch single conversation details so user can start chatting
           try {
             const singleRes = await fetch(
-              `${API_URL}/api/conversations/${deepLinkedConversationId}`,
+              `${API_URL}/api/conversations/${targetParamId}`,
               {
                 method: "GET",
                 credentials: "include",
@@ -195,35 +205,35 @@ function ConversationsContent() {
                   // Keep empty conversation out of list, but active in message panel
                   setCurrentPendingConversation(singleData.conversation);
                 }
-                setSelectedConversationId(deepLinkedConversationId);
+                setSelectedConversationId(targetParamId);
               }
             } else {
               setSelectedConversationId(
-                sanitizedList.length > 0 && window.innerWidth >= 768 ? sanitizedList[0].id : null
+                sanitizedList.length > 0 && typeof window !== "undefined" && window.innerWidth >= 768
+                  ? sanitizedList[0].id
+                  : null
               );
               setCurrentPendingConversation(null);
             }
           } catch {
             if (useAuthStore.getState().sessionGeneration !== gen) return;
             setSelectedConversationId(
-              sanitizedList.length > 0 && window.innerWidth >= 768 ? sanitizedList[0].id : null
+              sanitizedList.length > 0 && typeof window !== "undefined" && window.innerWidth >= 768
+                ? sanitizedList[0].id
+                : null
             );
             setCurrentPendingConversation(null);
           }
         }
-      } else if (sanitizedList.length > 0 && window.innerWidth >= 768) {
+      } else if (sanitizedList.length > 0 && typeof window !== "undefined" && window.innerWidth >= 768) {
         setSelectedConversationId(
-          selectedConversationId && sanitizedList.some((c) => c.id === selectedConversationId)
-            ? selectedConversationId
+          currentSelectedId && sanitizedList.some((c) => c.id === currentSelectedId)
+            ? currentSelectedId
             : sanitizedList[0].id
         );
         setCurrentPendingConversation(null);
-      } else {
-        setSelectedConversationId(
-          selectedConversationId && sanitizedList.some((c) => c.id === selectedConversationId)
-            ? selectedConversationId
-            : null
-        );
+      } else if (typeof window !== "undefined" && window.innerWidth < 768 && !currentSelectedId) {
+        setSelectedConversationId(null);
         setCurrentPendingConversation(null);
       }
     } catch (err: unknown) {
@@ -236,8 +246,6 @@ function ConversationsContent() {
       }
     }
   }, [
-    deepLinkedConversationId,
-    selectedConversationId,
     setConversations,
     setIsLoadingConversations,
     setSelectedConversationId,
@@ -269,6 +277,23 @@ function ConversationsContent() {
       isMounted = false;
     };
   }, [isAuthLoading, isAuthenticated, fetchConversations, setIsLoadingConversations]);
+
+  // 2b. Synchronize active selection when URL deep link changes (without refetching list)
+  React.useEffect(() => {
+    if (deepLinkedConversationId) {
+      if (selectedConversationId !== deepLinkedConversationId) {
+        setSelectedConversationId(deepLinkedConversationId);
+        setCurrentPendingConversation(null);
+      }
+    } else {
+      // URL has no conversation query param (e.g. user navigated back to /conversations)
+      // On mobile screens, deselect so the conversation list is visible
+      if (typeof window !== "undefined" && window.innerWidth < 768 && selectedConversationId) {
+        setSelectedConversationId(null);
+        setCurrentPendingConversation(null);
+      }
+    }
+  }, [deepLinkedConversationId, selectedConversationId, setSelectedConversationId, setCurrentPendingConversation]);
 
   // 3. Mark conversation read
   const markAsRead = React.useCallback(
@@ -570,7 +595,7 @@ function ConversationsContent() {
   }
 
   return (
-    <div className="h-[calc(100vh-4rem-5rem)] md:h-[calc(100vh-4rem)] bg-canvas p-0 md:p-4 lg:p-6 flex flex-col overflow-hidden">
+    <div className="h-[calc(100dvh-4rem-5rem)] md:h-[calc(100dvh-4rem)] bg-canvas p-0 md:p-4 lg:p-6 flex flex-col overflow-hidden">
       <div className="max-w-7xl w-full mx-auto flex-1 flex md:rounded-3xl md:border md:border-charcoal-200/80 md:shadow-xs bg-white overflow-hidden">
         {/* 1. Left Sidebar: Conversation List */}
         <div
@@ -601,10 +626,10 @@ function ConversationsContent() {
         {/* 2. Right Pane: Active Message Thread */}
         <div
           className={cn(
-            "flex-1 flex-col h-full overflow-hidden",
+            "flex-col overflow-hidden",
             selectedConversationId
-              ? "fixed top-16 bottom-0 left-0 right-0 z-40 bg-white flex md:static md:z-auto md:h-full md:flex-1"
-              : "hidden md:flex"
+              ? "fixed inset-x-0 top-16 bottom-0 z-40 bg-white flex md:static md:z-auto md:flex-1 md:h-full"
+              : "hidden md:flex md:flex-1 md:h-full"
           )}
         >
           <MessagePanel
