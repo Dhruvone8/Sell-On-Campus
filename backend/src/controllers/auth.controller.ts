@@ -218,7 +218,17 @@ export async function refreshAccessToken(req: Request, res: Response) {
             return res.status(401).json({ message: "Unauthorized" });
         }
 
-        const accessToken = await createAccessToken(userId);
+        const user = await prisma.user.findUnique({
+            where: { id: userId },
+            select: { id: true, status: true }
+        });
+
+        if (!user || user.status !== "ACTIVE") {
+            clearAuthCookies(res);
+            return res.status(403).json({ message: "Account is suspended or deactivated" });
+        }
+
+        const accessToken = await createAccessToken(user.id);
 
         setAccessTokenCookie(res, accessToken);
 
@@ -226,6 +236,7 @@ export async function refreshAccessToken(req: Request, res: Response) {
 
     } catch (error) {
         console.error("Refresh token error:", error);
+        clearAuthCookies(res);
         return res.status(401).json({ message: "Unauthorized" });
     }
 }

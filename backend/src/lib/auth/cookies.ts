@@ -1,10 +1,10 @@
 import type { Response } from "express";
 const isProduction = process.env.NODE_ENV === "production";
 
-const baseCookieOptions = {
+export const baseCookieOptions = {
     httpOnly: true,
     secure: isProduction,
-    sameSite: "lax" as const,
+    sameSite: (isProduction ? "none" : "lax") as "none" | "lax",
     path: "/",
 };
 

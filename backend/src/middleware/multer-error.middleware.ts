@@ -14,7 +14,7 @@ export function handleMulterError(error: unknown, _req: Request, res: Response, 
         return res.status(400).json({ message: error.message });
     }
 
-    if (error instanceof Error && error.message === "Only image files are allowed") {
+    if (error instanceof Error && error.message.includes("image")) {
         return res.status(400).json({ message: error.message });
     }
 
