@@ -10,7 +10,12 @@ const server = http.createServer(app);
 
 initializeWebSocketServer(server);
 
-await connectRedis();
+try {
+  await connectRedis();
+  console.log("Connected to Redis successfully");
+} catch (error) {
+  console.warn("⚠️ Redis connection failed. Server will continue with caching and rate limiting disabled:", error);
+}
 
 server.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

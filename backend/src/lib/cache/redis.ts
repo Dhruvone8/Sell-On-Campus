@@ -1,15 +1,22 @@
 import { createClient } from "redis";
 
-const redisUrl = process.env.REDIS_URL;
+const redisUrl = process.env.REDIS_URL || "redis://localhost:6379";
 
-if (!redisUrl) {
-    throw new Error("REDIS_URL is not defined");
-}
-
-const redis = createClient({ url: redisUrl });
+const redis = createClient({
+    url: redisUrl,
+    socket: {
+        reconnectStrategy: (retries) => {
+            if (retries > 3) {
+                return false; // Stop reconnect loop if Redis is not configured
+            }
+            return Math.min(retries * 500, 2000);
+        }
+    }
+});
 
 redis.on("error", (error) => {
-    console.error("Redis Client Error: ", error);
+    // Prevent unhandled error crashes
+    console.warn("Redis Warning (Client Error):", error.message || error);
 });
 
 export async function connectRedis() {
