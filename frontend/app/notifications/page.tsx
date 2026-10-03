@@ -4,6 +4,8 @@ import * as React from "react";
 import Link from "next/link";
 import { Bell, CheckCheck, ChevronRight, Inbox, Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import { useInboxStore } from "@/lib/stores/inbox.store";
+import { useNotificationsStore } from "@/lib/stores/notifications.store";
 import { useSocket } from "@/lib/socket-context";
 import { NotificationItem, NotificationData } from "@/components/notifications/notification-item";
 import { API_URL } from "@/lib/constants";
@@ -12,16 +14,32 @@ import { cn } from "@/lib/utils";
 type FilterTab = "all" | "unread";
 
 export default function NotificationsPage() {
-  const { isAuthenticated, setUnreadNotificationsCount } = useAuth();
+  const { isAuthenticated } = useAuth();
+  const setUnreadNotificationsCount = useInboxStore((s) => s.setUnreadNotificationsCount);
   const { subscribe } = useSocket();
 
+  // ── Store selectors ──────────────────────────────────────────────────────
+  const notifications  = useNotificationsStore((s) => s.notifications);
+  const isLoading      = useNotificationsStore((s) => s.isLoading);
+  const isMarkingAll   = useNotificationsStore((s) => s.isMarkingAll);
+  const nextCursor     = useNotificationsStore((s) => s.nextCursor);
+  const hasMore        = useNotificationsStore((s) => s.hasMore);
+  const isLoadingMore  = useNotificationsStore((s) => s.isLoadingMore);
+
+  // ── Store actions ────────────────────────────────────────────────────────
+  const setNotifications    = useNotificationsStore((s) => s.setNotifications);
+  const appendNotifications = useNotificationsStore((s) => s.appendNotifications);
+  const prependNotification = useNotificationsStore((s) => s.prependNotification);
+  const markOneRead         = useNotificationsStore((s) => s.markOneRead);
+  const markAllRead         = useNotificationsStore((s) => s.markAllRead);
+  const setIsLoading        = useNotificationsStore((s) => s.setIsLoading);
+  const setIsMarkingAll     = useNotificationsStore((s) => s.setIsMarkingAll);
+  const setNextCursor       = useNotificationsStore((s) => s.setNextCursor);
+  const setHasMore          = useNotificationsStore((s) => s.setHasMore);
+  const setIsLoadingMore    = useNotificationsStore((s) => s.setIsLoadingMore);
+
+  // ── Local UI state (tab selection — page-only, no cross-component need) ──
   const [activeTab, setActiveTab] = React.useState<FilterTab>("all");
-  const [notifications, setNotifications] = React.useState<NotificationData[]>([]);
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [isMarkingAll, setIsMarkingAll] = React.useState(false);
-  const [nextCursor, setNextCursor] = React.useState<string | null>(null);
-  const [hasMore, setHasMore] = React.useState(false);
-  const [isLoadingMore, setIsLoadingMore] = React.useState(false);
 
   // Fetch initial notifications
   const fetchNotifications = React.useCallback(async () => {
@@ -54,7 +72,7 @@ export default function NotificationsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [isAuthenticated, setUnreadNotificationsCount]);
+  }, [isAuthenticated, setUnreadNotificationsCount, setNotifications, setIsLoading, setNextCursor, setHasMore]);
 
   React.useEffect(() => {
     let isMounted = true;
@@ -77,7 +95,7 @@ export default function NotificationsPage() {
     const unsubscribe = subscribe("notification:new", (data: unknown) => {
       const newNotif = data as NotificationData;
       if (newNotif && newNotif.id) {
-        setNotifications((prev) => [newNotif, ...prev.filter((n) => n.id !== newNotif.id)]);
+        prependNotification(newNotif);
         setUnreadNotificationsCount((prev) => prev + 1);
       }
     });
@@ -85,7 +103,7 @@ export default function NotificationsPage() {
     return () => {
       unsubscribe();
     };
-  }, [isAuthenticated, subscribe, setUnreadNotificationsCount]);
+  }, [isAuthenticated, subscribe, setUnreadNotificationsCount, prependNotification]);
 
   // Load more notifications using cursor
   const handleLoadMore = async () => {
@@ -104,7 +122,7 @@ export default function NotificationsPage() {
       if (res.ok) {
         const data = await res.json();
         if (Array.isArray(data.notifications)) {
-          setNotifications((prev) => [...prev, ...data.notifications]);
+          appendNotifications(data.notifications);
         }
         if (data.pagination) {
           setNextCursor(data.pagination.nextCursor || null);
@@ -120,9 +138,7 @@ export default function NotificationsPage() {
 
   // Mark single notification as read
   const handleMarkRead = async (id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
-    );
+    markOneRead(id);
     setUnreadNotificationsCount((prev) => Math.max(0, prev - 1));
 
     try {
@@ -139,7 +155,7 @@ export default function NotificationsPage() {
   const handleMarkAllRead = async () => {
     if (isMarkingAll) return;
     setIsMarkingAll(true);
-    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
+    markAllRead();
     setUnreadNotificationsCount(0);
 
     try {
