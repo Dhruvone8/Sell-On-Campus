@@ -28,6 +28,11 @@ export function rateLimit(options: RateLimitOptions): RequestHandler {
         const key = `rate-limit:${keyPrefix}:${identifier}`;
 
         try {
+            if (!redis.isReady) {
+                // Redis unavailable (e.g. Upstash temporarily unreachable) — skip rate limiting rather than hanging
+                return next();
+            }
+
             const count = await redis.eval(
                 rateLimitScript,
                 {

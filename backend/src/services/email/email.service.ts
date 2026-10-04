@@ -1,23 +1,20 @@
-import nodemailer from "nodemailer";
-import "dotenv/config";
+import { Resend } from "resend";
 
-const transporter = nodemailer.createTransport({
-    host: process.env.SMTP_HOST,
-    port: Number(process.env.SMTP_PORT),
-    secure: process.env.SMTP_SECURE === "true",
-    auth: {
-        user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASSWORD
-    },
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+const FROM_ADDRESS = process.env.SMTP_FROM || "SellOnCampus <noreply@send.selloncampus.site>";
 
 export async function sendEmail(to: string, subject: string, text: string) {
-    await transporter.sendMail({
-        from: process.env.SMTP_FROM,
+    const { error } = await resend.emails.send({
+        from: FROM_ADDRESS,
         to,
         subject,
         text,
     });
+
+    if (error) {
+        throw new Error(`Failed to send email: ${error.message}`);
+    }
 }
 
 export async function sendRegistrationOtpEmail(email: string, otp: string) {
