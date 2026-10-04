@@ -14,6 +14,8 @@ Buy and sell textbooks, electronics, cycles, and dorm essentials securely with v
 [![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)](https://redis.io/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS_v4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 [![WebSockets](https://img.shields.io/badge/WebSockets-010101?style=for-the-badge&logo=socketdotio&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API)
+[![Resend](https://img.shields.io/badge/Resend-000000?style=for-the-badge&logo=resend&logoColor=white)](https://resend.com/)
+[![Cloudinary](https://img.shields.io/badge/Cloudinary-3448C5?style=for-the-badge&logo=cloudinary&logoColor=white)](https://cloudinary.com/)
 
 </div>
 
@@ -48,7 +50,7 @@ Designed specifically for university ecosystems, it connects students within ver
 
 ### 🛡️ Verified Student Authentication
 - **College-Only Registration**: Signups require a verified university email address (`@vit.edu.in`).
-- **OTP Verification**: Email verification via 4-digit numeric OTP sent directly via SMTP without requiring third-party domain purchases.
+- **OTP Verification**: Email verification via 4-digit numeric OTP sent via Resend transactional email API with domain verification (`selloncampus.site`).
 - **Secure Sessions**: Dual-token authentication with short-lived JWT Access Tokens and persistent Refresh Tokens stored in secure `HttpOnly`, `SameSite=Lax` cookies.
 
 ### 🛍️ Marketplace & Smart Discovery
@@ -75,7 +77,7 @@ Designed specifically for university ecosystems, it connects students within ver
 ### ⚡ Redis Caching, Rate Limiting & Abuse Prevention
 - **Cache-Aside Pattern**: In-memory Redis caching for hot entities (`listing:{id}`, search queries, and categories) with targeted invalidation on create/update/delete.
 - **Atomic Lua Rate Limiting**: Zero-race-condition rate limiting implemented via Redis atomic `INCR` + `EXPIRE` Lua scripts.
-- **Dual-Layer Auth Protection**: Correlated IP and email-based limiting on OTP requests and password resets to prevent SMTP quota exhaustion and brute-force attacks.
+- **Dual-Layer Auth Protection**: Correlated IP and email-based limiting on OTP requests and password resets to prevent email quota exhaustion and brute-force attacks.
 - **Quota & Resource Guards**: Per-user limits on listing creation (10 listings/hour, protecting image upload pipelines) and instant messaging (30 messages/minute).
 - **RFC Standard Headers**: Automatically provides `X-RateLimit-Limit`, `X-RateLimit-Remaining`, and standard `Retry-After` on `429 Too Many Requests`.
 
@@ -103,7 +105,7 @@ graph TD
         Services["Business Services (Listings, Auth, Chat)"]
         CacheLayer["Redis Cache-Aside (Get / Set / Evict)"]
         WSServer["WebSocket Server ('ws')"]
-        EmailService["Nodemailer (Gmail SMTP)"]
+        EmailService["Resend (Transactional Email API)"]
     end
 
     subgraph DataStore ["Data & Media Services"]
@@ -149,7 +151,7 @@ graph TD
 | **PostgreSQL (Neon)** | Cloud serverless relational database |
 | **Redis** | In-memory cache-aside store (listings, search queries, categories) & atomic Lua rate limiter |
 | **`ws` Library** | Native WebSockets with heartbeat detection and client connection manager |
-| **Nodemailer** | SMTP mail delivery with Google App Password integration |
+| **Resend** | Transactional email delivery via Resend API and verified domain |
 | **Cloudinary** | Cloud storage and optimized image CDN |
 | **Argon2** | Secure password hashing algorithm |
 | **Zod** | Request body and query parameter validation |
@@ -166,7 +168,7 @@ Ensure you have the following installed:
 - A free [Neon](https://neon.tech/) PostgreSQL database (or any PostgreSQL instance)
 - A [Redis](https://redis.io/) instance (local or hosted via [Upstash](https://upstash.com/) / [Redis Cloud](https://redis.com/try-free/))
 - A free [Cloudinary](https://cloudinary.com/) account for image uploads
-- A Google Account with 2-Step Verification enabled (to generate a free 16-character [App Password](https://myaccount.google.com/apppasswords))
+- A [Resend](https://resend.com/) account and API key for transactional emails
 
 ---
 
@@ -195,13 +197,10 @@ Ensure you have the following installed:
    JWT_REFRESH_SECRET="your-refresh-secret"
    JWT_RESET_SECRET="your-reset-secret"
 
-   # SMTP Email Service (Gmail SMTP with App Password)
-   SMTP_HOST=smtp.gmail.com
-   SMTP_PORT=465
-   SMTP_SECURE=true
-   SMTP_USER=your_email@gmail.com
-   SMTP_PASSWORD=your_16_char_google_app_password
-   SMTP_FROM="SellOnCampus <your_email@gmail.com>"
+   # Resend Email Service (https://resend.com)
+   RESEND_API_KEY=re_your_api_key_here
+   # Optional custom sender address override
+   # SMTP_FROM="SellOnCampus <noreply@selloncampus.site>"
 
    # Development Bypass / Whitelisted Test Email
    DEV_TEST_EMAIL=your_email@gmail.com
