@@ -672,20 +672,7 @@ export async function deleteListing(listingId: string, userId: string) {
         throw new AppError("You are not authorized to delete this listing", 403);
     }
 
-    // Delete associated images from Cloudinary
-    for (const image of listing.images) {
-        try {
-            await deleteImage(image.publicId);
-        } catch (cleanupError) {
-            console.error(
-                "Failed to delete Cloudinary image during listing deletion:",
-                image.publicId,
-                cleanupError
-            );
-        }
-    }
-
-    // Delete conversations and listing within a transaction
+    // Delete conversations and listing within a transaction first
     await prisma.$transaction(async (tx) => {
         await tx.conversation.deleteMany({
             where: {
@@ -702,6 +689,19 @@ export async function deleteListing(listingId: string, userId: string) {
 
     await deleteCache(`listing:${listingId}`);
     await deleteCache("listings:feed:p1:l10:newest");
+
+    // Best-effort Cloudinary cleanup after database commit
+    for (const image of listing.images) {
+        try {
+            await deleteImage(image.publicId);
+        } catch (cleanupError) {
+            console.error(
+                "Failed to delete Cloudinary image during listing deletion:",
+                image.publicId,
+                cleanupError
+            );
+        }
+    }
 
     return { success: true };
 }
