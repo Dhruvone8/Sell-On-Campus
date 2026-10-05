@@ -322,4 +322,4 @@ SellOnCampus/
 
 ## 📄 License
 
-This project is licensed under the [ISC License](LICENSE). Built for students, by students.
+This project is licensed under the [MIT License](LICENSE). Built for students, by students.
