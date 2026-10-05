@@ -3,7 +3,7 @@ import { requireAuth } from "../middleware/auth.middleware.js";
 import { validate, validateQuery } from "../middleware/validate.middleware.js";
 import {
     createListing, getListingById, updateListing, updateListingStatus, getMyListings, getListings,
-    getCategories
+    getCategories, deleteListing
 } from "../controllers/listing.controller.js";
 import {
     createListingSchema, updateListingSchema, updateListingStatusSchema, paginationSchema, listingQuerySchema
@@ -20,5 +20,6 @@ router.get("/:id", getListingById);
 router.post("/", requireAuth, listingRateLimiters.createListing, uploadListingImages, validate(createListingSchema), createListing);
 router.patch("/:id", requireAuth, uploadListingImages, validate(updateListingSchema), updateListing);
 router.patch("/:id/status", requireAuth, validate(updateListingStatusSchema), updateListingStatus);
+router.delete("/:id", requireAuth, deleteListing);
 
 export default router;
