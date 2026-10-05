@@ -653,3 +653,55 @@ export async function getCategories() {
 
     return categories;
 }
+
+export async function deleteListing(listingId: string, userId: string) {
+    const listing = await prisma.listing.findUnique({
+        where: {
+            id: listingId
+        },
+        include: {
+            images: true
+        }
+    });
+
+    if (!listing) {
+        throw new AppError("Listing not found", 404);
+    }
+
+    if (listing.sellerId !== userId) {
+        throw new AppError("You are not authorized to delete this listing", 403);
+    }
+
+    // Delete associated images from Cloudinary
+    for (const image of listing.images) {
+        try {
+            await deleteImage(image.publicId);
+        } catch (cleanupError) {
+            console.error(
+                "Failed to delete Cloudinary image during listing deletion:",
+                image.publicId,
+                cleanupError
+            );
+        }
+    }
+
+    // Delete conversations and listing within a transaction
+    await prisma.$transaction(async (tx) => {
+        await tx.conversation.deleteMany({
+            where: {
+                listingId
+            }
+        });
+
+        await tx.listing.delete({
+            where: {
+                id: listingId
+            }
+        });
+    });
+
+    await deleteCache(`listing:${listingId}`);
+    await deleteCache("listings:feed:p1:l10:newest");
+
+    return { success: true };
+}

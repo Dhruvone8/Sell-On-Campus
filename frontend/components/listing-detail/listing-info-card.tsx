@@ -6,8 +6,9 @@ import { useRouter } from "next/navigation";
 import { Listing } from "@/lib/types";
 import { formatPrice, cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
-import { MessageSquare, Loader2, Edit3, ShieldCheck, MapPin, Sparkles, Layers } from "lucide-react";
+import { MessageSquare, Loader2, Edit3, ShieldCheck, MapPin, Sparkles, Layers, Trash2 } from "lucide-react";
 import { API_URL } from "@/lib/constants";
+import { Modal } from "@/components/ui/modal";
 
 export interface ListingInfoCardProps {
   listing: Listing;
@@ -25,6 +26,9 @@ export function ListingInfoCard({ listing }: ListingInfoCardProps) {
   const { user, isAuthenticated } = useAuth();
   const [isMessaging, setIsMessaging] = React.useState(false);
   const [messageError, setMessageError] = React.useState<string | null>(null);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
+  const [isDeleting, setIsDeleting] = React.useState(false);
+  const [deleteError, setDeleteError] = React.useState<string | null>(null);
 
   const isOwner = Boolean(
     user && (user.id === listing.sellerId || user.id === listing.seller?.id)
@@ -76,6 +80,29 @@ export function ListingInfoCard({ listing }: ListingInfoCardProps) {
       const msg = err instanceof Error ? err.message : "Error contacting seller";
       setMessageError(msg);
       setIsMessaging(false);
+    }
+  };
+
+  const handleDeleteListing = async () => {
+    try {
+      setIsDeleting(true);
+      setDeleteError(null);
+      const apiUrl = API_URL;
+      const res = await fetch(`${apiUrl}/api/listings/${listing.id}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to delete listing");
+      }
+
+      router.push("/my-listings");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to delete listing";
+      setDeleteError(msg);
+      setIsDeleting(false);
     }
   };
 
@@ -147,21 +174,31 @@ export function ListingInfoCard({ listing }: ListingInfoCardProps) {
       {/* Primary Action Button */}
       <div className="pt-2">
         {isOwner ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            <Link
-              href={`/listings/${listing.id}/edit`}
-              className="w-full h-11 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-sm shadow-brand-500/25 transition-all cursor-pointer active:scale-[0.99]"
+          <div className="flex flex-col gap-2.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <Link
+                href={`/listings/${listing.id}/edit`}
+                className="w-full h-11 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-sm shadow-brand-500/25 transition-all cursor-pointer active:scale-[0.99]"
+              >
+                <Edit3 className="w-4 h-4 stroke-[2]" />
+                <span>Edit Listing</span>
+              </Link>
+              <Link
+                href="/my-listings"
+                className="w-full h-11 rounded-xl bg-charcoal-50 hover:bg-charcoal-100 text-charcoal-800 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 border border-charcoal-200/80 transition-all cursor-pointer active:scale-[0.99]"
+              >
+                <Layers className="w-4 h-4 stroke-[2]" />
+                <span>My Listings</span>
+              </Link>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsDeleteModalOpen(true)}
+              className="w-full h-10 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 border border-red-200/80 transition-all cursor-pointer active:scale-[0.99]"
             >
-              <Edit3 className="w-4 h-4 stroke-[2]" />
-              <span>Edit Listing</span>
-            </Link>
-            <Link
-              href="/my-listings"
-              className="w-full h-11 rounded-xl bg-charcoal-50 hover:bg-charcoal-100 text-charcoal-800 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 border border-charcoal-200/80 transition-all cursor-pointer active:scale-[0.99]"
-            >
-              <Layers className="w-4 h-4 stroke-[2]" />
-              <span>My Listings</span>
-            </Link>
+              <Trash2 className="w-4 h-4 stroke-[2]" />
+              <span>Delete Listing</span>
+            </button>
           </div>
         ) : isSold ? (
           <button
@@ -208,6 +245,55 @@ export function ListingInfoCard({ listing }: ListingInfoCardProps) {
           <span>Zero buyer fees • Direct student-to-student deal</span>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={isDeleteModalOpen}
+        onClose={() => !isDeleting && setIsDeleteModalOpen(false)}
+        title="Delete Listing"
+        maxWidth="sm"
+      >
+        <div className="flex flex-col gap-4">
+          <p className="text-xs sm:text-sm text-charcoal-600 leading-relaxed">
+            Are you sure you want to delete <span className="font-semibold text-charcoal-900">&ldquo;{listing.title}&rdquo;</span>? This will permanently remove the listing, photos, and any conversations associated with it. This action cannot be undone.
+          </p>
+
+          {deleteError && (
+            <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs font-medium">
+              {deleteError}
+            </div>
+          )}
+
+          <div className="flex items-center justify-end gap-2.5 pt-2">
+            <button
+              type="button"
+              disabled={isDeleting}
+              onClick={() => setIsDeleteModalOpen(false)}
+              className="px-4 py-2 rounded-xl text-xs font-semibold text-charcoal-700 bg-charcoal-100 hover:bg-charcoal-200 transition-colors disabled:opacity-50 cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              disabled={isDeleting}
+              onClick={handleDeleteListing}
+              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl text-xs font-semibold text-white bg-red-600 hover:bg-red-700 transition-colors shadow-xs active:scale-[0.98] disabled:opacity-60 cursor-pointer"
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  <span>Deleting...</span>
+                </>
+              ) : (
+                <>
+                  <Trash2 className="w-3.5 h-3.5" />
+                  <span>Delete</span>
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

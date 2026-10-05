@@ -95,6 +95,22 @@ export default function MyListingsPage() {
     );
   };
 
+  // Handle listing deletion
+  const handleDeleteListing = async (listingId: string) => {
+    const apiUrl = API_URL;
+    const res = await fetch(`${apiUrl}/api/listings/${listingId}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      throw new Error(errorData.message || "Failed to delete listing");
+    }
+
+    setListings((prev) => prev.filter((item) => item.id !== listingId));
+  };
+
   // Filter listings
   const filteredListings = React.useMemo(() => {
     return listings.filter((item) => {
@@ -282,6 +298,7 @@ export default function MyListingsPage() {
                 key={listing.id}
                 listing={listing}
                 onStatusChange={handleStatusChange}
+                onDelete={handleDeleteListing}
               />
             ))}
           </div>
