@@ -22,14 +22,11 @@ interface CreateReportInput {
 export async function createReport(input: CreateReportInput) {
     const { reporterId, reason, description, listingId, reportedUserId } = input;
 
-    if (reportedUserId && reportedUserId === reporterId) {
-        throw new AppError("You cannot report yourself", 400);
-    }
-
     let targetTitle = "Target";
     let sellerName: string | undefined;
     let sellerEmail: string | undefined;
     const targetType: "listing" | "user" = listingId ? "listing" : "user";
+    let effectiveReportedUserId: string | undefined;
 
     // If reporting a listing, verify it exists and prevent self-report
     if (listingId) {
@@ -51,6 +48,9 @@ export async function createReport(input: CreateReportInput) {
             throw new AppError("You cannot report your own listing", 400);
         }
 
+        // Always derive reportedUserId from the listing's seller on the server
+        effectiveReportedUserId = listing.sellerId;
+
         // Always keep targetTitle as the listing's title for listing reports
         targetTitle = listing.title;
         if (listing.seller) {
@@ -58,6 +58,10 @@ export async function createReport(input: CreateReportInput) {
             sellerEmail = listing.seller.email;
         }
     } else if (reportedUserId) {
+        if (reportedUserId === reporterId) {
+            throw new AppError("You cannot report yourself", 400);
+        }
+
         // If reporting a user profile directly
         const user = await prisma.user.findUnique({
             where: { id: reportedUserId },
@@ -68,17 +72,26 @@ export async function createReport(input: CreateReportInput) {
             throw new AppError("User not found", 404);
         }
 
+        effectiveReportedUserId = user.id;
         targetTitle = user.name;
+    } else {
+        throw new AppError("Either listingId or reportedUserId must be provided", 400);
     }
 
     // Prevent duplicate pending reports from the same reporter on the same target
     const existing = await prisma.report.findFirst({
-        where: {
-            reporterId,
-            status: "PENDING",
-            ...(listingId ? { listingId } : {}),
-            ...(reportedUserId ? { reportedUserId } : {}),
-        },
+        where: listingId
+            ? {
+                reporterId,
+                status: "PENDING",
+                listingId,
+            }
+            : {
+                reporterId,
+                status: "PENDING",
+                reportedUserId: effectiveReportedUserId,
+                listingId: null,
+            },
     });
 
     if (existing) {
@@ -91,7 +104,7 @@ export async function createReport(input: CreateReportInput) {
             reason,
             ...(description ? { description } : {}),
             ...(listingId ? { listingId } : {}),
-            ...(reportedUserId ? { reportedUserId } : {}),
+            ...(effectiveReportedUserId ? { reportedUserId: effectiveReportedUserId } : {}),
         },
         select: {
             id: true,
@@ -293,27 +306,90 @@ export async function resolveReport(input: ResolveReportInput) {
         throw new AppError("This report has already been resolved", 400);
     }
 
-    // Update the report with resolution data
-    await prisma.report.update({
-        where: { id: reportId },
-        data: {
-            status: "RESOLVED",
-            actionTaken: action,
-            ...(notes ? { resolutionNotes: notes } : {}),
-            reviewedById: adminId,
-            resolvedAt: new Date(),
-        },
+    const targetUser = report.listing
+        ? { id: report.listing.seller.id, email: report.listing.seller.email }
+        : report.reportedUser;
+
+    if (action === "LISTING_REMOVED" && !report.listingId) {
+        throw new AppError("Cannot remove listing: report is not associated with a listing", 400);
+    }
+
+    if ((action === "USER_SUSPENDED" || action === "USER_BANNED") && !targetUser) {
+        throw new AppError("Cannot suspend or ban user: report is not associated with a user", 400);
+    }
+
+    // Run report resolution and database moderation actions in the same transaction
+    await prisma.$transaction(async (tx) => {
+        await tx.report.update({
+            where: { id: reportId },
+            data: {
+                status: "RESOLVED",
+                actionTaken: action,
+                ...(notes ? { resolutionNotes: notes } : {}),
+                reviewedById: adminId,
+                resolvedAt: new Date(),
+            },
+        });
+
+        switch (action) {
+            case "DISMISSED":
+            case "WARNING_ISSUED":
+                // No database mutation on listing or user
+                break;
+
+            case "LISTING_REMOVED": {
+                if (report.listingId) {
+                    await tx.listing.update({
+                        where: { id: report.listingId },
+                        data: { status: "REMOVED_BY_ADMIN" },
+                    });
+                }
+                break;
+            }
+
+            case "USER_SUSPENDED":
+            case "USER_BANNED": {
+                const userStatus = action === "USER_SUSPENDED" ? "SUSPENDED" : "BANNED";
+                if (targetUser) {
+                    await tx.user.update({
+                        where: { id: targetUser.id },
+                        data: { status: userStatus },
+                    });
+
+                    await tx.listing.updateMany({
+                        where: {
+                            sellerId: targetUser.id,
+                            status: "ACTIVE",
+                        },
+                        data: { status: "REMOVED_BY_ADMIN" },
+                    });
+                }
+                break;
+            }
+        }
     });
 
-    // Execute the resolution action
+    // Invalidate caches after database transaction succeeds
+    if (action === "LISTING_REMOVED") {
+        if (report.listingId) {
+            await deleteCache(`listing:${report.listingId}`);
+        }
+        await deleteCache("listings:feed:p1:l10:newest");
+    } else if (action === "USER_SUSPENDED" || action === "USER_BANNED") {
+        await deleteCache("listings:feed:p1:l10:newest");
+        if (report.listingId) {
+            await deleteCache(`listing:${report.listingId}`);
+        }
+    }
+
+    // Send moderation emails — catch only email errors so email issues do not fail the completed DB resolution
     try {
         switch (action) {
             case "DISMISSED":
-                // No action needed on listing or user
                 break;
 
             case "WARNING_ISSUED": {
-                const targetEmail = report.reportedUser?.email || report.listing?.seller.email;
+                const targetEmail = targetUser?.email;
                 if (targetEmail) {
                     await sendWarningEmail(targetEmail, report.reason, notes);
                 }
@@ -321,15 +397,7 @@ export async function resolveReport(input: ResolveReportInput) {
             }
 
             case "LISTING_REMOVED": {
-                if (report.listingId && report.listing) {
-                    await prisma.listing.update({
-                        where: { id: report.listingId },
-                        data: { status: "REMOVED_BY_ADMIN" },
-                    });
-
-                    await deleteCache(`listing:${report.listingId}`);
-                    await deleteCache("listings:feed:p1:l10:newest");
-
+                if (report.listing?.seller.email && report.listing?.title) {
                     await sendListingRemovalEmail(
                         report.listing.seller.email,
                         report.listing.title,
@@ -342,30 +410,7 @@ export async function resolveReport(input: ResolveReportInput) {
 
             case "USER_SUSPENDED":
             case "USER_BANNED": {
-                const userStatus = action === "USER_SUSPENDED" ? "SUSPENDED" : "BANNED";
-                const targetUser = report.reportedUser || (report.listing ? { id: report.listing.seller.id, email: report.listing.seller.email } : null);
-
-                if (targetUser) {
-                    // Update user status and hide all their active listings
-                    await prisma.$transaction([
-                        prisma.user.update({
-                            where: { id: targetUser.id },
-                            data: { status: userStatus },
-                        }),
-                        prisma.listing.updateMany({
-                            where: {
-                                sellerId: targetUser.id,
-                                status: "ACTIVE",
-                            },
-                            data: { status: "REMOVED_BY_ADMIN" },
-                        }),
-                    ]);
-
-                    await deleteCache("listings:feed:p1:l10:newest");
-                    if (report.listingId) {
-                        await deleteCache(`listing:${report.listingId}`);
-                    }
-
+                if (targetUser?.email) {
                     await sendAccountSuspensionEmail(
                         targetUser.email,
                         action,
