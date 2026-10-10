@@ -2,6 +2,7 @@ enum ListingStatus {
   ACTIVE
   RESERVED
   SOLD
+  REMOVED_BY_ADMIN
 }
 
 enum ListingCondition {
