@@ -6,9 +6,10 @@ import { useRouter } from "next/navigation";
 import { Listing } from "@/lib/types";
 import { formatPrice, cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
-import { MessageSquare, Loader2, Edit3, ShieldCheck, MapPin, Sparkles, Layers, Trash2 } from "lucide-react";
+import { MessageSquare, Loader2, Edit3, ShieldCheck, MapPin, Sparkles, Layers, Trash2, Flag } from "lucide-react";
 import { API_URL } from "@/lib/constants";
 import { Modal } from "@/components/ui/modal";
+import { ReportListingModal } from "./report-listing-modal";
 
 export interface ListingInfoCardProps {
   listing: Listing;
@@ -29,6 +30,7 @@ export function ListingInfoCard({ listing }: ListingInfoCardProps) {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
   const [isDeleting, setIsDeleting] = React.useState(false);
   const [deleteError, setDeleteError] = React.useState<string | null>(null);
+  const [isReportModalOpen, setIsReportModalOpen] = React.useState(false);
 
   const isOwner = Boolean(
     user && (user.id === listing.sellerId || user.id === listing.seller?.id)
@@ -245,6 +247,29 @@ export function ListingInfoCard({ listing }: ListingInfoCardProps) {
           <span>Zero buyer fees • Direct student-to-student deal</span>
         </div>
       </div>
+
+      {/* Report Listing Trigger for non-owners */}
+      {!isOwner && (
+        <div className="pt-2 flex justify-end">
+          <button
+            type="button"
+            onClick={() => setIsReportModalOpen(true)}
+            className="inline-flex items-center gap-1.5 text-xs text-charcoal-400 hover:text-rose-600 transition-colors cursor-pointer group py-1 px-2 rounded-lg hover:bg-rose-50/60"
+          >
+            <Flag className="w-3.5 h-3.5 group-hover:text-rose-600 transition-colors" />
+            <span>Report this listing</span>
+          </button>
+        </div>
+      )}
+
+      {/* Report Listing Modal */}
+      <ReportListingModal
+        isOpen={isReportModalOpen}
+        onClose={() => setIsReportModalOpen(false)}
+        listingId={listing.id}
+        sellerId={listing.sellerId || listing.seller?.id}
+        listingTitle={listing.title}
+      />
 
       {/* Delete Confirmation Modal */}
       <Modal

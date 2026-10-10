@@ -13,6 +13,14 @@ enum ReportStatus {
   RESOLVED
 }
 
+enum ReportAction {
+  DISMISSED
+  WARNING_ISSUED
+  LISTING_REMOVED
+  USER_SUSPENDED
+  USER_BANNED
+}
+
 model Report {
   id String @id @default(uuid())
 
@@ -25,11 +33,22 @@ model Report {
   reporter   User   @relation("Reporter", fields: [reporterId], references: [id])
 
   listingId String?
-  listing   Listing? @relation(fields: [listingId], references: [id])
+  listing   Listing? @relation(fields: [listingId], references: [id], onDelete: SetNull)
 
   reportedUserId String?
-  reportedUser   User?   @relation("ReportedUser", fields: [reportedUserId], references: [id])
+  reportedUser   User?   @relation("ReportedUser", fields: [reportedUserId], references: [id], onDelete: SetNull)
+
+  // Resolution audit trail
+  reviewedById    String?
+  reviewedBy      User?         @relation("ReportReviewer", fields: [reviewedById], references: [id])
+  actionTaken     ReportAction?
+  resolutionNotes String?
+  resolvedAt      DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@index([status, createdAt(sort: Desc)])
+  @@index([reporterId, listingId])
+  @@index([reportedUserId])
 }

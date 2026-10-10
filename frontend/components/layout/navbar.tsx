@@ -13,6 +13,7 @@ import {
   LogOut,
   ChevronDown,
   ShoppingBag,
+  ShieldAlert,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { useInboxStore } from "@/lib/stores/inbox.store";
@@ -243,6 +244,17 @@ export function Navbar() {
                       {user?.email || "Verified Student"}
                     </p>
                   </div>
+
+                  {user?.role === "ADMIN" && (
+                    <Link
+                      href="/admin/reports"
+                      onClick={() => setDropdownOpen(false)}
+                      className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-rose-700 bg-rose-50/70 hover:bg-rose-100 hover:text-rose-900 transition-colors focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:outline-none mb-1 border border-rose-200/50"
+                    >
+                      <ShieldAlert className="h-4 w-4 text-rose-600 shrink-0" />
+                      <span>Moderation Queue</span>
+                    </Link>
+                  )}
 
                   <Link
                     href="/my-listings"

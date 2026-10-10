@@ -43,3 +43,12 @@ export const conversationRateLimiters = {
     }),
 };
 
+export const reportRateLimiters = {
+    createReport: rateLimit({
+        windowSeconds: 60 * 60,
+        maxRequests: 5,
+        keyPrefix: "create-report-user",
+        keyGenerator: (req: Request) => req.userId || req.ip || "unknown",
+    }),
+};
+

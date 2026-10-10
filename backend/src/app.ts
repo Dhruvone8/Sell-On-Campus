@@ -7,6 +7,7 @@ import listingRoutes from "./routes/listing.routes.js";
 import conversationRoutes from "./routes/conversation.routes.js";
 import notificationRoutes from "./routes/notification.routes.js";
 import userRoutes from "./routes/user.routes.js";
+import reportRoutes from "./routes/report.routes.js";
 import { isAllowedOrigin } from "./utils/origin.util.js";
 import { verifyMutationOrigin } from "./middleware/csrf.middleware.js";
 import { AppError } from "./lib/error.js";
@@ -48,6 +49,7 @@ app.use("/api/listings", listingRoutes);
 app.use("/api/conversations", conversationRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/users", userRoutes);
+app.use("/api/reports", reportRoutes);
 
 // Centralized JSON error handler (prevents stack trace / HTML leakage)
 app.use((err: unknown, _req: Request, res: Response, _next: NextFunction) => {
