@@ -3,12 +3,78 @@ import type { Metadata } from "next";
 import { ListingDetailContent } from "./listing-detail-content";
 import { Skeleton } from "@/components/ui/skeleton";
 
+import { API_URL, APP_LOGO_URL, SITE_URL } from "@/lib/constants";
+
 interface PageProps {
   params: Promise<{ id: string }>;
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  await params;
+  const { id } = await params;
+
+  try {
+    const res = await fetch(`${API_URL}/api/listings/${id}`, {
+      next: { revalidate: 60 },
+      headers: {
+        Accept: "application/json",
+      },
+    });
+
+    if (res.ok) {
+      const data = await res.json();
+      const listing = data.listing;
+
+      if (listing) {
+        const title = `${listing.title} | SellOnCampus`;
+        const priceFormatted = listing.price
+          ? `₹${Number(listing.price).toLocaleString("en-IN")}`
+          : "";
+        const descSnippet = listing.description
+          ? listing.description.replace(/\s+/g, " ").trim().slice(0, 160)
+          : "Buy and sell pre-owned campus essentials directly from verified university peers on SellOnCampus.";
+        const description = priceFormatted
+          ? `${priceFormatted} • ${descSnippet}`
+          : descSnippet;
+
+        const mainImage = listing.images?.[0]?.imageUrl || APP_LOGO_URL;
+        const pageUrl = `${SITE_URL}/listings/${id}`;
+
+        return {
+          title,
+          description,
+          openGraph: {
+            title,
+            description,
+            url: pageUrl,
+            siteName: "SellOnCampus",
+            type: "website",
+            images: mainImage
+              ? [
+                  {
+                    url: mainImage,
+                    width: 1200,
+                    height: 630,
+                    alt: listing.title,
+                  },
+                ]
+              : undefined,
+          },
+          twitter: {
+            card: "summary_large_image",
+            title,
+            description,
+            images: mainImage ? [mainImage] : undefined,
+          },
+          alternates: {
+            canonical: pageUrl,
+          },
+        };
+      }
+    }
+  } catch (error) {
+    console.warn("Unable to fetch dynamic listing metadata for id:", id, error);
+  }
+
   return {
     title: "Listing Details | SellOnCampus",
     description:

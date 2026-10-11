@@ -57,3 +57,20 @@ export const WS_URL =
     ? API_URL.replace(/^https/, "wss")
     : API_URL.replace(/^http/, "ws"));
 
+const rawSiteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/+$/, "") ||
+  process.env.NEXT_PUBLIC_APP_URL?.trim().replace(/\/+$/, "");
+
+export const SITE_URL =
+  rawSiteUrl ||
+  (typeof window !== "undefined" && window.location.origin
+    ? window.location.origin
+    : "http://localhost:3000");
+
+export function getListingShareUrl(id: string): string {
+  if (typeof window !== "undefined" && window.location.origin) {
+    return `${window.location.origin}/listings/${id}`;
+  }
+  return `${SITE_URL}/listings/${id}`;
+}
+

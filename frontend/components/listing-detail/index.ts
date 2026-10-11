@@ -6,3 +6,4 @@ export * from "./listing-specs-table";
 export * from "./listing-safety-card";
 export * from "./related-listings";
 export * from "./report-listing-modal";
+export * from "./share-listing-modal";

@@ -6,10 +6,11 @@ import { useRouter } from "next/navigation";
 import { Listing } from "@/lib/types";
 import { formatPrice, cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
-import { MessageSquare, Loader2, Edit3, ShieldCheck, MapPin, Sparkles, Layers, Trash2, Flag } from "lucide-react";
-import { API_URL } from "@/lib/constants";
+import { MessageSquare, Loader2, Edit3, ShieldCheck, MapPin, Sparkles, Layers, Trash2, Flag, Share2 } from "lucide-react";
+import { API_URL, getListingShareUrl } from "@/lib/constants";
 import { Modal } from "@/components/ui/modal";
 import { ReportListingModal } from "./report-listing-modal";
+import { ShareListingModal } from "./share-listing-modal";
 
 export interface ListingInfoCardProps {
   listing: Listing;
@@ -31,6 +32,31 @@ export function ListingInfoCard({ listing }: ListingInfoCardProps) {
   const [isDeleting, setIsDeleting] = React.useState(false);
   const [deleteError, setDeleteError] = React.useState<string | null>(null);
   const [isReportModalOpen, setIsReportModalOpen] = React.useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = React.useState(false);
+
+  const handleShare = async () => {
+    const shareUrl = getListingShareUrl(listing.id);
+    const priceText = listing.price ? ` (${formatPrice(listing.price)})` : "";
+
+    // On mobile devices where navigator.share is supported, invoke native share sheet directly
+    if (typeof navigator !== "undefined" && navigator.share) {
+      try {
+        await navigator.share({
+          title: listing.title,
+          text: `Check out "${listing.title}"${priceText} on SellOnCampus!`,
+          url: shareUrl,
+        });
+        return;
+      } catch (err: unknown) {
+        if ((err as Error)?.name === "AbortError") {
+          return;
+        }
+      }
+    }
+
+    // Fallback to desktop share modal
+    setIsShareModalOpen(true);
+  };
 
   const isOwner = Boolean(
     user && (user.id === listing.sellerId || user.id === listing.seller?.id)
@@ -143,10 +169,21 @@ export function ListingInfoCard({ listing }: ListingInfoCardProps) {
         </div>
       </div>
 
-      {/* Listing Title */}
-      <h1 className="text-xl min-[360px]:text-2xl sm:text-3xl font-bold text-charcoal-900 tracking-tight leading-snug font-jakarta">
-        {listing.title}
-      </h1>
+      {/* Listing Title & Share Button */}
+      <div className="flex items-start justify-between gap-3">
+        <h1 className="text-xl min-[360px]:text-2xl sm:text-3xl font-bold text-charcoal-900 tracking-tight leading-snug font-jakarta flex-1">
+          {listing.title}
+        </h1>
+        <button
+          type="button"
+          onClick={handleShare}
+          aria-label="Share listing"
+          title="Share listing"
+          className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-charcoal-50 hover:bg-charcoal-100 border border-charcoal-200/80 text-charcoal-600 hover:text-brand-600 hover:border-brand-200 transition-colors shadow-2xs shrink-0 cursor-pointer active:scale-95"
+        >
+          <Share2 className="w-4.5 h-4.5 stroke-[2.2]" />
+        </button>
+      </div>
 
       {/* Price & Condition */}
       <div className="flex flex-wrap items-baseline justify-between gap-2 pt-1">
@@ -248,9 +285,18 @@ export function ListingInfoCard({ listing }: ListingInfoCardProps) {
         </div>
       </div>
 
-      {/* Report Listing Trigger for non-owners */}
-      {!isOwner && (
-        <div className="pt-2 flex justify-end">
+      {/* Utility Actions Row: Share & Report */}
+      <div className="pt-2 flex items-center justify-between text-xs text-charcoal-500">
+        <button
+          type="button"
+          onClick={handleShare}
+          className="inline-flex items-center gap-1.5 text-xs text-charcoal-600 hover:text-brand-600 transition-colors cursor-pointer py-1 px-2 rounded-lg hover:bg-brand-50/60 font-medium"
+        >
+          <Share2 className="w-3.5 h-3.5 stroke-[2]" />
+          <span>Share listing</span>
+        </button>
+
+        {!isOwner && (
           <button
             type="button"
             onClick={() => setIsReportModalOpen(true)}
@@ -259,8 +305,15 @@ export function ListingInfoCard({ listing }: ListingInfoCardProps) {
             <Flag className="w-3.5 h-3.5 group-hover:text-rose-600 transition-colors" />
             <span>Report this listing</span>
           </button>
-        </div>
-      )}
+        )}
+      </div>
+
+      {/* Share Listing Modal */}
+      <ShareListingModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        listing={listing}
+      />
 
       {/* Report Listing Modal */}
       <ReportListingModal
