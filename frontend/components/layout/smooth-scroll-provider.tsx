@@ -11,18 +11,16 @@ import { ReactLenis } from "lenis/react";
  *
  * Configuration rationale:
  * - `autoRaf: true` — Lenis manages its own rAF loop (no GSAP dependency)
- * - `lerp: 0.1` — responsive interpolation; fast enough to feel snappy,
- *   smooth enough to be polished
- * - `duration: 1.2` — caps the maximum scroll animation duration for
- *   consistency across wheel/touch/keyboard
- * - `smoothWheel: true` — smooths mouse-wheel events on desktop
- * - `syncTouch: false` — keeps native touch scrolling on mobile devices
- *   for the best feel and battery efficiency
- * - `autoToggle: true` — automatically stops/starts Lenis when the page
- *   is hidden or visible, preventing background CPU waste
+ * - `lerp: 0.1` — responsive interpolation for desktop mousewheel/trackpad
+ * - `duration: 1.2` — smooth scroll duration
+ * - `smoothWheel: true` — smooths mouse-wheel events on desktop & responsive desktop viewports
+ * - `syncTouch: true` — enables smooth momentum scrolling for touch devices & mobile viewports
+ * - `syncTouchLerp: 0.08` — tuned interpolation for natural mobile swipe deceleration
+ * - `touchMultiplier: 1.2` — calibrated touch velocity multiplier for fluid finger gestures
+ * - `touchInertiaExponent: 1.7` — natural mobile touch inertia curve
+ * - `autoToggle: true` — automatically stops/starts Lenis when the page is hidden or visible
  * - `anchors: true` — smooth anchor-link navigation (#id jumps)
- * - `allowNestedScroll: true` — allows inner scrollable elements (modals,
- *   dropdowns, chat panels) to scroll normally without interference
+ * - `allowNestedScroll: true` — allows inner scrollable elements (modals, dropdowns, chat panels) to scroll normally
  */
 export function SmoothScrollProvider({
   children,
@@ -37,7 +35,10 @@ export function SmoothScrollProvider({
         lerp: 0.1,
         duration: 1.2,
         smoothWheel: true,
-        syncTouch: false,
+        syncTouch: true,
+        syncTouchLerp: 0.08,
+        touchMultiplier: 1.2,
+        touchInertiaExponent: 1.7,
         autoToggle: true,
         anchors: true,
         allowNestedScroll: true,
