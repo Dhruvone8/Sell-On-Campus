@@ -82,6 +82,12 @@ export function ListingContextHeader({
                 {initials}
               </div>
             )}
+            {isConnected && (
+              <span
+                className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 border-2 border-white rounded-full ring-1 ring-emerald-500/20"
+                title="Online"
+              />
+            )}
           </div>
 
           {/* Peer Name & Subtitle */}

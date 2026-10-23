@@ -7,9 +7,12 @@ export interface ListingSafetyCardProps {
   listingId?: string;
 }
 
-export function ListingSafetyCard({ listingId }: ListingSafetyCardProps) {
+export function ListingSafetyCard({ listingId }: ListingSafetyCardProps = {}) {
   return (
-    <div className="p-5 rounded-2xl bg-amber-50/70 border border-amber-200/70 shadow-xs flex flex-col gap-3">
+    <div
+      data-listing-id={listingId}
+      className="p-5 rounded-2xl bg-amber-50/70 border border-amber-200/70 shadow-xs flex flex-col gap-3"
+    >
       <div className="flex items-start gap-3">
         <ShieldCheck className="w-5 h-5 text-amber-700 shrink-0 mt-0.5" />
         <div className="flex flex-col gap-1">

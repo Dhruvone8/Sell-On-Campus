@@ -201,7 +201,7 @@ export function NotificationPopover() {
           </div>
 
           {/* Notifications Scroll List */}
-          <div className="max-h-[360px] overflow-y-auto p-2 space-y-1.5 scrollbar-thin">
+          <div className="max-h-[360px] overflow-y-auto p-2 space-y-1.5 scrollbar-thin" data-lenis-prevent>
             {isLoading ? (
               <div className="py-10 flex flex-col items-center justify-center text-charcoal-400 gap-2">
                 <Loader2 className="w-6 h-6 animate-spin text-brand-500" />

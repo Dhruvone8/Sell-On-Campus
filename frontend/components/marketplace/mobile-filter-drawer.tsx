@@ -67,7 +67,7 @@ export function MobileFilterDrawer({
         </div>
 
         {/* Scrollable Filters Content */}
-        <div className="p-4 overflow-y-auto flex-1">
+        <div className="p-4 overflow-y-auto flex-1" data-lenis-prevent>
           <FilterSidebar
             filters={filters}
             onFilterChange={onFilterChange}

@@ -5,7 +5,6 @@ import * as React from "react";
 export const dynamic = "force-dynamic";
 
 export default function GlobalError({
-  error: _error,
   reset,
 }: {
   error: Error & { digest?: string };

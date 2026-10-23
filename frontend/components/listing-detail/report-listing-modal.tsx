@@ -182,7 +182,7 @@ export function ReportListingModal({
           </div>
 
           {/* Body Content - Scrollable independently, no nested scrollbars */}
-          <div className="flex-1 min-h-0 overflow-y-auto p-5 sm:p-6 flex flex-col gap-5">
+          <div className="flex-1 min-h-0 overflow-y-auto p-5 sm:p-6 flex flex-col gap-5" data-lenis-prevent>
             {error && (
               <div className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium flex items-start gap-2.5 animate-in fade-in duration-150">
                 <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />

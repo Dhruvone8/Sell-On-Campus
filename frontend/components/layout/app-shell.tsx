@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { Navbar } from "./navbar";
 import { MobileNav } from "./mobile-nav";
 import { Footer } from "./footer";
+import { SmoothScrollProvider } from "./smooth-scroll-provider";
 import { AuthProvider } from "@/lib/auth-context";
 import { SocketProvider } from "@/lib/socket-context";
 
@@ -25,14 +26,16 @@ export function AppShell({ children }: AppShellProps) {
   return (
     <AuthProvider>
       <SocketProvider>
-        <div className="min-h-screen flex flex-col bg-canvas text-charcoal-900">
-          <Navbar />
-          <main className={cn("flex-1 pt-16", isMessageView ? "pb-0" : "pb-20 md:pb-0")}>
-            {children}
-          </main>
-          {!hideFooter && <Footer />}
-          <MobileNav />
-        </div>
+        <SmoothScrollProvider>
+          <div className="min-h-screen flex flex-col bg-canvas text-charcoal-900">
+            <Navbar />
+            <main className={cn("flex-1 pt-16", isMessageView ? "pb-0" : "pb-20 md:pb-0")}>
+              {children}
+            </main>
+            {!hideFooter && <Footer />}
+            <MobileNav />
+          </div>
+        </SmoothScrollProvider>
       </SocketProvider>
     </AuthProvider>
   );
