@@ -131,7 +131,7 @@ export function MessagePanel({
       />
 
       {/* 2. Message History Stream */}
-      <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-2 scrollbar-thin">
+      <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-2 scrollbar-thin" data-lenis-prevent>
         {error && (
           <div className="p-3 mb-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
             <AlertCircle className="w-4 h-4 shrink-0" />

@@ -562,7 +562,7 @@ export default function AdminReportsPage() {
             </div>
 
             {/* Scrollable Body - independent scroll, bounded by 90dvh, never clips */}
-            <div className="flex-1 min-h-0 overflow-y-auto p-5 sm:p-6 flex flex-col gap-5">
+            <div className="flex-1 min-h-0 overflow-y-auto p-5 sm:p-6 flex flex-col gap-5" data-lenis-prevent>
               {/* Top row: Allegation info vs Target Preview */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* Left Column: Allegation Details */}

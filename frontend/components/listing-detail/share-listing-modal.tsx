@@ -29,24 +29,21 @@ export function ShareListingModal({
 }: ShareListingModalProps) {
   const [copied, setCopied] = React.useState(false);
   const [copiedNotification, setCopiedNotification] = React.useState<string | null>(null);
-  const [shareUrl, setShareUrl] = React.useState("");
-  const [canNativeShare, setCanNativeShare] = React.useState(false);
   const [imageError, setImageError] = React.useState(false);
 
-  React.useEffect(() => {
-    if (typeof window !== "undefined") {
-      setShareUrl(getListingShareUrl(listing.id));
-      setCanNativeShare(typeof navigator !== "undefined" && Boolean(navigator.share));
-    }
-  }, [listing.id]);
+  const shareUrl = typeof window !== "undefined" ? getListingShareUrl(listing.id) : "";
+  const canNativeShare = React.useSyncExternalStore(
+    () => () => {},
+    () => typeof navigator !== "undefined" && Boolean(navigator.share),
+    () => false
+  );
 
-  React.useEffect(() => {
-    if (!isOpen) {
-      setCopied(false);
-      setCopiedNotification(null);
-      setImageError(false);
-    }
-  }, [isOpen]);
+  const handleClose = React.useCallback(() => {
+    setCopied(false);
+    setCopiedNotification(null);
+    setImageError(false);
+    onClose();
+  }, [onClose]);
 
   const rawThumbnail = listing.images?.[0]?.imageUrl;
   const thumbnail = rawThumbnail ? optimizeCloudinaryUrl(rawThumbnail) : null;
@@ -195,7 +192,7 @@ export function ShareListingModal({
         const mailto = `mailto:?subject=${encodeURIComponent(shareTitle)}&body=${encodeURIComponent(
           `${shareSummary}\n\n${shareUrl}\n\nSafe peer handoff on campus with SellOnCampus!`
         )}`;
-        window.location.href = mailto;
+        window.location.assign(mailto);
       },
     },
   ];
@@ -203,7 +200,7 @@ export function ShareListingModal({
   return (
     <Modal
       isOpen={isOpen}
-      onClose={onClose}
+      onClose={handleClose}
       title="Share listing"
       description="Share this item with classmates or campus groups"
       maxWidth="md"

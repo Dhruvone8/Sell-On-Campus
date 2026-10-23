@@ -71,7 +71,7 @@ export function ConversationList({
       </div>
 
       {/* Conversation List Stream */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-2 scrollbar-thin">
+      <div className="flex-1 overflow-y-auto p-3 space-y-2 scrollbar-thin" data-lenis-prevent>
         {isLoading ? (
           <div className="space-y-3 p-1">
             {Array.from({ length: 5 }).map((_, idx) => (
