@@ -1,4 +1,6 @@
 import { Resend } from "resend";
+import { renderWelcomeEmail } from "./templates/welcome.template.js";
+import { LOGO_IMAGE_BUFFER } from "./templates/logo.asset.js";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -13,13 +15,28 @@ function escapeHtml(str: string): string {
         .replace(/'/g, "&#039;");
 }
 
-export async function sendEmail(to: string, subject: string, text: string, html?: string) {
+export interface EmailAttachment {
+    filename: string;
+    content?: string | Buffer;
+    path?: string;
+    contentType?: string;
+    contentId?: string;
+}
+
+export async function sendEmail(
+    to: string,
+    subject: string,
+    text: string,
+    html?: string,
+    attachments?: EmailAttachment[]
+) {
     const { error } = await resend.emails.send({
         from: FROM_ADDRESS,
         to,
         subject,
         text,
         ...(html ? { html } : {}),
+        ...(attachments && attachments.length > 0 ? { attachments } : {}),
     });
 
     if (error) {
@@ -377,4 +394,20 @@ export async function sendNewReportAlertEmail(
         textBody,
         htmlBody
     );
+}
+
+export async function sendWelcomeEmail(email: string, name: string) {
+    const firstName = name.trim().split(/\s+/)[0] || "Student";
+    const marketplaceUrl = (process.env.FRONTEND_URL || "https://selloncampus.site").replace(/\/$/, "");
+
+    const { subject, text, html } = renderWelcomeEmail({ firstName, marketplaceUrl });
+
+    await sendEmail(email, subject, text, html, [
+        {
+            filename: "logo.jpg",
+            content: LOGO_IMAGE_BUFFER,
+            contentId: "selloncampus-logo",
+            contentType: "image/jpeg",
+        },
+    ]);
 }

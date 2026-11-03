@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
 import { prisma } from "../lib/prisma.js";
 import { requestOtp, verifyOtpCode } from "../services/auth/otp.service.js";
-import { sendPasswordResetOtpEmail, sendRegistrationOtpEmail } from "../services/email/email.service.js";
+import { sendPasswordResetOtpEmail, sendRegistrationOtpEmail, sendWelcomeEmail } from "../services/email/email.service.js";
 import argon2 from "argon2";
 import {
     createAccessToken, createPasswordResetToken, createRefreshToken, verifyPasswordResetToken, verifyRefreshToken
@@ -143,6 +143,18 @@ export async function register(req: Request, res: Response) {
         const refreshToken = await createRefreshToken(user.id);
 
         setAuthCookies(res, accessToken, refreshToken);
+
+        // Asynchronously dispatch welcome email and record timestamp upon delivery (non-blocking)
+        sendWelcomeEmail(user.email, user.name)
+            .then(async () => {
+                await prisma.user.update({
+                    where: { id: user.id },
+                    data: { welcomeEmailSentAt: new Date() },
+                });
+            })
+            .catch((err) => {
+                console.error(`[WelcomeEmail] Failed to send welcome email to ${user.email}:`, err);
+            });
 
         return res.status(201).json({ message: "Registration successful" });
 
