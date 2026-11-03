@@ -56,9 +56,15 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${plusJakartaSans.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-canvas text-charcoal-900 font-sans selection:bg-brand-100 selection:text-brand-900">
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `try{var s=window.sessionStorage,p=window.location.pathname,q=window.location.search,rm=window.matchMedia('(prefers-reduced-motion: reduce)').matches;if(!rm&&p==='/'&&(!s.getItem('soc_intro_shown')||q.indexOf('intro=1')!==-1||q.indexOf('replay=1')!==-1)){document.documentElement.classList.add('soc-intro-pending');}}catch(e){}`,
+          }}
+        />
         <AppShell>{children}</AppShell>
       </body>
     </html>

@@ -110,3 +110,33 @@ body {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* ============================================================================
+   SellOnCampus Intro Animation & Hero Hand-off Utilities
+   ============================================================================ */
+
+/* Hide intro overlay immediately on repeat visits or navigations */
+html:not(.soc-intro-pending) #soc-intro-overlay {
+  display: none !important;
+}
+
+/* Accessibility: instantly hide intro when user prefers reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  #soc-intro-overlay {
+    display: none !important;
+  }
+}
+
+/* While intro is actively playing, keep hero elements calmly primed underneath */
+html.soc-intro-pending .soc-hero-content {
+  opacity: 0;
+  transform: translateY(16px);
+}
+
+/* Fluid hand-off: as overlay lifts away, hero smoothly settles into view */
+html.soc-intro-revealing .soc-hero-content {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 650ms cubic-bezier(0.22, 1, 0.36, 1), transform 650ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: opacity, transform;
+}

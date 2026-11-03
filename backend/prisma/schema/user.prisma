@@ -21,7 +21,8 @@ model User {
   department      String?
   year            Int?
   profileImageUrl String?
-  emailVerifiedAt DateTime?
+  emailVerifiedAt    DateTime?
+  welcomeEmailSentAt DateTime?
 
   listings Listing[]
 
