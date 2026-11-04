@@ -1,16 +1,9 @@
-interface WelcomeEmailData {
+import { escapeHtml } from "./template.util.js";
+
+export interface WelcomeEmailData {
     firstName: string;
     marketplaceUrl: string;
     logoUrl?: string;
-}
-
-function escapeHtml(str: string): string {
-    return str
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
 }
 
 export function renderWelcomeEmail(data: WelcomeEmailData): { subject: string; text: string; html: string } {
