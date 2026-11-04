@@ -16,6 +16,11 @@ export function renderReportAlertEmail(data: ReportAlertEmailData): { subject: s
     const reasonLabel = data.reason.replace(/_/g, " ");
     const queueUrl = data.queueUrl;
 
+    const sanitizedDescription = data.description
+        ? data.description.replace(/[\r\n]+/g, " ").replace(/"/g, "'").trim()
+        : undefined;
+    const sanitizedTargetTitle = data.targetTitle.replace(/[\r\n]+/g, " ").replace(/"/g, "'").trim();
+
     const subject = `[Action Required] New ${reasonLabel} Report on SellOnCampus`;
 
     const text = [
@@ -25,10 +30,10 @@ export function renderReportAlertEmail(data: ReportAlertEmailData): { subject: s
         ``,
         `--- REPORT DETAILS ---`,
         `Reason: ${reasonLabel}`,
-        `Reported ${data.targetType === "listing" ? "Listing" : "User"}: "${data.targetTitle}"`,
+        `Reported ${data.targetType === "listing" ? "Listing" : "User"}: "${sanitizedTargetTitle}"`,
         data.sellerName ? `Seller / Owner: ${data.sellerName}${data.sellerEmail ? ` (${data.sellerEmail})` : ""}` : "",
         `Reported By: ${data.reporterName} (${data.reporterEmail})`,
-        data.description ? `Student Details: "${data.description}"` : `Student Details: None provided`,
+        sanitizedDescription ? `Student Details: "${sanitizedDescription}"` : `Student Details: None provided`,
         ``,
         `--- ACTION REQUIRED ---`,
         `Inspect the report and resolve it in the Moderation Queue:`,
