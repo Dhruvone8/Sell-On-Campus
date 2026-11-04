@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import {
-  IntroAnimation,
+  LoadingScreen,
   HeroSection,
   CategoryGrid,
   RecentListings,
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 export default function HomePage() {
   return (
     <div className="w-full flex flex-col">
-      <IntroAnimation />
+      <LoadingScreen />
       <HeroSection />
       <CategoryGrid />
       <RecentListings />

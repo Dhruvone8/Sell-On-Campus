@@ -1,5 +1,5 @@
 export * from "./hero-section";
-export * from "./intro-animation";
+export * from "./loading-screen";
 export * from "./category-grid";
 export * from "./recent-listings";
 export * from "./trust-pillars";
