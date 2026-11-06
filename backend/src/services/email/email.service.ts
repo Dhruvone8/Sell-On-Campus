@@ -27,7 +27,8 @@ export async function sendEmail(
     subject: string,
     text: string,
     html?: string,
-    attachments?: EmailAttachment[]
+    attachments?: EmailAttachment[],
+    idempotencyKey?: string
 ) {
     const { error } = await resend.emails.send({
         from: FROM_ADDRESS,
@@ -36,7 +37,8 @@ export async function sendEmail(
         text,
         ...(html ? { html } : {}),
         ...(attachments && attachments.length > 0 ? { attachments } : {}),
-    });
+    },
+        idempotencyKey ? { idempotencyKey } : undefined);
 
     if (error) {
         throw new Error(`Failed to send email: ${error.message}`);
@@ -99,7 +101,7 @@ export async function sendNewReportAlertEmail(
     await sendEmail(adminEmail, subject, text, html);
 }
 
-export async function sendWelcomeEmail(email: string, name: string) {
+export async function sendWelcomeEmail(email: string, name: string, idempotencyKey?: string) {
     const firstName = name.trim().split(/\s+/)[0] || "Student";
     const marketplaceUrl = (process.env.FRONTEND_URL || "https://selloncampus.site").replace(/\/$/, "");
 
@@ -112,5 +114,5 @@ export async function sendWelcomeEmail(email: string, name: string) {
             contentId: "selloncampus-logo",
             contentType: "image/jpeg",
         },
-    ]);
+    ], idempotencyKey);
 }
