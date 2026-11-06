@@ -7,7 +7,9 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "build": "prisma generate && tsc",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "dev:worker": "tsx src/workers/email.worker.ts",
+    "test:queue": "tsx src/workers/test.producer.ts"
   },
   "keywords": [],
   "author": "",
@@ -24,24 +26,26 @@
     "@types/pg": "^8.23.1",
     "@types/ws": "^8.18.1",
     "argon2": "^0.45.1",
+    "bullmq": "^6.6.0",
     "cloudinary": "^2.11.0",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "helmet": "^8.3.0",
+    "ioredis": "^6.0.0",
     "jose": "^6.2.10",
     "multer": "^2.3.0",
     "nodemailer": "^9.0.5",
     "pg": "^8.23.0",
     "prisma": "^7.9.1",
-    "redis": "^6.3.0",
+    "redis": "^6.3.1",
     "resend": "^6.32.0",
     "typescript": "^7.0.2",
     "ws": "^8.21.3",
     "zod": "^4.5.4"
   },
   "devDependencies": {
-    "tsx": "^4.23.12"
+    "tsx": "^4.23.15"
   }
 }

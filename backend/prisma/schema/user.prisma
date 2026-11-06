@@ -34,6 +34,8 @@ model User {
   notifications Notification[]
 
   conversationParticipants ConversationParticipant[]
+  
+  emailOutbox EmailOutbox[]
 
   reportsMade     Report[] @relation("Reporter")
   reportsAgainst  Report[] @relation("ReportedUser")
