@@ -12,7 +12,13 @@ Buy and sell textbooks, electronics, cycles, and dorm essentials securely with v
 [![Prisma](https://img.shields.io/badge/Prisma-2D3748?style=for-the-badge&logo=prisma&logoColor=white)](https://www.prisma.io/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 [![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)](https://redis.io/)
-[![BullMQ](https://img.shields.io/badge/BullMQ-000000?style=for-the-badge&logo=data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAA4klEQVR42u2VPQrCMBhAK0JBT6Dg5Al6Bc/QxVFw0Rs4isdxcXdxcPEuDk7OrwRaCCVf/hpdmgehTZrwvSRf0qLIZDKjB0hdpsDXt3/q4GjPjs2/BSR+KvDqBfIWMc3gPWDGV9yIAgvt/Wxbtvbbk3iMAjiSSj0fEcHmNgnXEtfAAZgxjFOsgE9S4ZGAW6l/F+gobEEZsbe+UrhWQLGLWO4K+Gj1WkhAUcBkLc3iIhzJFTAxjHdeRLfQY2Ror7T6PeRfYLsyJYF1r610Xb2SgO8gQgOkFlBl3/ZdJhHIZDKjpwEChssBAVjiBQAAAABJRU5ErkJggg==)](https://bullmq.io/)
+<a href="https://bullmq.io/">
+  <img
+    src="./assets/bullmq.svg"
+    alt="BullMQ"
+    height="28"
+  />
+</a>
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS_v4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 [![WebSockets](https://img.shields.io/badge/WebSockets-010101?style=for-the-badge&logo=socketdotio&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API)
 [![Resend](https://img.shields.io/badge/Resend-000000?style=for-the-badge&logo=resend&logoColor=white)](https://resend.com/)
