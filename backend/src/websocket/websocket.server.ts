@@ -10,8 +10,11 @@ interface AliveWebSocket extends WebSocket {
     isAlive: boolean;
 }
 
+let wssInstance: WebSocketServer | null = null;
+
 export function initializeWebSocketServer(server: Server) {
     const wss = new WebSocketServer({ server });
+    wssInstance = wss;
 
     wss.on("connection", async (socket: AliveWebSocket, request) => {
         socket.isAlive = true;
@@ -98,7 +101,64 @@ export function initializeWebSocketServer(server: Server) {
 
     wss.on("close", () => {
         clearInterval(heartBeatInterval);
+        wssInstance = null;
     });
 
     return wss;
+}
+
+export async function closeWebSocketServer(timeoutMs = 2000): Promise<void> {
+    if (!wssInstance) return;
+
+    const wss = wssInstance;
+
+    return new Promise<void>((resolve) => {
+        let isDone = false;
+        const done = () => {
+            if (!isDone) {
+                isDone = true;
+                resolve();
+            }
+        };
+
+        // Fallback timer: terminate any client sockets still hanging after timeout
+        const forceTimer = setTimeout(() => {
+            for (const client of wss.clients) {
+                if (client.readyState !== WebSocket.CLOSED) {
+                    try {
+                        client.terminate();
+                    } catch {
+                        // ignore termination errors
+                    }
+                }
+            }
+            done();
+        }, timeoutMs);
+        forceTimer.unref();
+
+        // Send standard 1001 "Going Away" close code to all active clients
+        for (const client of wss.clients) {
+            try {
+                if (client.readyState === WebSocket.OPEN) {
+                    client.close(1001, "Server shutting down");
+                }
+            } catch {
+                try {
+                    client.terminate();
+                } catch {
+                    // ignore
+                }
+            }
+        }
+
+        wss.close((err) => {
+            clearTimeout(forceTimer);
+            if (err) {
+                console.error("[WebSocket] Error closing WebSocket server:", err);
+            } else {
+                console.log("[WebSocket] WebSocket server closed.");
+            }
+            done();
+        });
+    });
 }

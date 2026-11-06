@@ -1,6 +1,7 @@
+import "dotenv/config";
 import { Worker, Job } from "bullmq";
 import connection from "../lib/queue/connection.js";
-import { prisma } from "../lib/prisma.js"
+import { prisma } from "../lib/prisma.js";
 import { sendWelcomeEmail } from "../services/email/email.service.js";
 
 interface EmailJobData {
@@ -70,20 +71,28 @@ emailWorker.on("completed", (job) => {
 });
 
 emailWorker.on("failed", async (job, error) => {
-    console.error(`[EmailWorker] Job: ${job?.id} failed `, error.message);
+    try {
+        console.error(`[EmailWorker] Job: ${job?.id} failed:`, error.message);
 
-    if (job && job.attemptsMade >= (job.opts.attempts ?? 1)) {
-        await prisma.emailOutbox.updateMany({
-            where: {
-                id: job.data.outboxId,
-                status: { not: "SENT" },
-            },
-            data: {
-                status: "FAILED",
-                attempts: job.attemptsMade,
-                lastError: error.message,
-            },
-        });
+        if (job && job.attemptsMade >= (job.opts.attempts ?? 1)) {
+            await prisma.emailOutbox.updateMany({
+                where: {
+                    id: job.data.outboxId,
+                    status: { not: "SENT" },
+                },
+                data: {
+                    status: "FAILED",
+                    attempts: job.attemptsMade,
+                    lastError: error.message,
+                },
+            });
+            console.log(`[EmailWorker] Outbox record ${job.data.outboxId} marked as FAILED.`);
+        }
+    } catch (dbError) {
+        console.error(
+            `[EmailWorker] Failed to update outbox record ${job?.data?.outboxId} status to FAILED (PostgreSQL may be unreachable):`,
+            dbError
+        );
     }
 });
 
@@ -98,24 +107,33 @@ async function gracefulShutdown(signal: string) {
 
     console.log(`\n[EmailWorker] ${signal} received. Shutting down...`);
 
+    // Hard deadline to prevent shutdown from hanging indefinitely
+    const shutdownTimeout = setTimeout(() => {
+        console.error("[EmailWorker] Graceful shutdown deadline exceeded (10s). Forcing termination.");
+        process.exit(1);
+    }, 10000);
+    shutdownTimeout.unref();
+
     try {
         // Stop accepting new jobs and wait for active jobs
         await emailWorker.close();
-
         console.log("[EmailWorker] Worker closed.");
 
         // Close Prisma connection
         await prisma.$disconnect();
-
         console.log("[EmailWorker] Prisma disconnected.");
 
-        // Close BullMQ Redis connection
-        await connection.quit();
-
+        // Close BullMQ Redis connection (bounded with safety fallback)
+        await Promise.race([
+            connection.quit(),
+            new Promise((resolve) => setTimeout(resolve, 2000)).then(() => {
+                connection.disconnect();
+            }),
+        ]).catch((err) => console.warn("[EmailWorker] Warning closing BullMQ Redis:", err));
         console.log("[EmailWorker] Redis connection closed.");
 
+        clearTimeout(shutdownTimeout);
         console.log("[EmailWorker] Graceful shutdown complete.");
-
         process.exit(0);
     } catch (error) {
         console.error("[EmailWorker] Shutdown error:", error);
