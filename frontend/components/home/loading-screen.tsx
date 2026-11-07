@@ -84,13 +84,6 @@ export function LoadingScreen() {
         isExiting ? "opacity-0 -translate-y-2 pointer-events-none" : "opacity-100 translate-y-0"
       }`}
     >
-      {/* Synchronous script to immediately hide overlay before first paint for returning visitors */}
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `try{if(sessionStorage.getItem('${STORAGE_KEY}')||window.matchMedia('(prefers-reduced-motion: reduce)').matches){var el=document.getElementById('soc-loading-screen');if(el)el.style.display='none';}}catch(e){}`,
-        }}
-      />
-
       <div className="flex flex-col items-center gap-3">
         <p className="text-sm font-medium text-charcoal-600 tracking-tight">
           Getting things ready...
