@@ -95,12 +95,12 @@ export function MyListingCard({
           {/* Top Row: Category, Date, and Status Changer */}
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2 text-xs">
-              <span className="font-semibold text-brand-600 text-xs flex items-center gap-1">
+              <span className="font-semibold text-brand-700 text-xs flex items-center gap-1">
                 <Layers className="w-3.5 h-3.5 stroke-[1.5]" />
                 {listing.category?.name || "Listing"}
               </span>
               <span className="text-charcoal-300">•</span>
-              <span className="text-charcoal-400 text-xs flex items-center gap-1">
+              <span className="text-charcoal-500 text-xs flex items-center gap-1">
                 <Calendar className="w-3 h-3 stroke-[1.5]" />
                 {formatRelativeTime(listing.createdAt)}
               </span>

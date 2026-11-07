@@ -113,11 +113,11 @@ export function ListingCard({
           {/* Category, Timestamp & Own Listing tag */}
           <div className="flex items-center justify-between text-xs text-charcoal-500 gap-1.5">
             <div className="flex items-center gap-1.5 min-w-0 truncate">
-              <span className="font-semibold text-brand-600 text-xs truncate">
+              <span className="font-semibold text-brand-700 text-xs truncate">
                 {listing.category?.name || "Marketplace"}
               </span>
               <span className="text-charcoal-300">•</span>
-              <span className="text-charcoal-400 text-xs shrink-0">
+              <span className="text-charcoal-500 text-xs shrink-0">
                 {formatRelativeTime(listing.createdAt)}
               </span>
             </div>

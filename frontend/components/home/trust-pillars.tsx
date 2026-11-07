@@ -62,8 +62,8 @@ export function TrustPillars() {
                 </div>
 
                 <div className="mt-6 pt-3.5 flex items-center justify-between text-charcoal-500 text-xs font-medium border-t border-charcoal-100">
-                  <span className="text-brand-600 font-semibold">{pillar.tagLabel}</span>
-                  <span className="text-charcoal-400">Verified peers</span>
+                  <span className="text-brand-700 font-semibold">{pillar.tagLabel}</span>
+                  <span className="text-charcoal-500">Verified peers</span>
                 </div>
               </div>
             );
