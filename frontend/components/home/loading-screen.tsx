@@ -77,6 +77,7 @@ export function LoadingScreen() {
   return (
     <div
       id="soc-loading-screen"
+      suppressHydrationWarning
       aria-live="polite"
       aria-label="Loading page content"
       className={`fixed inset-0 z-50 flex items-center justify-center bg-canvas select-none transition-all duration-300 ease-out ${
