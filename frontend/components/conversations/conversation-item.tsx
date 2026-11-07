@@ -49,11 +49,11 @@ export function ConversationItem({
       type="button"
       onClick={onSelect}
       className={cn(
-        "w-full text-left p-3.5 rounded-2xl transition-all duration-200 cursor-pointer flex items-start gap-3 relative border select-none group",
+        "w-full text-left p-3.5 rounded-xl transition-[border-color,background-color] duration-150 cursor-pointer flex items-start gap-3 relative border select-none group",
         isSelected
-          ? "bg-brand-50/70 border-brand-300/80 shadow-xs"
-          : "bg-white border-charcoal-200/60 hover:bg-charcoal-50/80 hover:border-charcoal-300/80",
-        unreadCount > 0 && !isSelected && "border-l-4 border-l-brand-500",
+          ? "bg-brand-50/60 border-brand-300 shadow-2xs"
+          : "bg-white border-charcoal-200/80 hover:bg-charcoal-50/70 hover:border-charcoal-300",
+        unreadCount > 0 && !isSelected && "border-l-2 border-l-brand-500",
         className
       )}
     >
@@ -63,10 +63,10 @@ export function ConversationItem({
           <img
             src={otherUser.profileImageUrl}
             alt={otherUser.name}
-            className="w-11 h-11 rounded-xl object-cover ring-1 ring-charcoal-200"
+            className="w-10 h-10 rounded-lg object-cover ring-1 ring-charcoal-200"
           />
         ) : (
-          <div className="w-11 h-11 rounded-xl bg-brand-50 border border-brand-200/70 flex items-center justify-center text-brand-600 font-bold text-sm font-jakarta">
+          <div className="w-10 h-10 rounded-lg bg-charcoal-100 border border-charcoal-200 flex items-center justify-center text-charcoal-700 font-bold text-xs font-jakarta">
             {initials}
           </div>
         )}

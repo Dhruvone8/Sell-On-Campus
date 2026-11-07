@@ -78,13 +78,13 @@ export function CategoryGrid() {
             <Link
               key={cat.name}
               href={`/listings?search=${encodeURIComponent(cat.name.split(" ")[0])}`}
-              className="p-3 sm:p-4 rounded-2xl bg-white hover:bg-charcoal-50/80 transition-all duration-200 border border-charcoal-200/70 shadow-xs hover:shadow-md flex flex-col justify-between group hover:-translate-y-0.5 cursor-pointer"
+              className="p-3.5 sm:p-4 rounded-xl bg-white hover:bg-charcoal-50/60 transition-[border-color,background-color] duration-150 border border-charcoal-200/80 shadow-2xs hover:border-charcoal-300 flex flex-col justify-between group cursor-pointer"
             >
-              <div className="h-10 w-10 sm:h-11 sm:w-11 rounded-xl bg-charcoal-100 group-hover:bg-brand-500 group-hover:text-white text-charcoal-700 flex items-center justify-center transition-colors mb-3 sm:mb-4">
-                <Icon className="w-5 h-5 stroke-[2]" />
+              <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-lg bg-charcoal-50 border border-charcoal-200/60 group-hover:border-brand-300 group-hover:bg-brand-50/60 text-charcoal-600 group-hover:text-brand-600 flex items-center justify-center transition-colors mb-3 sm:mb-4">
+                <Icon className="w-4 h-4 sm:w-5 sm:h-5 stroke-[1.5]" />
               </div>
               <div>
-                <span className="block font-bold text-charcoal-900 text-xs sm:text-base leading-snug group-hover:text-brand-600 transition-colors">
+                <span className="block font-semibold text-charcoal-900 text-xs sm:text-sm leading-snug group-hover:text-brand-600 transition-colors">
                   {cat.name}
                 </span>
               </div>

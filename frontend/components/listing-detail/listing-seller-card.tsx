@@ -46,26 +46,26 @@ export function ListingSellerCard({ seller }: ListingSellerCardProps) {
   }, [seller]);
 
   return (
-    <div className="p-4 sm:p-5 rounded-2xl bg-white border border-charcoal-200/70 shadow-xs flex items-center justify-between gap-3.5">
+    <div className="p-4 sm:p-5 rounded-2xl bg-white border border-charcoal-200/80 shadow-xs flex items-center justify-between gap-3.5">
       <div className="flex items-center gap-3.5 min-w-0">
         {image ? (
           <img
             src={image}
             alt={name}
-            className="w-12 h-12 rounded-full object-cover ring-2 ring-charcoal-200/80 shrink-0"
+            className="w-11 h-11 rounded-full object-cover ring-1 ring-charcoal-200 shrink-0"
           />
         ) : (
-          <div className="w-12 h-12 rounded-full bg-brand-100 text-brand-700 font-bold text-base flex items-center justify-center ring-2 ring-brand-200 shrink-0">
+          <div className="w-11 h-11 rounded-full bg-charcoal-100 text-charcoal-700 font-bold text-sm flex items-center justify-center ring-1 ring-charcoal-200 shrink-0">
             {initials}
           </div>
         )}
 
         <div className="flex flex-col min-w-0">
           <div className="flex items-center gap-1.5">
-            <h3 className="font-bold text-charcoal-900 text-base leading-snug truncate">
+            <h3 className="font-bold text-charcoal-900 text-sm sm:text-base leading-snug truncate">
               {name} {isSelf && <span className="text-xs font-semibold text-brand-600">(You)</span>}
             </h3>
-            <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+            <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0 stroke-[1.5]" />
           </div>
           <span className="text-xs text-charcoal-500 truncate mt-0.5">
             {academicInfo}
@@ -75,12 +75,12 @@ export function ListingSellerCard({ seller }: ListingSellerCardProps) {
 
       <div className="hidden sm:block shrink-0">
         {isSelf ? (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-brand-50 text-brand-700 text-[11px] font-bold border border-brand-200">
-            <User className="w-3 h-3 stroke-[2.5]" />
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-brand-50 text-brand-700 text-xs font-semibold border border-brand-200/80">
+            <User className="w-3.5 h-3.5 stroke-[1.5]" />
             Your Profile
           </span>
         ) : (
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-[11px] font-bold">
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-200/80">
             Verified
           </span>
         )}

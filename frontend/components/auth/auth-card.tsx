@@ -44,10 +44,10 @@ export function AuthCard({
         </p>
       </div>
 
-      {/* Glassmorphic Form Container */}
+      {/* Crisp Form Container */}
       <div
         className={cn(
-          "rounded-3xl border border-charcoal-200/80 bg-white/90 p-4 min-[360px]:p-6 sm:p-8 shadow-xl shadow-charcoal-900/[0.04] backdrop-blur-xl transition-all",
+          "rounded-2xl border border-charcoal-200/80 bg-white p-5 min-[360px]:p-6 sm:p-8 shadow-xs transition-all",
           className
         )}
       >

@@ -54,28 +54,28 @@ export function NotificationItem({
     <div
       onClick={handleContainerClick}
       className={cn(
-        "group relative flex items-start gap-3 rounded-2xl transition-all duration-200 cursor-pointer border select-none",
-        compact ? "p-3" : "p-4",
+        "group relative flex items-start gap-3 rounded-xl transition-[border-color,background-color] duration-150 cursor-pointer border select-none",
+        compact ? "p-3" : "p-3.5 sm:p-4",
         !isRead
-          ? "bg-brand-50/40 border-brand-200/80 hover:bg-brand-50/70 shadow-2xs"
-          : "bg-white border-charcoal-200/60 hover:bg-charcoal-50 hover:border-charcoal-300/80",
+          ? "bg-brand-50/50 border-brand-200 hover:bg-brand-50/80 shadow-2xs"
+          : "bg-white border-charcoal-200/80 hover:bg-charcoal-50 hover:border-charcoal-300",
         className
       )}
     >
       {/* Icon Pill */}
       <div
         className={cn(
-          "shrink-0 rounded-xl flex items-center justify-center transition-transform group-hover:scale-105",
-          compact ? "w-9 h-9" : "w-10 h-10",
+          "shrink-0 rounded-lg flex items-center justify-center transition-colors",
+          compact ? "w-8 h-8" : "w-9 h-9",
           !isRead
-            ? "bg-brand-500 text-white shadow-xs shadow-brand-500/25"
+            ? "bg-brand-500 text-white shadow-2xs"
             : "bg-charcoal-100 text-charcoal-600 group-hover:bg-charcoal-200"
         )}
       >
         {isMessageNotif ? (
-          <MessageSquare className={cn(compact ? "w-4 h-4" : "w-5 h-5")} />
+          <MessageSquare className={cn(compact ? "w-4 h-4" : "w-4 h-4", "stroke-[1.5]")} />
         ) : (
-          <Bell className={cn(compact ? "w-4 h-4" : "w-5 h-5")} />
+          <Bell className={cn(compact ? "w-4 h-4" : "w-4 h-4", "stroke-[1.5]")} />
         )}
       </div>
 
