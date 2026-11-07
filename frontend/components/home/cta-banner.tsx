@@ -22,7 +22,7 @@ export function CtaBanner() {
         <div className="flex items-center gap-3 shrink-0 relative z-10">
           <Link
             href="/listings/create"
-            className="px-6 py-3 rounded-xl bg-brand-500 hover:bg-brand-600 text-white font-bold text-sm sm:text-base shadow-xs transition-colors inline-flex items-center gap-2"
+            className="px-6 py-3 rounded-xl bg-brand-600 hover:bg-brand-700 text-white font-bold text-sm sm:text-base shadow-xs transition-colors inline-flex items-center gap-2"
           >
             <span>Post Listing</span>
             <ArrowRight className="w-4 h-4 stroke-[2]" />
