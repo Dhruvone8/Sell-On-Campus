@@ -10,25 +10,24 @@ const EXIT_DURATION_MS = 300;
 export function LoadingScreen() {
   const lenis = useLenis();
 
-  // Initialize stage:
-  // - On server: "visible" (prevents hero flash on first visit)
-  // - On client: checks sessionStorage immediately to prevent flash for returning visitors
-  const [stage, setStage] = React.useState<"visible" | "exiting" | "done">(() => {
-    if (typeof window === "undefined") {
-      return "visible";
-    }
+  // Always initialize as "visible" on initial render so server and client match identically.
+  // We check sessionStorage in a layout effect or effect immediately on mount.
+  const [stage, setStage] = React.useState<"visible" | "exiting" | "done">("visible");
+
+  React.useEffect(() => {
     try {
       if (
         sessionStorage.getItem(STORAGE_KEY) ||
         window.matchMedia("(prefers-reduced-motion: reduce)").matches
       ) {
-        return "done";
+        setStage("done");
+        return;
       }
     } catch {
-      return "done";
+      setStage("done");
+      return;
     }
-    return "visible";
-  });
+  }, []);
 
   // Pause Lenis smooth scrolling whenever the loader is actively visible
   React.useEffect(() => {
