@@ -29,21 +29,21 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     ref
   ) => {
     const baseStyles =
-      "inline-flex items-center justify-center font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 select-none cursor-pointer";
+      "inline-flex items-center justify-center font-medium transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 select-none cursor-pointer";
 
     const variants = {
       primary:
-        "bg-brand-500 hover:bg-brand-400 active:scale-[0.99] text-white shadow-sm hover:shadow-[0_4px_14px_0_rgba(249,90,30,0.25)] font-semibold rounded-xl",
+        "bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white shadow-xs font-semibold rounded-xl",
       secondary:
-        "bg-charcoal-900 hover:bg-charcoal-800 active:scale-[0.99] text-white font-semibold rounded-xl shadow-sm",
+        "bg-charcoal-900 hover:bg-charcoal-800 active:bg-charcoal-950 text-white font-semibold rounded-xl shadow-xs",
       outline:
-        "border border-charcoal-200 bg-white hover:bg-charcoal-50 active:bg-charcoal-100 text-charcoal-900 rounded-xl shadow-xs",
+        "border border-charcoal-200/80 bg-white hover:bg-charcoal-50 active:bg-charcoal-100 text-charcoal-900 rounded-xl shadow-2xs",
       ghost:
         "hover:bg-charcoal-100 active:bg-charcoal-200 text-charcoal-700 hover:text-charcoal-900 rounded-xl",
       glass:
-        "bg-white/80 hover:bg-white/95 backdrop-blur-md border border-white/80 text-charcoal-900 shadow-xs hover:shadow-sm rounded-xl",
+        "bg-white hover:bg-charcoal-50 border border-charcoal-200/80 text-charcoal-900 shadow-2xs rounded-xl",
       destructive:
-        "bg-red-600 hover:bg-red-700 text-white rounded-xl shadow-sm active:scale-[0.99]",
+        "bg-red-600 hover:bg-red-700 active:bg-red-800 text-white rounded-xl shadow-xs",
     };
 
     const sizes = {
@@ -62,7 +62,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       >
         {loading ? (
           <>
-            <Loader2 className="h-4 w-4 animate-spin shrink-0" />
+            <Loader2 className="h-4 w-4 animate-spin shrink-0 stroke-[1.5]" />
             <span>{children}</span>
           </>
         ) : (

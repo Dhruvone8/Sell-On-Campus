@@ -17,10 +17,10 @@ export interface MyListingCardProps {
 }
 
 const CONDITION_LABELS: Record<string, { label: string; badgeClass: string }> = {
-  NEW: { label: "Brand New", badgeClass: "bg-emerald-50 text-emerald-700 border-emerald-200/60" },
-  LIKE_NEW: { label: "Like New", badgeClass: "bg-blue-50 text-blue-700 border-blue-200/60" },
-  GOOD: { label: "Good", badgeClass: "bg-amber-50 text-amber-700 border-amber-200/60" },
-  FAIR: { label: "Fair", badgeClass: "bg-charcoal-100 text-charcoal-700 border-charcoal-200/60" },
+  NEW: { label: "Brand New", badgeClass: "bg-emerald-50 text-emerald-800 border-emerald-200/80" },
+  LIKE_NEW: { label: "Like New", badgeClass: "bg-blue-50 text-blue-800 border-blue-200/80" },
+  GOOD: { label: "Good", badgeClass: "bg-amber-50 text-amber-800 border-amber-200/80" },
+  FAIR: { label: "Fair", badgeClass: "bg-charcoal-100 text-charcoal-800 border-charcoal-200/80" },
 };
 
 export function MyListingCard({
@@ -54,7 +54,7 @@ export function MyListingCard({
   return (
     <div
       className={cn(
-        "group bg-white rounded-2xl border border-charcoal-200/80 shadow-xs hover:shadow-md transition-all duration-300 flex flex-col md:flex-row overflow-hidden",
+        "group bg-white rounded-2xl border border-charcoal-200/80 shadow-xs hover:border-charcoal-300 hover:shadow-sm transition-[border-color,box-shadow] duration-200 flex flex-col md:flex-row overflow-hidden",
         className
       )}
     >
@@ -65,11 +65,11 @@ export function MyListingCard({
             src={primaryImage}
             alt={listing.title}
             onError={() => setImageError(true)}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300"
           />
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center text-charcoal-400 bg-charcoal-50 p-4">
-            <Tag className="w-8 h-8 stroke-1 mb-1.5 opacity-60" />
+            <Tag className="w-7 h-7 stroke-[1.5] mb-1.5 opacity-60" />
             <span className="text-[11px] font-medium text-charcoal-400">No Image</span>
           </div>
         )}
@@ -79,7 +79,7 @@ export function MyListingCard({
           <div className="absolute top-3 left-3">
             <span
               className={cn(
-                "inline-flex items-center text-[11px] font-semibold px-2.5 py-0.5 rounded-full border backdrop-blur-md shadow-2xs",
+                "inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-md border bg-white/95 shadow-2xs",
                 conditionMeta.badgeClass
               )}
             >
@@ -95,13 +95,13 @@ export function MyListingCard({
           {/* Top Row: Category, Date, and Status Changer */}
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2 text-xs">
-              <span className="font-bold uppercase tracking-wider text-brand-600 text-[11px] flex items-center gap-1">
-                <Layers className="w-3 h-3" />
+              <span className="font-semibold text-brand-700 text-xs flex items-center gap-1">
+                <Layers className="w-3.5 h-3.5 stroke-[1.5]" />
                 {listing.category?.name || "Listing"}
               </span>
               <span className="text-charcoal-300">•</span>
-              <span className="text-charcoal-500 text-[11px] flex items-center gap-1">
-                <Calendar className="w-3 h-3" />
+              <span className="text-charcoal-500 text-xs flex items-center gap-1">
+                <Calendar className="w-3 h-3 stroke-[1.5]" />
                 {formatRelativeTime(listing.createdAt)}
               </span>
             </div>

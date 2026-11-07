@@ -10,25 +10,24 @@ const EXIT_DURATION_MS = 300;
 export function LoadingScreen() {
   const lenis = useLenis();
 
-  // Initialize stage:
-  // - On server: "visible" (prevents hero flash on first visit)
-  // - On client: checks sessionStorage immediately to prevent flash for returning visitors
-  const [stage, setStage] = React.useState<"visible" | "exiting" | "done">(() => {
-    if (typeof window === "undefined") {
-      return "visible";
-    }
+  // Always initialize as "visible" on initial render so server and client match identically.
+  // We check sessionStorage in a layout effect or effect immediately on mount.
+  const [stage, setStage] = React.useState<"visible" | "exiting" | "done">("visible");
+
+  React.useEffect(() => {
     try {
       if (
         sessionStorage.getItem(STORAGE_KEY) ||
         window.matchMedia("(prefers-reduced-motion: reduce)").matches
       ) {
-        return "done";
+        setStage("done");
+        return;
       }
     } catch {
-      return "done";
+      setStage("done");
+      return;
     }
-    return "visible";
-  });
+  }, []);
 
   // Pause Lenis smooth scrolling whenever the loader is actively visible
   React.useEffect(() => {
@@ -78,19 +77,13 @@ export function LoadingScreen() {
   return (
     <div
       id="soc-loading-screen"
+      suppressHydrationWarning
       aria-live="polite"
       aria-label="Loading page content"
       className={`fixed inset-0 z-50 flex items-center justify-center bg-canvas select-none transition-all duration-300 ease-out ${
         isExiting ? "opacity-0 -translate-y-2 pointer-events-none" : "opacity-100 translate-y-0"
       }`}
     >
-      {/* Synchronous script to immediately hide overlay before first paint for returning visitors */}
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `try{if(sessionStorage.getItem('${STORAGE_KEY}')||window.matchMedia('(prefers-reduced-motion: reduce)').matches){var el=document.getElementById('soc-loading-screen');if(el)el.style.display='none';}}catch(e){}`,
-        }}
-      />
-
       <div className="flex flex-col items-center gap-3">
         <p className="text-sm font-medium text-charcoal-600 tracking-tight">
           Getting things ready...

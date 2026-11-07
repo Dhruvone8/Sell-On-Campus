@@ -8,7 +8,7 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 
 export function Card({
   className,
-  glass = true,
+  glass = false,
   interactive = false,
   children,
   ...props
@@ -19,9 +19,9 @@ export function Card({
         "rounded-2xl border transition-all duration-200",
         glass
           ? "bg-white/85 backdrop-blur-xl border-charcoal-200/70 shadow-xs"
-          : "bg-white border-charcoal-200 shadow-xs",
+          : "bg-white border-charcoal-200/80 shadow-xs",
         interactive &&
-          "hover:shadow-md hover:-translate-y-0.5 hover:border-charcoal-300 cursor-pointer",
+          "hover:shadow-sm hover:border-charcoal-300 cursor-pointer",
         className
       )}
       {...props}

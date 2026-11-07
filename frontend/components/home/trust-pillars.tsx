@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Store, MessageSquare, PlusCircle, CheckCircle, MessagesSquare, Zap } from "lucide-react";
+import { Store, MessageSquare, PlusCircle } from "lucide-react";
 
 const PILLARS = [
   {
@@ -7,7 +7,6 @@ const PILLARS = [
     title: "Direct Campus Marketplace",
     description:
       "Browse and trade dorm furniture, tech, and course materials directly with peers right across your campus.",
-    tagIcon: CheckCircle,
     tagLabel: "Campus Community",
   },
   {
@@ -15,7 +14,6 @@ const PILLARS = [
     title: "Built-in Messaging",
     description:
       "Inquire about items, coordinate meetup times, and agree on pricing directly within the platform's chat.",
-    tagIcon: MessagesSquare,
     tagLabel: "Direct In-App Chat",
   },
   {
@@ -23,7 +21,6 @@ const PILLARS = [
     title: "Quick & Simple Listing",
     description:
       "Snap a photo, choose a category, and list items in under a minute without platform cut or complicated fees.",
-    tagIcon: Zap,
     tagLabel: "Instant Publishing",
   },
 ];
@@ -47,17 +44,16 @@ export function TrustPillars() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
           {PILLARS.map((pillar) => {
             const Icon = pillar.icon;
-            const TagIcon = pillar.tagIcon;
             return (
               <div
                 key={pillar.title}
-                className="p-8 rounded-3xl bg-white border border-charcoal-200/70 shadow-xs hover:shadow-md transition-all flex flex-col justify-between relative overflow-hidden group"
+                className="p-6 sm:p-7 rounded-2xl bg-white border border-charcoal-200/80 shadow-xs hover:border-charcoal-300 hover:shadow-sm transition-[border-color,box-shadow] duration-200 flex flex-col justify-between relative overflow-hidden group"
               >
                 <div>
-                  <div className="h-14 w-14 rounded-2xl bg-brand-500/10 text-brand-500 flex items-center justify-center mb-6 transition-colors group-hover:bg-brand-500 group-hover:text-white">
-                    <Icon className="w-7 h-7 stroke-[2]" />
+                  <div className="h-10 w-10 rounded-xl bg-charcoal-100/90 text-charcoal-800 border border-charcoal-200/60 flex items-center justify-center mb-5 group-hover:border-brand-300 group-hover:bg-brand-50 group-hover:text-brand-600 transition-colors">
+                    <Icon className="w-5 h-5 stroke-[1.5]" />
                   </div>
-                  <h3 className="text-xl font-bold text-charcoal-900 mb-2">
+                  <h3 className="text-lg font-bold text-charcoal-900 mb-2">
                     {pillar.title}
                   </h3>
                   <p className="text-sm text-charcoal-600 leading-relaxed">
@@ -65,9 +61,9 @@ export function TrustPillars() {
                   </p>
                 </div>
 
-                <div className="mt-6 pt-4 flex items-center gap-2 text-brand-600 text-xs font-bold border-t border-charcoal-100">
-                  <TagIcon className="w-4 h-4 stroke-[2]" />
-                  <span>{pillar.tagLabel}</span>
+                <div className="mt-6 pt-3.5 flex items-center justify-between text-charcoal-500 text-xs font-medium border-t border-charcoal-100">
+                  <span className="text-brand-700 font-semibold">{pillar.tagLabel}</span>
+                  <span className="text-charcoal-500">Verified peers</span>
                 </div>
               </div>
             );

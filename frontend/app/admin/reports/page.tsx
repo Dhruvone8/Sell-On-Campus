@@ -243,11 +243,11 @@ export default function AdminReportsPage() {
   if (!isAuthenticated || user?.role !== "ADMIN") {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center p-6 text-center max-w-md mx-auto">
-        <div className="w-14 h-14 rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center mb-4">
-          <ShieldAlert className="w-7 h-7" />
+        <div className="w-10 h-10 rounded-xl bg-rose-50 border border-rose-200 text-rose-600 flex items-center justify-center mb-3">
+          <ShieldAlert className="w-5 h-5 stroke-[1.5]" />
         </div>
-        <h1 className="text-xl font-bold text-charcoal-900 font-jakarta">Admin Access Required</h1>
-        <p className="text-xs text-charcoal-600 mt-2 leading-relaxed">
+        <h1 className="text-lg font-bold text-charcoal-900 font-jakarta">Admin Access Required</h1>
+        <p className="text-xs text-charcoal-600 mt-1.5 leading-relaxed">
           The Moderation Queue is restricted to verified campus administrators. If you believe this is an error, please contact university administration.
         </p>
         <Link
@@ -417,14 +417,14 @@ export default function AdminReportsPage() {
                         <td className="py-3.5 px-4">
                           {report.listing ? (
                             <div className="flex items-center gap-2 max-w-xs truncate">
-                              <Package className="w-4 h-4 text-brand-500 shrink-0" />
+                              <Package className="w-4 h-4 text-charcoal-500 shrink-0 stroke-[1.5]" />
                               <span className="font-semibold text-charcoal-900 truncate">
                                 {report.listing.title}
                               </span>
                             </div>
                           ) : report.reportedUser ? (
                             <div className="flex items-center gap-2 max-w-xs truncate">
-                              <User className="w-4 h-4 text-blue-500 shrink-0" />
+                              <User className="w-4 h-4 text-charcoal-500 shrink-0 stroke-[1.5]" />
                               <span className="font-semibold text-charcoal-900 truncate">
                                 {report.reportedUser.name} ({report.reportedUser.email})
                               </span>
@@ -530,21 +530,21 @@ export default function AdminReportsPage() {
         ) : reportDetail ? (
           <form onSubmit={handleResolve} className="flex flex-col h-full min-h-0 overflow-hidden">
             {/* Header - Fixed & Non-shrinking */}
-            <div className="shrink-0 p-5 sm:p-6 pb-4 border-b border-charcoal-100 flex items-start gap-3.5 pr-12 bg-white">
-              <div className="w-10 h-10 rounded-2xl bg-rose-50 border border-rose-200/80 text-rose-600 flex items-center justify-center shrink-0 shadow-xs">
-                <ShieldAlert className="w-5 h-5 stroke-[2.2]" />
+            <div className="shrink-0 p-4 sm:p-5 pb-3.5 border-b border-charcoal-100 flex items-start gap-3.5 pr-12 bg-white">
+              <div className="w-9 h-9 rounded-xl bg-rose-50 border border-rose-200/80 text-rose-600 flex items-center justify-center shrink-0">
+                <ShieldAlert className="w-4 h-4 stroke-[1.5]" />
               </div>
               <div className="flex flex-col min-w-0">
                 <div className="flex items-center gap-2 flex-wrap">
-                  <h2 className="text-lg sm:text-xl font-extrabold text-charcoal-900 font-jakarta tracking-tight leading-snug">
+                  <h2 className="text-base sm:text-lg font-bold text-charcoal-900 font-jakarta tracking-tight leading-snug">
                     Report Review
                   </h2>
-                  <span className="font-mono text-xs px-2 py-0.5 rounded-lg bg-charcoal-100 text-charcoal-700 font-bold border border-charcoal-200">
+                  <span className="font-mono text-xs px-2 py-0.5 rounded-md bg-charcoal-100 text-charcoal-700 font-bold border border-charcoal-200">
                     #{reportDetail.id.slice(0, 8)}
                   </span>
                   <span
                     className={cn(
-                      "inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold border",
+                      "inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold border",
                       reportDetail.status === "RESOLVED"
                         ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                         : reportDetail.status === "REVIEWED"
@@ -562,13 +562,13 @@ export default function AdminReportsPage() {
             </div>
 
             {/* Scrollable Body - independent scroll, bounded by 90dvh, never clips */}
-            <div className="flex-1 min-h-0 overflow-y-auto p-5 sm:p-6 flex flex-col gap-5" data-lenis-prevent>
+            <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-5 flex flex-col gap-4" data-lenis-prevent>
               {/* Top row: Allegation info vs Target Preview */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
                 {/* Left Column: Allegation Details */}
-                <div className="p-4 rounded-2xl bg-charcoal-50/70 border border-charcoal-200/80 flex flex-col gap-3">
+                <div className="p-3.5 sm:p-4 rounded-xl bg-charcoal-50/70 border border-charcoal-200/80 flex flex-col gap-2.5">
                   <h4 className="text-xs font-bold text-charcoal-900 uppercase tracking-wider font-jakarta flex items-center gap-1.5">
-                    <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />
+                    <ShieldAlert className="w-3.5 h-3.5 text-rose-600 stroke-[1.5]" />
                     <span>Report Allegation</span>
                   </h4>
 
@@ -579,7 +579,7 @@ export default function AdminReportsPage() {
                     <div className="mt-1">
                       <span
                         className={cn(
-                          "inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border",
+                          "inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-bold border",
                           REASON_CONFIG[reportDetail.reason].bg,
                           REASON_CONFIG[reportDetail.reason].text,
                           REASON_CONFIG[reportDetail.reason].border
@@ -594,7 +594,7 @@ export default function AdminReportsPage() {
                     <span className="text-[10px] font-bold text-charcoal-400 uppercase tracking-wider">
                       Student Description
                     </span>
-                    <div className="mt-1 text-xs text-charcoal-800 bg-white p-3 rounded-xl border border-charcoal-200/70 leading-relaxed italic">
+                    <div className="mt-1 text-xs text-charcoal-800 bg-white p-2.5 rounded-lg border border-charcoal-200/70 leading-relaxed italic">
                       {reportDetail.description ? `“${reportDetail.description}”` : <span className="text-charcoal-400 not-italic">No written description provided.</span>}
                     </div>
                   </div>

@@ -5,7 +5,7 @@ import * as React from "react";
 import Link from "next/link";
 import { Listing } from "@/lib/types";
 import { formatPrice, formatRelativeTime, getInitials, cn } from "@/lib/utils";
-import { Tag, Sparkles } from "lucide-react";
+import { Tag, UserCheck } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 
 export interface ListingCardProps {
@@ -16,10 +16,10 @@ export interface ListingCardProps {
 }
 
 const CONDITION_LABELS: Record<string, { label: string; badgeClass: string }> = {
-  NEW: { label: "Brand New", badgeClass: "bg-emerald-50 text-emerald-700 border-emerald-200/60" },
-  LIKE_NEW: { label: "Like New", badgeClass: "bg-blue-50 text-blue-700 border-blue-200/60" },
-  GOOD: { label: "Good", badgeClass: "bg-amber-50 text-amber-700 border-amber-200/60" },
-  FAIR: { label: "Fair", badgeClass: "bg-charcoal-100 text-charcoal-700 border-charcoal-200/60" },
+  NEW: { label: "Brand New", badgeClass: "bg-emerald-50 text-emerald-800 border-emerald-200/80" },
+  LIKE_NEW: { label: "Like New", badgeClass: "bg-blue-50 text-blue-800 border-blue-200/80" },
+  GOOD: { label: "Good", badgeClass: "bg-amber-50 text-amber-800 border-amber-200/80" },
+  FAIR: { label: "Fair", badgeClass: "bg-charcoal-100 text-charcoal-800 border-charcoal-200/80" },
 };
 
 export function ListingCard({
@@ -43,7 +43,7 @@ export function ListingCard({
     <Link
       href={`/listings/${listing.id}`}
       className={cn(
-        "group bg-white rounded-2xl overflow-hidden border border-charcoal-200/70 shadow-xs hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-brand-500/30",
+        "group bg-white rounded-2xl overflow-hidden border border-charcoal-200/80 shadow-xs hover:border-charcoal-300 hover:shadow-sm transition-[border-color,box-shadow] duration-200 focus:outline-none focus:ring-2 focus:ring-brand-500/20",
         layout === "list" ? "flex flex-col sm:flex-row" : "flex flex-col",
         className
       )}
@@ -64,12 +64,12 @@ export function ListingCard({
             src={primaryImage}
             alt={listing.title}
             onError={() => setImageError(true)}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+            className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-300 ease-out"
             loading="lazy"
           />
         ) : (
-          <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-charcoal-100 to-charcoal-200/60 text-charcoal-400 p-4 text-center">
-            <Tag className="w-8 h-8 mb-1.5 stroke-[1.5] text-charcoal-400" />
+          <div className="w-full h-full flex flex-col items-center justify-center bg-charcoal-100/90 text-charcoal-400 p-4 text-center">
+            <Tag className="w-7 h-7 mb-1.5 stroke-[1.5] text-charcoal-400" />
             <span className="text-xs font-medium text-charcoal-500">
               {listing.category?.name || "Campus Item"}
             </span>
@@ -81,7 +81,7 @@ export function ListingCard({
           <div className="absolute top-2.5 right-2.5 z-10">
             <span
               className={cn(
-                "inline-flex items-center px-2 py-0.5 rounded-lg text-[10px] font-semibold border backdrop-blur-md shadow-2xs tracking-tight",
+                "inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border shadow-2xs tracking-tight bg-white/95",
                 conditionMeta.badgeClass
               )}
             >
@@ -91,16 +91,16 @@ export function ListingCard({
         )}
 
         {/* Compact Price Capsule (Bottom Left) */}
-        <div className="absolute bottom-2 left-2 z-10">
-          <span className="inline-flex items-baseline px-2.5 py-0.5 rounded-lg bg-charcoal-900/80 backdrop-blur-md text-white font-bold text-xs sm:text-sm tracking-tight shadow-xs">
+        <div className="absolute bottom-2.5 left-2.5 z-10">
+          <span className="inline-flex items-baseline px-2.5 py-1 rounded-lg bg-charcoal-900/90 text-white font-bold text-xs sm:text-sm tracking-tight tabular-nums shadow-xs">
             {formatPrice(listing.price)}
           </span>
         </div>
 
         {/* Reserved / Sold Badge overlay */}
         {listing.status && listing.status !== "ACTIVE" && (
-          <div className="absolute inset-0 bg-charcoal-900/60 backdrop-blur-[2px] flex items-center justify-center">
-            <span className="px-3.5 py-1.5 rounded-xl bg-white text-charcoal-900 font-extrabold text-xs tracking-wider uppercase shadow-md">
+          <div className="absolute inset-0 bg-charcoal-900/60 flex items-center justify-center">
+            <span className="px-3 py-1 rounded-lg bg-white text-charcoal-900 font-bold text-xs tracking-wider uppercase shadow-sm">
               {listing.status}
             </span>
           </div>
@@ -113,18 +113,18 @@ export function ListingCard({
           {/* Category, Timestamp & Own Listing tag */}
           <div className="flex items-center justify-between text-xs text-charcoal-500 gap-1.5">
             <div className="flex items-center gap-1.5 min-w-0 truncate">
-              <span className="font-bold uppercase tracking-wider text-brand-600 text-[11px] truncate">
+              <span className="font-semibold text-brand-700 text-xs truncate">
                 {listing.category?.name || "Marketplace"}
               </span>
               <span className="text-charcoal-300">•</span>
-              <span className="text-charcoal-400 text-[11px] shrink-0">
+              <span className="text-charcoal-500 text-xs shrink-0">
                 {formatRelativeTime(listing.createdAt)}
               </span>
             </div>
 
             {isOwner && (
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-brand-50 text-brand-700 border border-brand-200/80 shrink-0">
-                <Sparkles className="w-2.5 h-2.5 stroke-[2.5]" />
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold bg-brand-50 text-brand-700 border border-brand-200/80 shrink-0">
+                <UserCheck className="w-3 h-3 stroke-[1.5]" />
                 <span>Your Listing</span>
               </span>
             )}
@@ -156,11 +156,11 @@ export function ListingCard({
                 className="w-6 h-6 rounded-full object-cover shrink-0 ring-1 ring-charcoal-200"
               />
             ) : (
-              <div className="w-6 h-6 rounded-full bg-brand-100 text-brand-700 font-bold text-[10px] flex items-center justify-center shrink-0">
+              <div className="w-6 h-6 rounded-full bg-charcoal-100 text-charcoal-700 font-bold text-[10px] flex items-center justify-center shrink-0">
                 {sellerInitials}
               </div>
             )}
-            <span className="text-xs font-semibold text-charcoal-700 truncate max-w-[140px]">
+            <span className="text-xs font-medium text-charcoal-700 truncate max-w-[140px]">
               {isOwner ? "You (Seller)" : sellerName}
             </span>
           </div>
