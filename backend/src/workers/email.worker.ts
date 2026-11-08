@@ -98,48 +98,10 @@ emailWorker.on("failed", async (job, error) => {
 
 console.log("[EmailWorker] Email worker is running...");
 
-let isShuttingDown = false;
+export async function closeEmailWorker() {
+    console.log("[EmailWorker] Closing worker...");
 
-async function gracefulShutdown(signal: string) {
-    if (isShuttingDown) return;
+    await emailWorker.close();
 
-    isShuttingDown = true;
-
-    console.log(`\n[EmailWorker] ${signal} received. Shutting down...`);
-
-    // Hard deadline to prevent shutdown from hanging indefinitely
-    const shutdownTimeout = setTimeout(() => {
-        console.error("[EmailWorker] Graceful shutdown deadline exceeded (10s). Forcing termination.");
-        process.exit(1);
-    }, 10000);
-    shutdownTimeout.unref();
-
-    try {
-        // Stop accepting new jobs and wait for active jobs
-        await emailWorker.close();
-        console.log("[EmailWorker] Worker closed.");
-
-        // Close Prisma connection
-        await prisma.$disconnect();
-        console.log("[EmailWorker] Prisma disconnected.");
-
-        // Close BullMQ Redis connection (bounded with safety fallback)
-        await Promise.race([
-            connection.quit(),
-            new Promise((resolve) => setTimeout(resolve, 2000)).then(() => {
-                connection.disconnect();
-            }),
-        ]).catch((err) => console.warn("[EmailWorker] Warning closing BullMQ Redis:", err));
-        console.log("[EmailWorker] Redis connection closed.");
-
-        clearTimeout(shutdownTimeout);
-        console.log("[EmailWorker] Graceful shutdown complete.");
-        process.exit(0);
-    } catch (error) {
-        console.error("[EmailWorker] Shutdown error:", error);
-        process.exit(1);
-    }
+    console.log("[EmailWorker] Worker closed.");
 }
-
-process.on("SIGTERM", () => void gracefulShutdown("SIGTERM"));
-process.on("SIGINT", () => void gracefulShutdown("SIGINT"));

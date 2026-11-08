@@ -8,6 +8,7 @@ import { emailQueue } from "./lib/queue/email.queue.js";
 import connection from "./lib/queue/connection.js";
 import redis from "./lib/cache/redis.js";
 import { prisma } from "./lib/prisma.js";
+import { closeEmailWorker } from "./workers/email.worker.js";
 
 const PORT = process.env.PORT || 5000;
 
@@ -67,7 +68,11 @@ async function gracefulShutdown(signal: string) {
       }
     });
 
-    // 4. Close BullMQ queue
+    // 4. Stop BullMQ worker and wait for active jobs
+    await closeEmailWorker();
+    console.log("[Server] Email worker closed.");
+
+    // 5. Close BullMQ queue
     await emailQueue.close();
     console.log("[Server] Email queue closed.");
 
