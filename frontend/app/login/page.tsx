@@ -4,10 +4,10 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
+import toast from "react-hot-toast";
 import { AuthCard } from "@/components/auth/auth-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Alert } from "@/components/ui/alert";
 import { useAuth } from "@/lib/auth-context";
 import { API_URL } from "@/lib/constants";
 
@@ -21,13 +21,9 @@ function LoginForm() {
   const [password, setPassword] = React.useState("");
   const [showPassword, setShowPassword] = React.useState(false);
   const [loading, setLoading] = React.useState(false);
-  const [error, setError] = React.useState("");
-  const [success, setSuccess] = React.useState("");
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setError("");
-    setSuccess("");
     setLoading(true);
 
     try {
@@ -46,11 +42,11 @@ function LoginForm() {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.message || "Invalid email or password.");
+        toast.error(data.message || "Invalid email or password.");
         return;
       }
 
-      setSuccess("Welcome back! Redirecting...");
+      toast.success("Welcome back! Redirecting...");
       await checkAuth();
 
       setTimeout(() => {
@@ -58,7 +54,7 @@ function LoginForm() {
         router.refresh();
       }, 500);
     } catch {
-      setError("Unable to connect to server. Please check your internet connection.");
+      toast.error("Unable to connect to server. Please check your internet connection.");
     } finally {
       setLoading(false);
     }
@@ -82,8 +78,6 @@ function LoginForm() {
         }
       >
         <form onSubmit={handleSubmit} className="space-y-4">
-          {error && <Alert variant="error">{error}</Alert>}
-          {success && <Alert variant="success">{success}</Alert>}
 
           {/* Email */}
           <Input

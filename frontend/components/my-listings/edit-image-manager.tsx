@@ -14,6 +14,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import toast from "react-hot-toast";
 
 export interface EditableImage {
   id: string;
@@ -68,11 +69,15 @@ export function EditImageManager({
     for (let i = 0; i < newFileList.length; i++) {
       const file = newFileList[i];
       if (!file.type.startsWith("image/")) {
-        setLocalError("Only image files (JPEG, PNG, WebP) are allowed.");
+        const msg = "Only image files (JPEG, PNG, WebP) are allowed.";
+        setLocalError(msg);
+        toast.error(msg);
         continue;
       }
       if (file.size > 5 * 1024 * 1024) {
-        setLocalError(`"${file.name}" exceeds the 5MB size limit.`);
+        const msg = `"${file.name}" exceeds the 5MB size limit.`;
+        setLocalError(msg);
+        toast.error(msg);
         continue;
       }
 
@@ -89,7 +94,9 @@ export function EditImageManager({
 
     const availableSlots = maxImages - images.length;
     if (added.length > availableSlots) {
-      setLocalError(`You can upload at most ${maxImages} photos. Additional photos were ignored.`);
+      const msg = `You can upload at most ${maxImages} photos. Additional photos were ignored.`;
+      setLocalError(msg);
+      toast.error(msg);
     }
 
     const next = [...images, ...added.slice(0, availableSlots)];
@@ -104,12 +111,16 @@ export function EditImageManager({
 
     const file = fileList[0];
     if (!file.type.startsWith("image/")) {
-      setLocalError("Only image files (JPEG, PNG, WebP) are allowed.");
+      const msg = "Only image files (JPEG, PNG, WebP) are allowed.";
+      setLocalError(msg);
+      toast.error(msg);
       setReplacingIndex(null);
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      setLocalError(`"${file.name}" exceeds the 5MB size limit.`);
+      const msg = `"${file.name}" exceeds the 5MB size limit.`;
+      setLocalError(msg);
+      toast.error(msg);
       setReplacingIndex(null);
       return;
     }
@@ -161,6 +172,7 @@ export function EditImageManager({
 
     const updated = images.filter((_, i) => i !== index);
     onImagesChange(updated);
+    toast.success("Photo removed");
   };
 
   const handleMakeCover = (index: number) => {

@@ -4,6 +4,7 @@
 import * as React from "react";
 import { UploadCloud, X } from "lucide-react";
 import { cn } from "@/lib/utils";
+import toast from "react-hot-toast";
 
 export interface ImageUploaderProps {
   files: File[];
@@ -39,11 +40,15 @@ export function ImageUploader({
     for (let i = 0; i < newFileList.length; i++) {
       const file = newFileList[i];
       if (!file.type.startsWith("image/")) {
-        setErrorMessage("Only image files (JPEG, PNG, WebP) are allowed.");
+        const msg = "Only image files (JPEG, PNG, WebP) are allowed.";
+        setErrorMessage(msg);
+        toast.error(msg);
         continue;
       }
       if (file.size > 5 * 1024 * 1024) {
-        setErrorMessage(`"${file.name}" exceeds the 5MB size limit.`);
+        const msg = `"${file.name}" exceeds the 5MB size limit.`;
+        setErrorMessage(msg);
+        toast.error(msg);
         continue;
       }
       added.push(file);
@@ -51,7 +56,9 @@ export function ImageUploader({
 
     const combined = [...files, ...added].slice(0, maxFiles);
     if (files.length + added.length > maxFiles) {
-      setErrorMessage(`You can upload a maximum of ${maxFiles} photos.`);
+      const msg = `You can upload a maximum of ${maxFiles} photos.`;
+      setErrorMessage(msg);
+      toast.error(msg);
     }
 
     onFilesChange(combined);

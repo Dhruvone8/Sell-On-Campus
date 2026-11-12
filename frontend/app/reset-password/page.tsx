@@ -4,10 +4,10 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Lock, Eye, EyeOff, ArrowLeft } from "lucide-react";
+import toast from "react-hot-toast";
 import { AuthCard } from "@/components/auth/auth-card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Alert } from "@/components/ui/alert";
 import { API_URL } from "@/lib/constants";
 
 export default function ResetPasswordPage() {
@@ -19,8 +19,7 @@ export default function ResetPasswordPage() {
   const [showPassword, setShowPassword] = React.useState(false);
 
   const [loading, setLoading] = React.useState(false);
-  const [error, setError] = React.useState("");
-  const [success, setSuccess] = React.useState("");
+  const [completed, setCompleted] = React.useState(false);
 
   // Retrieve token on mount
   React.useEffect(() => {
@@ -29,7 +28,7 @@ export default function ResetPasswordPage() {
       if (!active) return;
       const token = sessionStorage.getItem("soc_reset_token");
       if (!token) {
-        setError("No valid reset session found. Please request a new password reset code.");
+        toast.error("No valid reset session found. Please request a new password reset code.");
       } else {
         setResetToken(token);
       }
@@ -41,21 +40,23 @@ export default function ResetPasswordPage() {
 
   async function handleResetPassword(e: React.FormEvent) {
     e.preventDefault();
-    setError("");
-    setSuccess("");
+
+    if (completed || loading) {
+      return;
+    }
 
     if (!resetToken) {
-      setError("Reset token is missing or expired. Please start over.");
+      toast.error("Reset token is missing or expired. Please start over.");
       return;
     }
 
     if (newPassword.length < 6) {
-      setError("Password must be at least 6 characters long.");
+      toast.error("Password must be at least 6 characters long.");
       return;
     }
 
     if (newPassword !== confirmPassword) {
-      setError("Passwords do not match.");
+      toast.error("Passwords do not match.");
       return;
     }
 
@@ -73,7 +74,7 @@ export default function ResetPasswordPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.message || "Failed to reset password.");
+        toast.error(data.message || "Failed to reset password.");
         return;
       }
 
@@ -81,12 +82,13 @@ export default function ResetPasswordPage() {
       sessionStorage.removeItem("soc_reset_token");
       sessionStorage.removeItem("soc_reset_email");
 
-      setSuccess("Password reset successfully! Redirecting to login...");
+      setCompleted(true);
+      toast.success("Password reset successfully! Redirecting to login...");
       setTimeout(() => {
         router.push("/login");
-      }, 1200);
+      }, 1000);
     } catch {
-      setError("Unable to connect to server. Please try again.");
+      toast.error("Unable to connect to server. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -109,10 +111,7 @@ export default function ResetPasswordPage() {
           </div>
         }
       >
-        {error && <Alert variant="error" className="mb-4">{error}</Alert>}
-        {success && <Alert variant="success" className="mb-4">{success}</Alert>}
-
-        {!resetToken && !success ? (
+        {!resetToken ? (
           <div className="text-center py-4">
             <Link href="/forgot-password">
               <Button variant="primary" className="w-full">
@@ -131,7 +130,7 @@ export default function ResetPasswordPage() {
               placeholder="Enter new password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              disabled={loading || !!success}
+              disabled={loading || completed}
               leftIcon={<Lock className="h-4 w-4" />}
               rightIcon={
                 <button
@@ -153,7 +152,7 @@ export default function ResetPasswordPage() {
               placeholder="Re-enter new password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              disabled={loading || !!success}
+              disabled={loading || completed}
               leftIcon={<Lock className="h-4 w-4" />}
             />
 
@@ -162,7 +161,7 @@ export default function ResetPasswordPage() {
               variant="primary"
               size="lg"
               loading={loading}
-              disabled={!!success}
+              disabled={loading || completed}
               className="w-full mt-2"
             >
               Update Password

@@ -4,11 +4,11 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Mail, ArrowLeft } from "lucide-react";
+import toast from "react-hot-toast";
 import { AuthCard } from "@/components/auth/auth-card";
 import { OtpInput } from "@/components/auth/otp-input";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Alert } from "@/components/ui/alert";
 import { API_URL } from "@/lib/constants";
 
 type Step = "EMAIL" | "OTP";
@@ -21,20 +21,16 @@ export default function ForgotPasswordPage() {
 
   const [loading, setLoading] = React.useState(false);
   const [resending, setResending] = React.useState(false);
-  const [error, setError] = React.useState("");
-  const [success, setSuccess] = React.useState("");
 
   const apiUrl = API_URL;
 
   // Step 1: Request Password Reset OTP
   async function handleRequestOtp(e: React.FormEvent) {
     e.preventDefault();
-    setError("");
-    setSuccess("");
 
     const trimmedEmail = email.trim().toLowerCase();
     if (!trimmedEmail) {
-      setError("Please enter your college email address.");
+      toast.error("Please enter your college email address.");
       return;
     }
 
@@ -49,14 +45,14 @@ export default function ForgotPasswordPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.message || "Failed to send password reset code.");
+        toast.error(data.message || "Failed to send password reset code.");
         return;
       }
 
-      setSuccess("Reset code sent! Please check your email inbox.");
+      toast.success("Reset code sent! Please check your email inbox.");
       setStep("OTP");
     } catch {
-      setError("Unable to connect to server. Please try again.");
+      toast.error("Unable to connect to server. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -65,11 +61,9 @@ export default function ForgotPasswordPage() {
   // Step 2: Verify Password Reset OTP
   async function handleVerifyOtp(e: React.FormEvent) {
     e.preventDefault();
-    setError("");
-    setSuccess("");
 
     if (otp.length !== 4) {
-      setError("Please enter the complete 4-digit code.");
+      toast.error("Please enter the complete 4-digit code.");
       return;
     }
 
@@ -84,13 +78,13 @@ export default function ForgotPasswordPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.message || "Invalid or expired reset code.");
+        toast.error(data.message || "Invalid or expired reset code.");
         return;
       }
 
       const resetToken = data.resetToken;
       if (!resetToken) {
-        setError("Failed to retrieve reset authorization. Please try again.");
+        toast.error("Failed to retrieve reset authorization. Please try again.");
         return;
       }
 
@@ -98,12 +92,12 @@ export default function ForgotPasswordPage() {
       sessionStorage.setItem("soc_reset_token", resetToken);
       sessionStorage.setItem("soc_reset_email", email.trim().toLowerCase());
 
-      setSuccess("Code verified! Redirecting to set your new password...");
+      toast.success("Code verified! Redirecting to set your new password...");
       setTimeout(() => {
         router.push("/reset-password");
       }, 500);
     } catch {
-      setError("Unable to connect to server. Please try again.");
+      toast.error("Unable to connect to server. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -111,7 +105,6 @@ export default function ForgotPasswordPage() {
 
   // Resend code
   async function handleResend() {
-    setError("");
     setResending(true);
     try {
       const response = await fetch(`${apiUrl}/api/auth/forgot-password`, {
@@ -121,12 +114,12 @@ export default function ForgotPasswordPage() {
       });
       const data = await response.json();
       if (!response.ok) {
-        setError(data.message || "Failed to resend code.");
+        toast.error(data.message || "Failed to resend code.");
         return;
       }
-      setSuccess("A fresh reset code has been sent to your email.");
+      toast.success("A fresh reset code has been sent to your email.");
     } catch {
-      setError("Failed to resend code. Please try again.");
+      toast.error("Failed to resend code. Please try again.");
     } finally {
       setResending(false);
     }
@@ -153,9 +146,6 @@ export default function ForgotPasswordPage() {
           </div>
         }
       >
-        {error && <Alert variant="error" className="mb-4">{error}</Alert>}
-        {success && <Alert variant="success" className="mb-4">{success}</Alert>}
-
         {step === "EMAIL" && (
           <form onSubmit={handleRequestOtp} className="space-y-4">
             <Input
@@ -213,7 +203,6 @@ export default function ForgotPasswordPage() {
                 onClick={() => {
                   setStep("EMAIL");
                   setOtp("");
-                  setError("");
                 }}
                 className="flex items-center gap-1 text-charcoal-500 hover:text-charcoal-800 transition-colors"
               >

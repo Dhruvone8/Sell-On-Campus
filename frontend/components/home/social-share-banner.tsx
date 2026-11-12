@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Share2, Check, Copy } from "lucide-react";
 import { SITE_URL } from "@/lib/constants";
+import toast from "react-hot-toast";
 
 function WhatsAppIcon({ className }: { className?: string }) {
   return (
@@ -39,6 +40,7 @@ export function SocialShareBanner() {
       if (typeof navigator !== "undefined" && navigator.clipboard && window.isSecureContext) {
         await navigator.clipboard.writeText(shareUrl);
         setCopied(true);
+        toast.success("Link copied to clipboard!");
         setTimeout(() => setCopied(false), 2500);
         return;
       }
@@ -55,10 +57,13 @@ export function SocialShareBanner() {
 
       if (successful) {
         setCopied(true);
+        toast.success("Link copied to clipboard!");
         setTimeout(() => setCopied(false), 2500);
+      } else {
+        toast.error("Failed to copy link");
       }
     } catch {
-      // Keep copied false on failure
+      toast.error("Failed to copy link");
     }
   };
 

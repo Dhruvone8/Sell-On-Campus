@@ -4,11 +4,11 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Mail, Lock, User, Eye, EyeOff, ArrowLeft, CheckCircle2 } from "lucide-react";
+import toast from "react-hot-toast";
 import { AuthCard } from "@/components/auth/auth-card";
 import { OtpInput } from "@/components/auth/otp-input";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Alert } from "@/components/ui/alert";
 import { useAuth } from "@/lib/auth-context";
 import { API_URL } from "@/lib/constants";
 
@@ -28,20 +28,16 @@ export default function RegisterPage() {
 
   const [loading, setLoading] = React.useState(false);
   const [resending, setResending] = React.useState(false);
-  const [error, setError] = React.useState("");
-  const [success, setSuccess] = React.useState("");
 
   const apiUrl = API_URL;
 
   // Step 1: Request OTP
   async function handleRequestOtp(e: React.FormEvent) {
     e.preventDefault();
-    setError("");
-    setSuccess("");
 
     const trimmedEmail = email.trim().toLowerCase();
     if (!trimmedEmail) {
-      setError("Please enter your college email address.");
+      toast.error("Please enter your college email address.");
       return;
     }
 
@@ -56,14 +52,14 @@ export default function RegisterPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.message || "Failed to send registration OTP.");
+        toast.error(data.message || "Failed to send registration OTP.");
         return;
       }
 
-      setSuccess("Verification OTP sent! Please check your inbox.");
+      toast.success("Verification OTP sent! Please check your inbox.");
       setStep("OTP");
     } catch {
-      setError("Unable to connect to server. Please try again.");
+      toast.error("Unable to connect to server. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -72,11 +68,9 @@ export default function RegisterPage() {
   // Step 2: Verify OTP
   async function handleVerifyOtp(e: React.FormEvent) {
     e.preventDefault();
-    setError("");
-    setSuccess("");
 
     if (otp.length !== 4) {
-      setError("Please enter the complete 4-digit verification code.");
+      toast.error("Please enter the complete 4-digit verification code.");
       return;
     }
 
@@ -91,14 +85,14 @@ export default function RegisterPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.message || "Invalid or expired OTP code.");
+        toast.error(data.message || "Invalid or expired OTP code.");
         return;
       }
 
-      setSuccess("Email successfully verified! Create your password to finish.");
+      toast.success("Email verified! Create your password to finish.");
       setStep("PROFILE");
     } catch {
-      setError("Unable to connect to server. Please try again.");
+      toast.error("Unable to connect to server. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -106,7 +100,6 @@ export default function RegisterPage() {
 
   // Resend OTP handler
   async function handleResendOtp() {
-    setError("");
     setResending(true);
     try {
       const response = await fetch(`${apiUrl}/api/auth/register/request-otp`, {
@@ -118,13 +111,13 @@ export default function RegisterPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.message || "Failed to resend OTP.");
+        toast.error(data.message || "Failed to resend OTP.");
         return;
       }
 
-      setSuccess("A fresh code has been sent to your email.");
+      toast.success("A fresh code has been sent to your email.");
     } catch {
-      setError("Failed to resend code. Please try again.");
+      toast.error("Failed to resend code. Please try again.");
     } finally {
       setResending(false);
     }
@@ -133,21 +126,19 @@ export default function RegisterPage() {
   // Step 3: Complete Registration
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault();
-    setError("");
-    setSuccess("");
 
     if (!name.trim()) {
-      setError("Please enter your full name.");
+      toast.error("Please enter your full name.");
       return;
     }
 
     if (password.length < 6) {
-      setError("Password must be at least 6 characters long.");
+      toast.error("Password must be at least 6 characters long.");
       return;
     }
 
     if (password !== confirmPassword) {
-      setError("Passwords do not match.");
+      toast.error("Passwords do not match.");
       return;
     }
 
@@ -167,11 +158,11 @@ export default function RegisterPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.message || "Registration failed.");
+        toast.error(data.message || "Registration failed.");
         return;
       }
 
-      setSuccess("Account successfully created! Directing to marketplace...");
+      toast.success("Account created! Redirecting to marketplace...");
       await checkAuth();
 
       setTimeout(() => {
@@ -179,7 +170,7 @@ export default function RegisterPage() {
         router.refresh();
       }, 600);
     } catch {
-      setError("Unable to connect to server. Please try again.");
+      toast.error("Unable to connect to server. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -262,9 +253,6 @@ export default function RegisterPage() {
           </div>
         </div>
 
-        {error && <Alert variant="error" className="mb-4">{error}</Alert>}
-        {success && <Alert variant="success" className="mb-4">{success}</Alert>}
-
         {/* STEP 1: Enter Email */}
         {step === "EMAIL" && (
           <form onSubmit={handleRequestOtp} className="space-y-4">
@@ -325,7 +313,6 @@ export default function RegisterPage() {
                 onClick={() => {
                   setStep("EMAIL");
                   setOtp("");
-                  setError("");
                 }}
                 className="flex items-center gap-1 text-charcoal-500 hover:text-charcoal-800 transition-colors"
               >

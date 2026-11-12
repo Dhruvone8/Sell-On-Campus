@@ -11,6 +11,7 @@ import { API_URL, getListingShareUrl } from "@/lib/constants";
 import { Modal } from "@/components/ui/modal";
 import { ReportListingModal } from "./report-listing-modal";
 import { ShareListingModal } from "./share-listing-modal";
+import toast from "react-hot-toast";
 
 export interface ListingInfoCardProps {
   listing: Listing;
@@ -106,6 +107,7 @@ export function ListingInfoCard({ listing }: ListingInfoCardProps) {
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Error contacting seller";
+      toast.error(msg);
       setMessageError(msg);
       setIsMessaging(false);
     }
@@ -126,9 +128,11 @@ export function ListingInfoCard({ listing }: ListingInfoCardProps) {
         throw new Error(errorData.message || "Failed to delete listing");
       }
 
+      toast.success("Listing deleted successfully");
       router.push("/my-listings");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to delete listing";
+      toast.error(msg);
       setDeleteError(msg);
       setIsDeleting(false);
     }
