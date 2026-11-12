@@ -6,6 +6,9 @@ export const metadata: Metadata = {
   title: "Post a Listing | SellOnCampus",
   description:
     "Sell your textbooks, electronics, dorm essentials, and cycles directly to campus students. 0% platform fee.",
+  alternates: {
+    canonical: "/listings/create",
+  },
 };
 
 export default function CreateListingPage() {

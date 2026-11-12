@@ -32,9 +32,6 @@ export const metadata: Metadata = {
     "campus cycles",
     "university gear exchange",
   ],
-  alternates: {
-    canonical: "/",
-  },
   openGraph: {
     title: "SellOnCampus — Campus Marketplace",
     description:

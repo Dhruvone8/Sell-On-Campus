@@ -17,7 +17,7 @@ export const CAMPUS_FAQS: FaqItem[] = [
   {
     question: "How does student verification work?",
     answer:
-      "To ensure campus security and prevent outside commercial vendors or spammers from accessing listings, account registration requires a valid university email address. A one-time verification passcode (OTP) confirms your active student status before you can post or message sellers.",
+      "SellOnCampus is publicly browsable so anyone can explore available gear across campus. To maintain community safety, prevent commercial spammers, and protect students, creating listings, editing items, and chatting with sellers requires an active university email address verified via a quick one-time passcode (OTP).",
   },
   {
     question: "How do payments and item handoffs work?",

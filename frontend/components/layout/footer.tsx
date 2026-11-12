@@ -57,7 +57,7 @@ export function Footer() {
               href="/listings/create"
               className="hover:text-brand-500 transition-colors focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:outline-none rounded-lg px-1 py-0.5"
             >
-              List Free Item
+              Post a Listing
             </Link>
             <Link
               href="/conversations"
@@ -66,7 +66,7 @@ export function Footer() {
               Campus Inbox
             </Link>
             <Link
-              href="/my-listings"
+              href="/profile"
               className="hover:text-brand-500 transition-colors focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:outline-none rounded-lg px-1 py-0.5"
             >
               My Account

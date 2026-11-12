@@ -36,20 +36,29 @@ export function SocialShareBanner() {
 
   const handleCopy = async () => {
     try {
-      if (navigator.clipboard) {
+      if (typeof navigator !== "undefined" && navigator.clipboard && window.isSecureContext) {
         await navigator.clipboard.writeText(shareUrl);
-      } else {
-        const textarea = document.createElement("textarea");
-        textarea.value = shareUrl;
-        document.body.appendChild(textarea);
-        textarea.select();
-        document.execCommand("copy");
-        document.body.removeChild(textarea);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2500);
+        return;
       }
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
+
+      const textarea = document.createElement("textarea");
+      textarea.value = shareUrl;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      const successful = document.execCommand("copy");
+      document.body.removeChild(textarea);
+
+      if (successful) {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2500);
+      }
     } catch {
-      // ignore
+      // Keep copied false on failure
     }
   };
 
