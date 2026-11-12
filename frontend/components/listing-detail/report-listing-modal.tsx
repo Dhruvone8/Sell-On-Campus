@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
+import toast from "react-hot-toast";
 
 export interface ReportListingModalProps {
   isOpen: boolean;
@@ -94,7 +95,9 @@ export function ReportListingModal({
     }
 
     if (description.trim().length > 0 && description.trim().length < 10) {
-      setError("Please provide at least 10 characters in your description.");
+      const msg = "Please provide at least 10 characters in your description.";
+      setError(msg);
+      toast.error(msg);
       return;
     }
 
@@ -131,8 +134,11 @@ export function ReportListingModal({
       }
 
       setIsSuccess(true);
+      toast.success("Report submitted for review");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to submit report");
+      const msg = err instanceof Error ? err.message : "Failed to submit report";
+      setError(msg);
+      toast.error(msg);
     } finally {
       setIsSubmitting(false);
     }

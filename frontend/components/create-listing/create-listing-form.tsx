@@ -9,6 +9,7 @@ import { CategorySelector } from "./category-selector";
 import { Loader2, PlusCircle, ShieldCheck, ChevronDown, ChevronUp, Check, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { API_URL } from "@/lib/constants";
+import toast from "react-hot-toast";
 
 export function CreateListingForm() {
   const router = useRouter();
@@ -134,6 +135,7 @@ export function CreateListingForm() {
       const listingId = data.listing?.id;
 
       setIsSuccess(true);
+      toast.success("Listing created successfully!");
 
       if (listingId) {
         router.push(`/listings/${listingId}`);
@@ -142,6 +144,7 @@ export function CreateListingForm() {
       }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Error creating listing";
+      toast.error(msg);
       setErrorMessage(msg);
       setIsSubmitting(false);
       setIsSuccess(false);

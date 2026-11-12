@@ -28,6 +28,7 @@ import {
   Loader2,
   ChevronRight,
 } from "lucide-react";
+import toast from "react-hot-toast";
 
 const REASON_CONFIG: Record<
   ReportReason,
@@ -217,6 +218,7 @@ export default function AdminReportsPage() {
       }
 
       setResolveSuccess(true);
+      toast.success("Report resolved successfully");
       setRefreshKey((k) => k + 1);
 
       // Close after brief visual confirmation
@@ -224,7 +226,9 @@ export default function AdminReportsPage() {
         closeReportDetail();
       }, 1200);
     } catch (err: unknown) {
-      setDetailError(err instanceof Error ? err.message : "Failed to resolve report");
+      const msg = err instanceof Error ? err.message : "Failed to resolve report";
+      setDetailError(msg);
+      toast.error(msg);
     } finally {
       setIsResolving(false);
     }

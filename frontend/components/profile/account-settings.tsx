@@ -18,6 +18,7 @@ import {
   Camera,
 } from "lucide-react";
 import { API_URL } from "@/lib/constants";
+import toast from "react-hot-toast";
 
 export interface AccountSettingsProps {
   user: UserProfile;
@@ -46,7 +47,9 @@ export function AccountSettings({ user, onProfileUpdated }: AccountSettingsProps
     setSaveSuccess(null);
 
     if (!name.trim() || name.trim().length < 2) {
-      setSaveError("Name must be at least 2 characters long.");
+      const msg = "Name must be at least 2 characters long.";
+      setSaveError(msg);
+      toast.error(msg);
       return;
     }
 
@@ -82,6 +85,7 @@ export function AccountSettings({ user, onProfileUpdated }: AccountSettingsProps
       }
 
       setSaveSuccess("Profile updated successfully!");
+      toast.success("Profile updated successfully!");
       if (data.user) {
         onProfileUpdated?.(data.user);
         await checkAuth();
@@ -89,6 +93,7 @@ export function AccountSettings({ user, onProfileUpdated }: AccountSettingsProps
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : "Error saving profile";
       setSaveError(errMsg);
+      toast.error(errMsg);
     } finally {
       setIsSaving(false);
     }

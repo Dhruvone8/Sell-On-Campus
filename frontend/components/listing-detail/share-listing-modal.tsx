@@ -15,6 +15,7 @@ import {
   ExternalLink,
   Info,
 } from "lucide-react";
+import toast from "react-hot-toast";
 
 export interface ShareListingModalProps {
   isOpen: boolean;
@@ -69,7 +70,9 @@ export function ShareListingModal({
       }
 
       setCopied(true);
-      setCopiedNotification(customMessage || "Link copied to clipboard!");
+      const notificationMsg = customMessage || "Link copied to clipboard!";
+      setCopiedNotification(notificationMsg);
+      toast.success(notificationMsg);
 
       setTimeout(() => {
         setCopied(false);

@@ -5,6 +5,7 @@ import { ListingStatus } from "@/lib/types";
 import { Loader2, CheckCircle2, Bookmark, Check, ChevronDown, Lock } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { API_URL } from "@/lib/constants";
+import toast from "react-hot-toast";
 
 export interface StatusChangerProps {
   listingId: string;
@@ -141,10 +142,12 @@ export function StatusChanger({
         throw new Error(data.message || "Failed to update status");
       }
 
+      toast.success(`Listing status updated to ${newStatus.toLowerCase()}`);
       onStatusChange?.(newStatus);
       setIsOpen(false);
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : "Error updating status";
+      toast.error(errMsg);
       setError(errMsg);
     } finally {
       setIsUpdating(false);

@@ -10,6 +10,7 @@ import { Loader2, ArrowLeft, Check, AlertCircle, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { API_URL } from "@/lib/constants";
+import toast from "react-hot-toast";
 
 export interface EditListingFormProps {
   listing: Listing;
@@ -171,12 +172,14 @@ export function EditListingForm({ listing }: EditListingFormProps) {
 
       setIsSuccess(true);
       setSuccessMessage("Listing updated successfully! Redirecting...");
+      toast.success("Listing updated successfully!");
       setTimeout(() => {
         router.push("/my-listings");
         router.refresh();
       }, 900);
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : "Something went wrong";
+      toast.error(errMsg);
       setErrorMessage(errMsg);
       setIsSubmitting(false);
       setIsSuccess(false);
