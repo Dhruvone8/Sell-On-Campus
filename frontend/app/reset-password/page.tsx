@@ -19,6 +19,7 @@ export default function ResetPasswordPage() {
   const [showPassword, setShowPassword] = React.useState(false);
 
   const [loading, setLoading] = React.useState(false);
+  const [completed, setCompleted] = React.useState(false);
 
   // Retrieve token on mount
   React.useEffect(() => {
@@ -39,6 +40,10 @@ export default function ResetPasswordPage() {
 
   async function handleResetPassword(e: React.FormEvent) {
     e.preventDefault();
+
+    if (completed || loading) {
+      return;
+    }
 
     if (!resetToken) {
       toast.error("Reset token is missing or expired. Please start over.");
@@ -77,6 +82,7 @@ export default function ResetPasswordPage() {
       sessionStorage.removeItem("soc_reset_token");
       sessionStorage.removeItem("soc_reset_email");
 
+      setCompleted(true);
       toast.success("Password reset successfully! Redirecting to login...");
       setTimeout(() => {
         router.push("/login");
@@ -124,7 +130,7 @@ export default function ResetPasswordPage() {
               placeholder="Enter new password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              disabled={loading}
+              disabled={loading || completed}
               leftIcon={<Lock className="h-4 w-4" />}
               rightIcon={
                 <button
@@ -146,7 +152,7 @@ export default function ResetPasswordPage() {
               placeholder="Re-enter new password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              disabled={loading}
+              disabled={loading || completed}
               leftIcon={<Lock className="h-4 w-4" />}
             />
 
@@ -155,7 +161,7 @@ export default function ResetPasswordPage() {
               variant="primary"
               size="lg"
               loading={loading}
-              disabled={loading}
+              disabled={loading || completed}
               className="w-full mt-2"
             >
               Update Password
