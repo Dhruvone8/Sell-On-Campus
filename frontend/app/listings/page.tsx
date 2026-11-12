@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   title: "Campus Marketplace | SellOnCampus",
   description:
     "Explore student listings for textbooks, electronics, dorm furniture, and bikes directly across your campus.",
+  alternates: {
+    canonical: "/listings",
+  },
 };
 
 function ListingsLoadingFallback() {

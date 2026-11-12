@@ -78,6 +78,7 @@ export function CategoryGrid() {
             <Link
               key={cat.name}
               href={`/listings?search=${encodeURIComponent(cat.name.split(" ")[0])}`}
+              rel="nofollow"
               className="p-3.5 sm:p-4 rounded-xl bg-white hover:bg-charcoal-50/60 transition-[border-color,background-color] duration-150 border border-charcoal-200/80 shadow-2xs hover:border-charcoal-300 flex flex-col justify-between group cursor-pointer"
             >
               <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-lg bg-charcoal-50 border border-charcoal-200/60 group-hover:border-brand-300 group-hover:bg-brand-50/60 text-charcoal-600 group-hover:text-brand-700 flex items-center justify-center transition-colors mb-3 sm:mb-4">

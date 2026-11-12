@@ -79,6 +79,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title: "Listing Details | SellOnCampus",
     description:
       "View item specifications, condition, campus handoff locations, and contact the student seller directly on SellOnCampus.",
+    alternates: {
+      canonical: `/listings/${id}`,
+    },
   };
 }
 
