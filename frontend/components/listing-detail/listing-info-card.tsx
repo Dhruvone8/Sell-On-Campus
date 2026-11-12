@@ -285,18 +285,9 @@ export function ListingInfoCard({ listing }: ListingInfoCardProps) {
         </div>
       </div>
 
-      {/* Utility Actions Row: Share & Report */}
-      <div className="pt-2 flex items-center justify-between text-xs text-charcoal-500">
-        <button
-          type="button"
-          onClick={handleShare}
-          className="inline-flex items-center gap-1.5 text-xs text-charcoal-600 hover:text-brand-600 transition-colors cursor-pointer py-1 px-2 rounded-lg hover:bg-brand-50/60 font-medium"
-        >
-          <Share2 className="w-3.5 h-3.5 stroke-[2]" />
-          <span>Share listing</span>
-        </button>
-
-        {!isOwner && (
+      {/* Utility Actions Row: Report */}
+      {!isOwner && (
+        <div className="pt-2 flex items-center justify-end text-xs text-charcoal-500">
           <button
             type="button"
             onClick={() => setIsReportModalOpen(true)}
@@ -305,8 +296,8 @@ export function ListingInfoCard({ listing }: ListingInfoCardProps) {
             <Flag className="w-3.5 h-3.5 group-hover:text-rose-600 transition-colors" />
             <span>Report this listing</span>
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Share Listing Modal */}
       <ShareListingModal
