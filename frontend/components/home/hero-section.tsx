@@ -6,11 +6,10 @@ import { useRouter } from "next/navigation";
 import { Search, ArrowRight, PlusCircle } from "lucide-react";
 
 const POPULAR_SEARCHES = [
-  "Textbooks",
-  "MacBook",
-  "Dorm Decor",
-  "Cycles",
-  "Calculators",
+  "Scientific Calculators",
+  "Arduino",
+  "Sensors",
+  "Laptops",
 ];
 
 export function HeroSection() {
@@ -73,7 +72,7 @@ export function HeroSection() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search TI-84, Chem 31A books, desk fans, bikes..."
+                  placeholder="Search Scientific Calculators, Arduino, Sensors, Laptops..."
                   className="w-full pl-11 pr-4 py-2.5 sm:py-3 bg-charcoal-50/70 rounded-xl text-xs sm:text-sm font-medium text-charcoal-900 placeholder:text-charcoal-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-brand-500/25 transition-all"
                 />
               </div>

@@ -137,7 +137,7 @@ export function Navbar() {
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search textbooks, laptops, dorm gear..."
+              placeholder="Search scientific calculators, Arduino, laptops..."
               aria-label="Search listings"
               className="w-full pl-10 pr-12 xl:pr-14 py-2 rounded-xl bg-white/90 border border-charcoal-200 text-sm text-charcoal-900 placeholder:text-charcoal-400 focus:bg-white focus:border-brand-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/30 transition-all duration-200 ease-out"
             />

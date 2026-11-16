@@ -269,7 +269,8 @@ export async function getUserConversations(userId: string, limit: number, cursor
                     id: true,
                     title: true,
                     price: true,
-                    status: true
+                    status: true,
+                    sellerId: true,
                 },
             },
 
@@ -371,6 +372,7 @@ export async function getUserConversations(userId: string, limit: number, cursor
 
     const result = conversations.map((conversation) => {
         const otherUser = conversation.buyer.id === userId ? conversation.seller : conversation.buyer;
+        const isBuyer = conversation.buyer.id === userId;
 
         return {
             id: conversation.id,
@@ -378,6 +380,9 @@ export async function getUserConversations(userId: string, limit: number, cursor
             otherUser,
             lastMessage: conversation.messages[0] ?? null,
             unreadCount: unreadCountMap.get(conversation.id) ?? 0,
+            buyerId: conversation.buyer.id,
+            sellerId: conversation.seller.id,
+            isBuyer,
         };
     });
 
@@ -472,6 +477,7 @@ export async function getConversationById(conversationId: string, userId: string
                     title: true,
                     price: true,
                     status: true,
+                    sellerId: true,
                 },
             },
 
@@ -543,6 +549,7 @@ export async function getConversationById(conversationId: string, userId: string
     }
 
     const otherUser = conversation.buyer.id === userId ? conversation.seller : conversation.buyer;
+    const isBuyer = conversation.buyer.id === userId;
 
     return {
         id: conversation.id,
@@ -550,5 +557,8 @@ export async function getConversationById(conversationId: string, userId: string
         otherUser,
         lastMessage: conversation.messages[0] ?? null,
         unreadCount,
+        buyerId: conversation.buyer.id,
+        sellerId: conversation.seller.id,
+        isBuyer,
     };
 }
