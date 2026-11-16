@@ -155,6 +155,7 @@ export function ListingStampOverlay({
 
       {/* Slamming Stamp Graphic driven by Framer Motion: Hyper-fast 140ms drop into 1.25s slow-motion landing */}
       <motion.img
+        key={status}
         src={stampSrc}
         alt={altText}
         initial={
