@@ -12,6 +12,7 @@ export interface StatusChangerProps {
   currentStatus: ListingStatus;
   onStatusChange?: (newStatus: ListingStatus) => void;
   className?: string;
+  align?: "left" | "right";
 }
 
 const STATUS_METADATA: Record<
@@ -52,6 +53,7 @@ export function StatusChanger({
   currentStatus,
   onStatusChange,
   className,
+  align = "right",
 }: StatusChangerProps) {
   const [isOpen, setIsOpen] = React.useState(false);
   const [isUpdating, setIsUpdating] = React.useState(false);
@@ -205,7 +207,12 @@ export function StatusChanger({
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute left-0 sm:right-0 sm:left-auto mt-2 w-64 rounded-2xl bg-white shadow-xl border border-charcoal-200/80 py-1.5 z-40 animate-in fade-in-0 zoom-in-95 duration-150">
+        <div
+          className={cn(
+            "absolute mt-2 w-64 rounded-2xl bg-white shadow-xl border border-charcoal-200/80 py-1.5 z-40 animate-in fade-in-0 zoom-in-95 duration-150",
+            align === "right" ? "right-0" : "left-0"
+          )}
+        >
           <div className="px-3 py-2 border-b border-charcoal-100">
             <p className="text-[11px] font-bold uppercase tracking-wider text-charcoal-400">
               Update Listing Status
