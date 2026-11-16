@@ -182,20 +182,22 @@ export function ListingInfoCard({ listing, onStatusChange }: ListingInfoCardProp
         </div>
       </div>
 
-      {/* Listing Title & Share Button */}
+      {/* Listing Title & Share Button (Non-owner gets top share icon) */}
       <div className="flex items-start justify-between gap-3">
         <h1 className="text-xl min-[360px]:text-2xl sm:text-3xl font-bold text-charcoal-900 tracking-tight leading-snug font-jakarta flex-1">
           {listing.title}
         </h1>
-        <button
-          type="button"
-          onClick={handleShare}
-          aria-label="Share listing"
-          title="Share listing"
-          className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-charcoal-50 hover:bg-charcoal-100 border border-charcoal-200/80 text-charcoal-600 hover:text-brand-600 hover:border-brand-200 transition-colors shadow-2xs shrink-0 cursor-pointer active:scale-95"
-        >
-          <Share2 className="w-4.5 h-4.5 stroke-[2.2]" />
-        </button>
+        {!isOwner && (
+          <button
+            type="button"
+            onClick={handleShare}
+            aria-label="Share listing"
+            title="Share listing"
+            className="inline-flex items-center justify-center w-10 h-10 rounded-xl bg-charcoal-50 hover:bg-charcoal-100 border border-charcoal-200/80 text-charcoal-600 hover:text-brand-600 hover:border-brand-200 transition-colors shadow-2xs shrink-0 cursor-pointer active:scale-95"
+          >
+            <Share2 className="w-4.5 h-4.5 stroke-[2.2]" />
+          </button>
+        )}
       </div>
 
       {/* Price & Condition */}
@@ -223,24 +225,43 @@ export function ListingInfoCard({ listing, onStatusChange }: ListingInfoCardProp
         </div>
       )}
 
-      {/* Primary Action Button */}
+      {/* Primary Action Row / Owner Controls */}
       <div className="pt-2">
         {isOwner ? (
-          <div className="flex flex-col gap-2.5">
+          <div className="grid grid-cols-3 gap-2.5">
+            {/* Edit Icon Button */}
             <Link
               href={`/listings/${listing.id}/edit`}
-              className="w-full h-11 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-sm shadow-brand-500/25 transition-all cursor-pointer active:scale-[0.99]"
+              title="Edit listing details"
+              aria-label="Edit listing"
+              className="h-11 rounded-xl bg-brand-50 hover:bg-brand-100 text-brand-700 border border-brand-200/80 font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-[0.98] shadow-2xs hover:shadow-xs"
             >
               <Edit3 className="w-4 h-4 stroke-[2]" />
-              <span>Edit Listing</span>
+              <span className="hidden sm:inline">Edit</span>
             </Link>
+
+            {/* Delete Icon Button */}
             <button
               type="button"
               onClick={() => setIsDeleteModalOpen(true)}
-              className="w-full h-10 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 border border-red-200/80 transition-all cursor-pointer active:scale-[0.99]"
+              title="Delete this listing"
+              aria-label="Delete listing"
+              className="h-11 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 border border-red-200/80 font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-[0.98] shadow-2xs hover:shadow-xs"
             >
               <Trash2 className="w-4 h-4 stroke-[2]" />
-              <span>Delete Listing</span>
+              <span className="hidden sm:inline">Delete</span>
+            </button>
+
+            {/* Share Icon Button */}
+            <button
+              type="button"
+              onClick={handleShare}
+              title="Share listing link"
+              aria-label="Share listing"
+              className="h-11 rounded-xl bg-charcoal-50 hover:bg-charcoal-100 text-charcoal-700 border border-charcoal-200/80 font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-[0.98] shadow-2xs hover:shadow-xs"
+            >
+              <Share2 className="w-4 h-4 stroke-[2]" />
+              <span className="hidden sm:inline">Share</span>
             </button>
           </div>
         ) : isSold ? (
