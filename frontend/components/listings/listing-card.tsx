@@ -7,6 +7,7 @@ import { Listing } from "@/lib/types";
 import { formatPrice, formatRelativeTime, getInitials, cn } from "@/lib/utils";
 import { Tag, UserCheck } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
+import { ListingStampOverlay } from "./listing-stamp-overlay";
 
 export interface ListingCardProps {
   listing: Listing;
@@ -97,13 +98,9 @@ export function ListingCard({
           </span>
         </div>
 
-        {/* Reserved / Sold Badge overlay */}
+        {/* Dynamic SOLD / RESERVED Stamp Overlay with Animation & Dust */}
         {listing.status && listing.status !== "ACTIVE" && (
-          <div className="absolute inset-0 bg-charcoal-900/60 flex items-center justify-center">
-            <span className="px-3 py-1 rounded-lg bg-white text-charcoal-900 font-bold text-xs tracking-wider uppercase shadow-sm">
-              {listing.status}
-            </span>
-          </div>
+          <ListingStampOverlay status={listing.status} size="sm" />
         )}
       </div>
 

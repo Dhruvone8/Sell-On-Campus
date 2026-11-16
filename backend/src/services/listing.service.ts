@@ -540,7 +540,7 @@ export async function getListings(
     const skip = (page - 1) * limit;
 
     const where: Prisma.ListingWhereInput = {
-        status: "ACTIVE" as const,
+        status: { in: ["ACTIVE", "RESERVED", "SOLD"] },
 
         ...(filters.categoryId && { categoryId: filters.categoryId }),
 

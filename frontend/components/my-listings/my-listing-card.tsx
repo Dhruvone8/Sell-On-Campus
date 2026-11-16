@@ -8,6 +8,7 @@ import { formatPrice, formatRelativeTime, cn } from "@/lib/utils";
 import { StatusChanger } from "./status-changer";
 import { Pencil, Eye, Tag, Calendar, Layers, Trash2, Loader2 } from "lucide-react";
 import { Modal } from "@/components/ui/modal";
+import { ListingStampOverlay } from "@/components/listings/listing-stamp-overlay";
 
 export interface MyListingCardProps {
   listing: Listing;
@@ -86,6 +87,11 @@ export function MyListingCard({
               {conditionMeta.label}
             </span>
           </div>
+        )}
+
+        {/* Dynamic SOLD / RESERVED Stamp Overlay */}
+        {listing.status && listing.status !== "ACTIVE" && (
+          <ListingStampOverlay status={listing.status} size="sm" />
         )}
       </div>
 

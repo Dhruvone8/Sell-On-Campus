@@ -2,16 +2,18 @@
 "use client";
 
 import * as React from "react";
-import { ListingImage } from "@/lib/types";
+import { ListingImage, ListingStatus } from "@/lib/types";
 import { Tag } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ListingStampOverlay } from "@/components/listings/listing-stamp-overlay";
 
 export interface ListingGalleryProps {
   images: ListingImage[];
   title: string;
+  status?: ListingStatus;
 }
 
-export function ListingGallery({ images, title }: ListingGalleryProps) {
+export function ListingGallery({ images, title, status }: ListingGalleryProps) {
   const [activeIndex, setActiveIndex] = React.useState(0);
   const [failedImages, setFailedImages] = React.useState<Record<number, boolean>>({});
 
@@ -44,6 +46,11 @@ export function ListingGallery({ images, title }: ListingGalleryProps) {
               No photos uploaded by seller
             </span>
           </div>
+        )}
+
+        {/* Dynamic SOLD / RESERVED Stamp Overlay for Gallery view */}
+        {status && status !== "ACTIVE" && (
+          <ListingStampOverlay status={status} size="lg" />
         )}
       </div>
 

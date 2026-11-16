@@ -152,6 +152,7 @@ export function ListingDetailContent({ id }: ListingDetailContentProps) {
           <ListingGallery
             images={listing.images || []}
             title={listing.title}
+            status={listing.status}
           />
 
           <ListingSpecsTable listing={listing} />
