@@ -92,6 +92,24 @@ export function MessagePanel({
     return -1;
   }, [messages, initialUserLastReadSequence, currentUserId, conversation?.otherUser.id]);
 
+  // Determine if the current user is the prospective buyer
+  const isBuyer = React.useMemo(() => {
+    if (!conversation) return false;
+    if (conversation.isBuyer !== undefined) {
+      return conversation.isBuyer;
+    }
+    if (currentUserId && conversation.buyerId) {
+      return currentUserId === conversation.buyerId;
+    }
+    if (currentUserId && conversation.sellerId) {
+      return currentUserId !== conversation.sellerId;
+    }
+    if (currentUserId && conversation.listing?.sellerId) {
+      return currentUserId !== conversation.listing.sellerId;
+    }
+    return false;
+  }, [conversation, currentUserId]);
+
   if (!conversation) {
     return (
       <div
@@ -209,6 +227,7 @@ export function MessagePanel({
         onSendMessage={onSendMessage}
         isSending={isSending}
         disabled={isLoadingMessages}
+        isBuyer={isBuyer}
       />
     </div>
   );

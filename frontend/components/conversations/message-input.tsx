@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Send, Loader2, Sparkles } from "lucide-react";
+import { Send, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface MessageInputProps {
@@ -9,6 +9,7 @@ export interface MessageInputProps {
   isSending: boolean;
   disabled?: boolean;
   className?: string;
+  isBuyer?: boolean;
 }
 
 const QUICK_PROMPTS = [
@@ -22,6 +23,7 @@ export function MessageInput({
   isSending,
   disabled = false,
   className,
+  isBuyer = false,
 }: MessageInputProps) {
   const [content, setContent] = React.useState("");
   const textareaRef = React.useRef<HTMLTextAreaElement>(null);
@@ -68,24 +70,25 @@ export function MessageInput({
         className
       )}
     >
-      {/* Quick Suggestion Chips */}
-      <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
-        <span className="text-[10px] font-bold uppercase tracking-wider text-charcoal-400 flex items-center gap-1 shrink-0">
-          <Sparkles className="w-3 h-3 text-brand-500" />
-          Quick:
-        </span>
-        {QUICK_PROMPTS.map((prompt) => (
-          <button
-            key={prompt}
-            type="button"
-            disabled={disabled || isSending}
-            onClick={() => handleQuickPromptClick(prompt)}
-            className="text-[11px] font-medium text-charcoal-600 bg-charcoal-50 hover:bg-brand-50 hover:text-brand-700 hover:border-brand-200 border border-charcoal-200/70 px-2.5 py-1 rounded-full whitespace-nowrap transition-colors cursor-pointer shrink-0 touch-manipulation"
-          >
-            {prompt}
-          </button>
-        ))}
-      </div>
+      {/* Quick Suggestion Chips (Buyer only, without AI sparkles) */}
+      {isBuyer && (
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
+          <span className="text-[10px] font-bold uppercase tracking-wider text-charcoal-400 shrink-0">
+            Quick:
+          </span>
+          {QUICK_PROMPTS.map((prompt) => (
+            <button
+              key={prompt}
+              type="button"
+              disabled={disabled || isSending}
+              onClick={() => handleQuickPromptClick(prompt)}
+              className="text-[11px] font-medium text-charcoal-600 bg-charcoal-50 hover:bg-brand-50 hover:text-brand-700 hover:border-brand-200 border border-charcoal-200/70 px-2.5 py-1 rounded-full whitespace-nowrap transition-colors cursor-pointer shrink-0 touch-manipulation"
+            >
+              {prompt}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* Input Field & Submit */}
       <form onSubmit={handleSubmit} className="flex items-end gap-2">

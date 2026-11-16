@@ -7,11 +7,15 @@ import { Tag } from "lucide-react";
 
 export type ConversationItemData = {
   id: string;
+  buyerId?: string;
+  sellerId?: string;
+  isBuyer?: boolean;
   listing: {
     id: string;
     title: string;
     price: string | number;
     status: string;
+    sellerId?: string;
   };
   otherUser: {
     id: string;
