@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Listing } from "@/lib/types";
+import { Listing, ListingStatus } from "@/lib/types";
+import { useAuth } from "@/lib/auth-context";
 import {
   ListingBreadcrumbs,
   ListingGallery,
@@ -21,9 +22,18 @@ export interface ListingDetailContentProps {
 }
 
 export function ListingDetailContent({ id }: ListingDetailContentProps) {
+  const { user } = useAuth();
   const [listing, setListing] = React.useState<Listing | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+
+  const isOwner = Boolean(
+    user && listing && (user.id === listing.sellerId || user.id === listing.seller?.id)
+  );
+
+  const handleStatusChange = (newStatus: ListingStatus) => {
+    setListing((prev) => (prev ? { ...prev, status: newStatus } : prev));
+  };
 
   React.useEffect(() => {
     let isMounted = true;
@@ -149,9 +159,12 @@ export function ListingDetailContent({ id }: ListingDetailContentProps) {
 
         {/* Right Column: Sticky Buy Box & Seller Profile */}
         <div className="lg:col-span-5 flex flex-col gap-5 lg:sticky lg:top-24">
-          <ListingInfoCard listing={listing} />
+          <ListingInfoCard
+            listing={listing}
+            onStatusChange={handleStatusChange}
+          />
 
-          <ListingSellerCard seller={listing.seller} />
+          {!isOwner && <ListingSellerCard seller={listing.seller} />}
 
           <ListingSafetyCard listingId={listing.id} />
         </div>

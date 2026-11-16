@@ -6,15 +6,18 @@ import { useRouter } from "next/navigation";
 import { Listing } from "@/lib/types";
 import { formatPrice, cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
-import { MessageSquare, Loader2, Edit3, ShieldCheck, MapPin, Sparkles, Layers, Trash2, Flag, Share2 } from "lucide-react";
+import { MessageSquare, Loader2, Edit3, ShieldCheck, MapPin, Tag, Coins, Trash2, Flag, Share2 } from "lucide-react";
 import { API_URL, getListingShareUrl } from "@/lib/constants";
 import { Modal } from "@/components/ui/modal";
 import { ReportListingModal } from "./report-listing-modal";
 import { ShareListingModal } from "./share-listing-modal";
+import { StatusChanger } from "@/components/my-listings/status-changer";
 import toast from "react-hot-toast";
+import { ListingStatus } from "@/lib/types";
 
 export interface ListingInfoCardProps {
   listing: Listing;
+  onStatusChange?: (newStatus: ListingStatus) => void;
 }
 
 const CONDITION_META: Record<string, { label: string; badgeClass: string }> = {
@@ -24,7 +27,7 @@ const CONDITION_META: Record<string, { label: string; badgeClass: string }> = {
   FAIR: { label: "Fair", badgeClass: "bg-charcoal-100 text-charcoal-700 border-charcoal-200" },
 };
 
-export function ListingInfoCard({ listing }: ListingInfoCardProps) {
+export function ListingInfoCard({ listing, onStatusChange }: ListingInfoCardProps) {
   const router = useRouter();
   const { user, isAuthenticated } = useAuth();
   const [isMessaging, setIsMessaging] = React.useState(false);
@@ -148,13 +151,19 @@ export function ListingInfoCard({ listing }: ListingInfoCardProps) {
 
         <div className="flex items-center gap-2">
           {isOwner && (
-            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-brand-50 text-brand-700 border border-brand-200 text-xs font-bold">
-              <Sparkles className="w-3 h-3 stroke-[2.5]" />
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-brand-50 text-brand-700 border border-brand-200 text-xs font-bold">
+              <Tag className="w-3 h-3 stroke-[2.2]" />
               <span>Your Listing</span>
             </span>
           )}
 
-          {isSold ? (
+          {isOwner ? (
+            <StatusChanger
+              listingId={listing.id}
+              currentStatus={listing.status}
+              onStatusChange={onStatusChange}
+            />
+          ) : isSold ? (
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-charcoal-100 text-charcoal-600 text-xs font-bold">
               <span className="w-1.5 h-1.5 rounded-full bg-charcoal-500" />
               Sold
@@ -218,22 +227,13 @@ export function ListingInfoCard({ listing }: ListingInfoCardProps) {
       <div className="pt-2">
         {isOwner ? (
           <div className="flex flex-col gap-2.5">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              <Link
-                href={`/listings/${listing.id}/edit`}
-                className="w-full h-11 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-sm shadow-brand-500/25 transition-all cursor-pointer active:scale-[0.99]"
-              >
-                <Edit3 className="w-4 h-4 stroke-[2]" />
-                <span>Edit Listing</span>
-              </Link>
-              <Link
-                href="/my-listings"
-                className="w-full h-11 rounded-xl bg-charcoal-50 hover:bg-charcoal-100 text-charcoal-800 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 border border-charcoal-200/80 transition-all cursor-pointer active:scale-[0.99]"
-              >
-                <Layers className="w-4 h-4 stroke-[2]" />
-                <span>My Listings</span>
-              </Link>
-            </div>
+            <Link
+              href={`/listings/${listing.id}/edit`}
+              className="w-full h-11 rounded-xl bg-brand-500 hover:bg-brand-600 text-white text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-sm shadow-brand-500/25 transition-all cursor-pointer active:scale-[0.99]"
+            >
+              <Edit3 className="w-4 h-4 stroke-[2]" />
+              <span>Edit Listing</span>
+            </Link>
             <button
               type="button"
               onClick={() => setIsDeleteModalOpen(true)}
@@ -284,7 +284,7 @@ export function ListingInfoCard({ listing }: ListingInfoCardProps) {
           <span>Direct in-person campus pickup and inspection</span>
         </div>
         <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
+          <Coins className="w-4 h-4 text-amber-600 shrink-0" />
           <span>Zero buyer fees • Direct student-to-student deal</span>
         </div>
       </div>
