@@ -30,6 +30,7 @@ export default function MyListingsPage() {
 
   const [activeTab, setActiveTab] = React.useState<TabFilter>("ALL");
   const [searchQuery, setSearchQuery] = React.useState("");
+  const [recentlyChangedId, setRecentlyChangedId] = React.useState<string | null>(null);
 
   // Fetch student's listings from backend
   const fetchMyListings = React.useCallback(async () => {
@@ -88,6 +89,7 @@ export default function MyListingsPage() {
 
   // Handle live status update in local state
   const handleStatusChange = (listingId: string, newStatus: ListingStatus) => {
+    setRecentlyChangedId(listingId);
     setListings((prev) =>
       prev.map((item) =>
         item.id === listingId ? { ...item, status: newStatus } : item
@@ -297,6 +299,7 @@ export default function MyListingsPage() {
               <MyListingCard
                 key={listing.id}
                 listing={listing}
+                animateStamp={listing.id === recentlyChangedId}
                 onStatusChange={handleStatusChange}
                 onDelete={handleDeleteListing}
               />
