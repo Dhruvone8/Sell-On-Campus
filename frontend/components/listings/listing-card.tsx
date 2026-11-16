@@ -98,9 +98,9 @@ export function ListingCard({
           </span>
         </div>
 
-        {/* Dynamic SOLD / RESERVED Stamp Overlay with Animation & Dust */}
+        {/* Dynamic SOLD / RESERVED Stamp Overlay (Static on public cards) */}
         {listing.status && listing.status !== "ACTIVE" && (
-          <ListingStampOverlay status={listing.status} size="sm" />
+          <ListingStampOverlay status={listing.status} size="sm" animate={false} />
         )}
       </div>
 

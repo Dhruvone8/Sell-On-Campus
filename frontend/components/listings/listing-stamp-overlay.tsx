@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { ListingStatus } from "@/lib/types";
 import { playStampSound } from "@/lib/audio";
 import { cn } from "@/lib/utils";
@@ -34,22 +34,20 @@ const SMOG_COLORS = [
 
 export function ListingStampOverlay({
   status,
-  animate = true,
+  animate = false,
   className,
   size = "md",
 }: ListingStampOverlayProps) {
   const [showDust, setShowDust] = React.useState(false);
   const [puffs, setPuffs] = React.useState<SmogPuff[]>([]);
+  const shouldReduceMotion = useReducedMotion();
+  const shouldAnimate = Boolean(animate && !shouldReduceMotion);
 
   // Only render for RESERVED or SOLD
   const isTargetStatus = status === "SOLD" || status === "RESERVED";
 
   React.useEffect(() => {
-    if (!isTargetStatus) return;
-
-    if (!animate) {
-      return;
-    }
+    if (!isTargetStatus || !shouldAnimate) return;
 
     // Trigger audio thump & dust shockwave at impact point (140ms)
     const impactTimer = setTimeout(() => {
@@ -81,7 +79,7 @@ export function ListingStampOverlay({
       clearTimeout(impactTimer);
       clearTimeout(dustCleanupTimer);
     };
-  }, [status, animate, isTargetStatus]);
+  }, [status, shouldAnimate, isTargetStatus]);
 
   if (!isTargetStatus) return null;
 
@@ -108,9 +106,9 @@ export function ListingStampOverlay({
     >
       {/* Darkened backdrop: 45% black wash with subtle blur so the stamp and smog visibly pop */}
       <motion.div
-        initial={animate ? { opacity: 0 } : { opacity: 1 }}
+        initial={{ opacity: shouldAnimate ? 0 : 1 }}
         animate={{ opacity: 1 }}
-        transition={{ duration: 0.35, ease: "easeOut" }}
+        transition={{ duration: shouldAnimate ? 0.35 : 0 }}
         className="absolute inset-0 bg-black/45 backdrop-blur-[0.5px]"
       />
 
@@ -159,7 +157,7 @@ export function ListingStampOverlay({
         src={stampSrc}
         alt={altText}
         initial={
-          animate
+          shouldAnimate
             ? {
                 scale: 4.2,
                 opacity: 0,
@@ -171,13 +169,21 @@ export function ListingStampOverlay({
                 rotate: -12,
               }
         }
-        animate={{
-          scale: [4.2, 0.88, 1.14, 0.96, 1.02, 1],
-          opacity: [0, 1, 1, 1, 1, 1],
-          rotate: [14, -16, -9, -13, -11.5, -12],
-        }}
+        animate={
+          shouldAnimate
+            ? {
+                scale: [4.2, 0.88, 1.14, 0.96, 1.02, 1],
+                opacity: [0, 1, 1, 1, 1, 1],
+                rotate: [14, -16, -9, -13, -11.5, -12],
+              }
+            : {
+                scale: 1,
+                opacity: 1,
+                rotate: -12,
+              }
+        }
         transition={
-          animate
+          shouldAnimate
             ? {
                 duration: 1.4,
                 times: [0, 0.1, 0.3, 0.6, 0.85, 1],

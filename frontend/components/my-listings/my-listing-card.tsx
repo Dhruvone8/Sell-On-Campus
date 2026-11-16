@@ -15,6 +15,7 @@ export interface MyListingCardProps {
   onStatusChange?: (listingId: string, newStatus: ListingStatus) => void;
   onDelete?: (listingId: string) => Promise<void> | void;
   className?: string;
+  animateStamp?: boolean;
 }
 
 const CONDITION_LABELS: Record<string, { label: string; badgeClass: string }> = {
@@ -29,6 +30,7 @@ export function MyListingCard({
   onStatusChange,
   onDelete,
   className,
+  animateStamp = false,
 }: MyListingCardProps) {
   const [imageError, setImageError] = React.useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = React.useState(false);
@@ -91,7 +93,7 @@ export function MyListingCard({
 
         {/* Dynamic SOLD / RESERVED Stamp Overlay */}
         {listing.status && listing.status !== "ACTIVE" && (
-          <ListingStampOverlay status={listing.status} size="sm" />
+          <ListingStampOverlay status={listing.status} size="sm" animate={animateStamp} />
         )}
       </div>
 

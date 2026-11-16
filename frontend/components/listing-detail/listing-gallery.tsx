@@ -11,9 +11,15 @@ export interface ListingGalleryProps {
   images: ListingImage[];
   title: string;
   status?: ListingStatus;
+  animateStamp?: boolean;
 }
 
-export function ListingGallery({ images, title, status }: ListingGalleryProps) {
+export function ListingGallery({
+  images,
+  title,
+  status,
+  animateStamp = false,
+}: ListingGalleryProps) {
   const [activeIndex, setActiveIndex] = React.useState(0);
   const [failedImages, setFailedImages] = React.useState<Record<number, boolean>>({});
 
@@ -50,7 +56,7 @@ export function ListingGallery({ images, title, status }: ListingGalleryProps) {
 
         {/* Dynamic SOLD / RESERVED Stamp Overlay for Gallery view */}
         {status && status !== "ACTIVE" && (
-          <ListingStampOverlay status={status} size="lg" />
+          <ListingStampOverlay status={status} size="lg" animate={animateStamp} />
         )}
       </div>
 

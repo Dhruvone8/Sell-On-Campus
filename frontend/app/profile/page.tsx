@@ -34,6 +34,7 @@ export default function ProfilePage() {
 
   const [activeTab, setActiveTab] = React.useState<ProfileTab>("LISTINGS");
   const [listingFilter, setListingFilter] = React.useState<ListingFilter>("ALL");
+  const [recentlyChangedId, setRecentlyChangedId] = React.useState<string | null>(null);
 
   // Fetch real user profile and user listings
   const loadProfileData = React.useCallback(async () => {
@@ -102,6 +103,7 @@ export default function ProfilePage() {
 
   // Handle live status toggle for listings
   const handleStatusChange = (listingId: string, newStatus: ListingStatus) => {
+    setRecentlyChangedId(listingId);
     setListings((prev) =>
       prev.map((item) =>
         item.id === listingId ? { ...item, status: newStatus } : item
@@ -280,6 +282,7 @@ export default function ProfilePage() {
                     <MyListingCard
                       key={listing.id}
                       listing={listing}
+                      animateStamp={listing.id === recentlyChangedId}
                       onStatusChange={handleStatusChange}
                     />
                   ))}

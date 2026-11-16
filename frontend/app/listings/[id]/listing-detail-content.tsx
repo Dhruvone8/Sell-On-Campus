@@ -26,12 +26,14 @@ export function ListingDetailContent({ id }: ListingDetailContentProps) {
   const [listing, setListing] = React.useState<Listing | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  const [hasOwnerChangedStatus, setHasOwnerChangedStatus] = React.useState(false);
 
   const isOwner = Boolean(
     user && listing && (user.id === listing.sellerId || user.id === listing.seller?.id)
   );
 
   const handleStatusChange = (newStatus: ListingStatus) => {
+    setHasOwnerChangedStatus(true);
     setListing((prev) => (prev && prev.id === id ? { ...prev, status: newStatus } : prev));
   };
 
@@ -153,6 +155,7 @@ export function ListingDetailContent({ id }: ListingDetailContentProps) {
             images={listing.images || []}
             title={listing.title}
             status={listing.status}
+            animateStamp={hasOwnerChangedStatus}
           />
 
           <ListingSpecsTable listing={listing} />
