@@ -32,7 +32,7 @@ export function ListingDetailContent({ id }: ListingDetailContentProps) {
   );
 
   const handleStatusChange = (newStatus: ListingStatus) => {
-    setListing((prev) => (prev ? { ...prev, status: newStatus } : prev));
+    setListing((prev) => (prev && prev.id === id ? { ...prev, status: newStatus } : prev));
   };
 
   React.useEffect(() => {
