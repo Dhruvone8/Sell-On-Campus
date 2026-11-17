@@ -49,6 +49,7 @@ export function ListingDetailContent({ id }: ListingDetailContentProps) {
       try {
         const apiUrl = API_URL;
         const res = await fetch(`${apiUrl}/api/listings/${id}`, {
+          cache: "no-store",
           credentials: "include",
           headers: {
             Accept: "application/json",

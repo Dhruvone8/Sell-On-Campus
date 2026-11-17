@@ -14,7 +14,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
   try {
     const res = await fetch(`${API_URL}/api/listings/${id}`, {
-      next: { revalidate: 60 },
+      cache: "no-store",
       headers: {
         Accept: "application/json",
       },

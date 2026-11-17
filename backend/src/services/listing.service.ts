@@ -191,21 +191,17 @@ export async function createListing(data: CreateListingData) {
 }
 
 export async function getListingById(listingId: string) {
-    const cachedKey = `listing:${listingId}`;
-
-    const cachedListing = await getCache<ListingDetail>(cachedKey);
-
-    if (cachedListing) {
-        return cachedListing;
-    }
-
     const listing = await prisma.listing.findUnique({
         where: {
             id: listingId
         },
         include: {
             category: true,
-            images: true,
+            images: {
+                orderBy: {
+                    createdAt: "asc"
+                }
+            },
             seller: {
                 select: {
                     id: true,
@@ -231,9 +227,7 @@ export async function getListingById(listingId: string) {
         })),
     };
 
-    await setCache(cachedKey, result, 60 * 10)
-
-    return result
+    return result;
 }
 
 export async function updateListing(

@@ -58,6 +58,7 @@ export async function getListingById(req: Request, res: Response) {
 
         const listing = await getListingByIdService(id);
 
+        res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
         return res.status(200).json({ listing });
 
     } catch (error) {
