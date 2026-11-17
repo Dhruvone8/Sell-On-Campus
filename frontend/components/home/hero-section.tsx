@@ -40,7 +40,7 @@ export function HeroSection() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col items-center text-center max-w-4xl mx-auto">
           {/* University Live Hub Pill */}
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/90 backdrop-blur-md shadow-xs border border-charcoal-200/70 mt-8 sm:mt-10 mb-6">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white shadow-xs border border-charcoal-200 mt-8 sm:mt-10 mb-6">
             <span className="relative flex h-2 w-2 shrink-0 translate-y-[1px]">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-brand-500" />
@@ -63,8 +63,8 @@ export function HeroSection() {
             Buy, sell, and trade textbooks, electronics, dorm essentials, and cycles directly with fellow students. Verified campus emails only.
           </p>
 
-          {/* Prominent Search Glass Container */}
-          <div className="w-full max-w-2xl bg-white/90 backdrop-blur-xl p-2 sm:p-2.5 rounded-2xl shadow-xl shadow-charcoal-900/[0.04] border border-charcoal-200/80 mb-6">
+          {/* Prominent Search Solid Container */}
+          <div className="w-full max-w-2xl bg-white p-2 sm:p-2.5 rounded-2xl shadow-lg shadow-charcoal-900/[0.04] border border-charcoal-200 mb-6">
             <form onSubmit={handleSearch} className="flex flex-col sm:flex-row items-center gap-2">
               <div className="relative flex-1 w-full flex items-center">
                 <Search className="w-5 h-5 absolute left-3.5 text-charcoal-400 stroke-[2] pointer-events-none" />
@@ -73,7 +73,7 @@ export function HeroSection() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search Scientific Calculators, Arduino, Sensors, Laptops..."
-                  className="w-full pl-11 pr-4 py-2.5 sm:py-3 bg-charcoal-50/70 rounded-xl text-xs sm:text-sm font-medium text-charcoal-900 placeholder:text-charcoal-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-brand-500/25 transition-all"
+                  className="w-full pl-11 pr-4 py-2.5 sm:py-3 bg-charcoal-50 rounded-xl text-xs sm:text-sm font-medium text-charcoal-900 placeholder:text-charcoal-400 focus:outline-none focus:bg-white focus:ring-2 focus:ring-brand-500/25 transition-all"
                 />
               </div>
 
@@ -96,7 +96,7 @@ export function HeroSection() {
                   key={chip}
                   type="button"
                   onClick={() => handleQuickChip(chip)}
-                  className="px-2.5 py-1 min-h-[30px] rounded-lg bg-charcoal-100/70 text-charcoal-700 text-xs font-semibold hover:bg-charcoal-200/80 hover:text-charcoal-900 transition-colors shrink-0 cursor-pointer focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:outline-none"
+                  className="px-2.5 py-1 min-h-[30px] rounded-lg bg-charcoal-100 text-charcoal-700 text-xs font-semibold hover:bg-charcoal-200 hover:text-charcoal-900 transition-colors shrink-0 cursor-pointer focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:outline-none"
                 >
                   {chip}
                 </button>

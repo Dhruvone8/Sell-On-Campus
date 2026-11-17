@@ -22,10 +22,10 @@ export function Alert({
   };
 
   const variants = {
-    error: "border-red-200 bg-red-50/90 text-red-900 [&>svg]:text-red-600",
-    success: "border-emerald-200 bg-emerald-50/90 text-emerald-900 [&>svg]:text-emerald-600",
-    warning: "border-amber-200 bg-amber-50/90 text-amber-900 [&>svg]:text-amber-600",
-    info: "border-blue-200 bg-blue-50/90 text-blue-900 [&>svg]:text-blue-600",
+    error: "border-red-200 bg-red-50 text-red-900 [&>svg]:text-red-600",
+    success: "border-emerald-200 bg-emerald-50 text-emerald-900 [&>svg]:text-emerald-600",
+    warning: "border-amber-200 bg-amber-50 text-amber-900 [&>svg]:text-amber-600",
+    info: "border-blue-200 bg-blue-50 text-blue-900 [&>svg]:text-blue-600",
   };
 
   const Icon = icons[variant];
@@ -34,7 +34,7 @@ export function Alert({
     <div
       role="alert"
       className={cn(
-        "relative flex w-full gap-3 rounded-xl border p-4 text-sm backdrop-blur-sm transition-all shadow-xs",
+        "relative flex w-full gap-3 rounded-xl border p-4 text-sm transition-all shadow-xs",
         variants[variant],
         className
       )}

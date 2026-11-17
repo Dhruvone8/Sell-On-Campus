@@ -289,7 +289,7 @@ export function EditImageManager({
 
             {/* Status pill for newly added photos */}
             {img.type === "new" && idx !== 0 && (
-              <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded-md bg-charcoal-900/75 backdrop-blur-xs text-white text-[9px] font-semibold z-10">
+              <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded-md bg-charcoal-900 text-white text-[9px] font-semibold z-10">
                 New
               </div>
             )}
@@ -304,7 +304,7 @@ export function EditImageManager({
                   setReplacingIndex(idx);
                   replaceInputRef.current?.click();
                 }}
-                className="p-1.5 rounded-lg bg-charcoal-900/85 hover:bg-brand-600 text-white transition-colors cursor-pointer shadow-sm"
+                className="p-1.5 rounded-lg bg-charcoal-900 hover:bg-brand-600 text-white transition-colors cursor-pointer shadow-sm"
                 title="Replace with new photo"
                 aria-label={`Replace photo ${idx + 1}`}
               >
@@ -318,7 +318,7 @@ export function EditImageManager({
                   e.stopPropagation();
                   handleDelete(idx);
                 }}
-                className="p-1.5 rounded-lg bg-charcoal-900/85 hover:bg-red-600 text-white transition-colors cursor-pointer shadow-sm"
+                className="p-1.5 rounded-lg bg-charcoal-900 hover:bg-red-600 text-white transition-colors cursor-pointer shadow-sm"
                 title="Delete photo"
                 aria-label={`Delete photo ${idx + 1}`}
               >
@@ -366,7 +366,7 @@ export function EditImageManager({
                     e.stopPropagation();
                     handleMakeCover(idx);
                   }}
-                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold text-white bg-white/20 hover:bg-brand-500 hover:text-white backdrop-blur-xs transition-colors cursor-pointer"
+                  className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-bold text-white bg-charcoal-800 hover:bg-brand-500 transition-colors cursor-pointer"
                   title="Make this the cover photo"
                 >
                   <Star className="w-2.5 h-2.5 fill-current" />
