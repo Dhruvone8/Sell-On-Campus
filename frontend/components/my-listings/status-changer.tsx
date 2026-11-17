@@ -43,7 +43,7 @@ const STATUS_METADATA: Record<
     label: "Sold",
     badgeBg: "bg-charcoal-100",
     dotColor: "bg-charcoal-400",
-    textColor: "text-charcoal-600 line-through",
+    textColor: "text-charcoal-600",
     borderColor: "border-charcoal-200",
   },
 };

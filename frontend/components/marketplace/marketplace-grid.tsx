@@ -43,7 +43,7 @@ export function MarketplaceGrid({
 
   if (listings.length === 0) {
     return (
-      <div className="bg-white/90 backdrop-blur-md rounded-3xl border border-charcoal-200/70 p-10 sm:p-14 text-center max-w-lg mx-auto shadow-xs">
+      <div className="bg-white rounded-3xl border border-charcoal-200 p-10 sm:p-14 text-center max-w-lg mx-auto shadow-xs">
         <div className="w-14 h-14 rounded-2xl bg-charcoal-100 text-charcoal-500 flex items-center justify-center mx-auto mb-4">
           <PackageSearch className="w-7 h-7 stroke-[1.5]" />
         </div>

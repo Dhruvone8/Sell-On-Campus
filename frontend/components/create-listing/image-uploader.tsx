@@ -166,7 +166,7 @@ export function ImageUploader({
 
               {/* Cover badge on first image */}
               {idx === 0 && (
-                <div className="absolute top-1.5 left-1.5 px-2 py-0.5 rounded-md bg-charcoal-900/85 backdrop-blur-md text-white text-[10px] font-bold tracking-tight shadow-sm">
+                <div className="absolute top-1.5 left-1.5 px-2 py-0.5 rounded-md bg-charcoal-900 text-white text-[10px] font-bold tracking-tight shadow-sm">
                   Cover
                 </div>
               )}

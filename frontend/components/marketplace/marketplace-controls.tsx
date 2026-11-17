@@ -70,7 +70,7 @@ export function MarketplaceControls({
   }
 
   return (
-    <div className="bg-white/85 backdrop-blur-md rounded-2xl border border-charcoal-200/70 shadow-xs p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+    <div className="bg-white rounded-2xl border border-charcoal-200 shadow-xs p-3 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
       {/* Left: Count & Active Chips */}
       <div className="flex flex-wrap items-center gap-2">
         <span className="font-bold text-charcoal-900 text-xs sm:text-base font-jakarta">

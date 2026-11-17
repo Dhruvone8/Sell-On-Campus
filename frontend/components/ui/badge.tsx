@@ -30,7 +30,7 @@ export function Badge({
     brand: "bg-brand-50 text-brand-700 border border-brand-200/80 font-semibold",
     success: "bg-emerald-50 text-emerald-700 border border-emerald-200/80 font-semibold",
     warning: "bg-amber-50 text-amber-700 border border-amber-200/80 font-semibold",
-    sold: "bg-charcoal-100 text-charcoal-500 border border-charcoal-200 line-through",
+    sold: "bg-charcoal-100 text-charcoal-600 border border-charcoal-200",
     category: "bg-white text-charcoal-700 border border-charcoal-200/80 shadow-2xs hover:border-charcoal-300",
     outline: "bg-transparent text-charcoal-600 border border-charcoal-200/80",
   };

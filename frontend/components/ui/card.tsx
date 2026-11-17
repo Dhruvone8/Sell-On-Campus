@@ -18,7 +18,7 @@ export function Card({
       className={cn(
         "rounded-2xl border transition-all duration-200",
         glass
-          ? "bg-white/85 backdrop-blur-xl border-charcoal-200/70 shadow-xs"
+          ? "bg-white border-charcoal-200 shadow-xs"
           : "bg-white border-charcoal-200/80 shadow-xs",
         interactive &&
           "hover:shadow-sm hover:border-charcoal-300 cursor-pointer",

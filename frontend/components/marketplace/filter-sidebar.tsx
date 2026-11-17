@@ -66,7 +66,7 @@ export function FilterSidebar({
   return (
     <div className="space-y-4">
       {/* Filter Card Container */}
-      <div className="bg-white/90 backdrop-blur-md rounded-2xl border border-charcoal-200/70 shadow-xs p-5 flex flex-col gap-6">
+      <div className="bg-white rounded-2xl border border-charcoal-200 shadow-xs p-5 flex flex-col gap-6">
         {/* Categories Section */}
         <div className="space-y-2.5">
           <div className="flex items-center justify-between">

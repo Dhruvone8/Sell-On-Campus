@@ -34,7 +34,7 @@ const STATUS_PILLS: Record<string, { label: string; badgeClass: string }> = {
   },
   SOLD: {
     label: "Sold",
-    badgeClass: "bg-charcoal-100 text-charcoal-500 border-charcoal-200 line-through",
+    badgeClass: "bg-charcoal-100 text-charcoal-600 border-charcoal-200",
   },
 };
 

@@ -234,7 +234,7 @@ export function ListingInfoCard({ listing, onStatusChange }: ListingInfoCardProp
               href={`/listings/${listing.id}/edit`}
               title="Edit listing details"
               aria-label="Edit listing"
-              className="h-11 rounded-xl bg-brand-50 hover:bg-brand-100 text-brand-700 border border-brand-200/80 font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-[0.98] shadow-2xs hover:shadow-xs"
+              className="h-11 rounded-xl bg-white hover:bg-brand-50 text-brand-700 border border-brand-200 font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-[0.98] shadow-2xs hover:shadow-xs"
             >
               <Edit3 className="w-4 h-4 stroke-[2]" />
               <span className="hidden sm:inline">Edit</span>
@@ -246,7 +246,7 @@ export function ListingInfoCard({ listing, onStatusChange }: ListingInfoCardProp
               onClick={() => setIsDeleteModalOpen(true)}
               title="Delete this listing"
               aria-label="Delete listing"
-              className="h-11 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 border border-red-200/80 font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-[0.98] shadow-2xs hover:shadow-xs"
+              className="h-11 rounded-xl bg-white hover:bg-red-50 text-red-600 border border-red-200 font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-[0.98] shadow-2xs hover:shadow-xs"
             >
               <Trash2 className="w-4 h-4 stroke-[2]" />
               <span className="hidden sm:inline">Delete</span>
@@ -258,7 +258,7 @@ export function ListingInfoCard({ listing, onStatusChange }: ListingInfoCardProp
               onClick={handleShare}
               title="Share listing link"
               aria-label="Share listing"
-              className="h-11 rounded-xl bg-charcoal-50 hover:bg-charcoal-100 text-charcoal-700 border border-charcoal-200/80 font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-[0.98] shadow-2xs hover:shadow-xs"
+              className="h-11 rounded-xl bg-white hover:bg-charcoal-50 text-charcoal-700 border border-charcoal-200 font-bold text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer active:scale-[0.98] shadow-2xs hover:shadow-xs"
             >
               <Share2 className="w-4 h-4 stroke-[2]" />
               <span className="hidden sm:inline">Share</span>

@@ -82,7 +82,7 @@ export function ListingCard({
           <div className="absolute top-2.5 right-2.5 z-10">
             <span
               className={cn(
-                "inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border shadow-2xs tracking-tight bg-white/95",
+                "inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border shadow-2xs tracking-tight bg-white",
                 conditionMeta.badgeClass
               )}
             >
@@ -93,7 +93,7 @@ export function ListingCard({
 
         {/* Compact Price Capsule (Bottom Left) */}
         <div className="absolute bottom-2.5 left-2.5 z-10">
-          <span className="inline-flex items-baseline px-2.5 py-1 rounded-lg bg-charcoal-900/90 text-white font-bold text-xs sm:text-sm tracking-tight tabular-nums shadow-xs">
+          <span className="inline-flex items-baseline px-2.5 py-1 rounded-lg bg-charcoal-900 text-white font-bold text-xs sm:text-sm tracking-tight tabular-nums shadow-xs">
             {formatPrice(listing.price)}
           </span>
         </div>

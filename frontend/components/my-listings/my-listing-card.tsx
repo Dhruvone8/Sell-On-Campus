@@ -82,7 +82,7 @@ export function MyListingCard({
           <div className="absolute top-3 left-3">
             <span
               className={cn(
-                "inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-md border bg-white/95 shadow-2xs",
+                "inline-flex items-center text-[10px] font-semibold px-2 py-0.5 rounded-md border bg-white shadow-2xs",
                 conditionMeta.badgeClass
               )}
             >
