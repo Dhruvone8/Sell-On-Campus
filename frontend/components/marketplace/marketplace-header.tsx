@@ -26,9 +26,9 @@ export function MarketplaceHeader({
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <span className="font-bold text-charcoal-900 text-base sm:text-lg font-jakarta">
-                Campus Feed
-              </span>
+              <h1 className="font-bold text-charcoal-900 text-base sm:text-lg font-jakarta">
+                Campus Marketplace
+              </h1>
               <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-brand-50 text-brand-700 text-xs font-bold shrink-0">
                 <span className="w-1.5 h-1.5 rounded-full bg-brand-500 animate-pulse" />
                 Live Stock

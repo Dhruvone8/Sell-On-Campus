@@ -19,6 +19,8 @@ function getLocalIpAddresses(): string[] {
 }
 
 const nextConfig: NextConfig = {
+  poweredByHeader: false,
+  compress: true,
   allowedDevOrigins: getLocalIpAddresses(),
   images: {
     remotePatterns: [
@@ -27,6 +29,36 @@ const nextConfig: NextConfig = {
         hostname: "res.cloudinary.com",
       },
     ],
+  },
+  async redirects() {
+    return [
+      {
+        source: "/browse",
+        destination: "/listings",
+        permanent: true,
+      },
+    ];
+  },
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: [
+          {
+            key: "X-Content-Type-Options",
+            value: "nosniff",
+          },
+          {
+            key: "X-Frame-Options",
+            value: "SAMEORIGIN",
+          },
+          {
+            key: "Referrer-Policy",
+            value: "strict-origin-when-cross-origin",
+          },
+        ],
+      },
+    ];
   },
 };
 

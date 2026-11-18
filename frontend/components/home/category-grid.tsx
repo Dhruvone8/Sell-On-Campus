@@ -19,32 +19,32 @@ interface CampusCategory {
 const CATEGORIES: CampusCategory[] = [
   {
     name: "Textbooks & Notes",
-    slug: "textbooks",
+    slug: "Books",
     icon: BookOpen,
   },
   {
     name: "Laptops & Tech",
-    slug: "tech",
+    slug: "Electronics",
     icon: Laptop,
   },
   {
     name: "Dorm & Living",
-    slug: "dorm",
+    slug: "Hostel",
     icon: Armchair,
   },
   {
     name: "Cycles",
-    slug: "cycles",
+    slug: "Cycles",
     icon: Bike,
   },
   {
     name: "Lab & Calculators",
-    slug: "lab",
+    slug: "Stationery",
     icon: FlaskConical,
   },
   {
-    name: "Subleases & Rides",
-    slug: "subleases",
+    name: "Furniture & Decor",
+    slug: "Furniture",
     icon: Building2,
   },
 ];
@@ -77,8 +77,7 @@ export function CategoryGrid() {
           return (
             <Link
               key={cat.name}
-              href={`/listings?search=${encodeURIComponent(cat.name.split(" ")[0])}`}
-              rel="nofollow"
+              href={`/listings?category=${encodeURIComponent(cat.slug)}`}
               className="p-3.5 sm:p-4 rounded-xl bg-white hover:bg-charcoal-50/60 transition-[border-color,background-color] duration-150 border border-charcoal-200/80 shadow-2xs hover:border-charcoal-300 flex flex-col justify-between group cursor-pointer"
             >
               <div className="h-9 w-9 sm:h-10 sm:w-10 rounded-lg bg-charcoal-50 border border-charcoal-200/60 group-hover:border-brand-300 group-hover:bg-brand-50/60 text-charcoal-600 group-hover:text-brand-700 flex items-center justify-center transition-colors mb-3 sm:mb-4">

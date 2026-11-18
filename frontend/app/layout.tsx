@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import ReactDOM from "react-dom";
 import "./globals.css";
@@ -14,14 +14,30 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 
 const siteBaseUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim() || "https://selloncampus.site";
 
+export const viewport: Viewport = {
+  themeColor: "#f95a1e",
+  width: "device-width",
+  initialScale: 1,
+};
+
 export const metadata: Metadata = {
   metadataBase: new URL(siteBaseUrl),
+  applicationName: "SellOnCampus",
   title: {
     default: "SellOnCampus — Campus Marketplace",
     template: "%s | SellOnCampus",
   },
   description:
     "Direct student-to-student campus marketplace. Buy and sell textbooks, electronics, cycles, and dorm essentials with verified students.",
+  alternates: {
+    canonical: siteBaseUrl,
+  },
+  manifest: "/manifest.webmanifest",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "SellOnCampus",
+  },
   keywords: [
     "campus marketplace",
     "sell textbooks",

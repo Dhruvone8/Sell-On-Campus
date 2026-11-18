@@ -22,6 +22,31 @@ export const metadata: Metadata = {
   alternates: {
     canonical: siteUrl,
   },
+  openGraph: {
+    title: "SellOnCampus | Student Marketplace For Your Campus",
+    description:
+      "Buy, sell, and trade textbooks, electronics, dorm essentials, and cycles directly with fellow students. Verified campus emails only.",
+    url: siteUrl,
+    siteName: "SellOnCampus",
+    type: "website",
+    images: APP_LOGO_URL
+      ? [
+          {
+            url: APP_LOGO_URL,
+            width: 1200,
+            height: 630,
+            alt: "SellOnCampus - The Student Marketplace",
+          },
+        ]
+      : undefined,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "SellOnCampus | Student Marketplace For Your Campus",
+    description:
+      "Buy, sell, and trade textbooks, electronics, dorm essentials, and cycles directly with fellow students. Verified campus emails only.",
+    images: APP_LOGO_URL ? [APP_LOGO_URL] : undefined,
+  },
 };
 
 export default function HomePage() {

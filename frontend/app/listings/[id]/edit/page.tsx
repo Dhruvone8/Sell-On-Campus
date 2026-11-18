@@ -11,8 +11,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   return {
     title: "Edit Listing | SellOnCampus",
     description: "Update details, price, condition, and status for your campus listing.",
-    alternates: {
-      canonical: `/listings/${id}/edit`,
+    robots: {
+      index: false,
+      follow: false,
     },
   };
 }

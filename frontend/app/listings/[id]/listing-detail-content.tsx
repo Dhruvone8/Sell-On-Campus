@@ -19,12 +19,13 @@ import { API_URL } from "@/lib/constants";
 
 export interface ListingDetailContentProps {
   id: string;
+  initialListing?: Listing | null;
 }
 
-export function ListingDetailContent({ id }: ListingDetailContentProps) {
+export function ListingDetailContent({ id, initialListing }: ListingDetailContentProps) {
   const { user } = useAuth();
-  const [listing, setListing] = React.useState<Listing | null>(null);
-  const [isLoading, setIsLoading] = React.useState(true);
+  const [listing, setListing] = React.useState<Listing | null>(initialListing || null);
+  const [isLoading, setIsLoading] = React.useState(!initialListing);
   const [error, setError] = React.useState<string | null>(null);
   const [hasOwnerChangedStatus, setHasOwnerChangedStatus] = React.useState(false);
 
