@@ -2,13 +2,41 @@ import * as React from "react";
 import type { Metadata } from "next";
 import { ListingsPageContent } from "./listings-content";
 import { Skeleton } from "@/components/ui/skeleton";
+import { APP_LOGO_URL } from "@/lib/constants";
+
+const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL?.trim() || "https://selloncampus.site").replace(/\/+$/, "");
 
 export const metadata: Metadata = {
-  title: "Campus Marketplace | SellOnCampus",
+  title: "Campus Marketplace — Buy & Sell College Gear | SellOnCampus",
   description:
-    "Explore student listings for textbooks, electronics, dorm furniture, and bikes directly across your campus.",
+    "Explore student listings for textbooks, electronics, dorm essentials, lab equipment, and campus cycles directly from verified university peers.",
   alternates: {
-    canonical: "/listings",
+    canonical: `${siteUrl}/listings`,
+  },
+  openGraph: {
+    title: "Campus Marketplace — Buy & Sell College Gear | SellOnCampus",
+    description:
+      "Explore student listings for textbooks, electronics, dorm essentials, lab equipment, and campus cycles directly from verified university peers.",
+    url: `${siteUrl}/listings`,
+    siteName: "SellOnCampus",
+    type: "website",
+    images: APP_LOGO_URL
+      ? [
+          {
+            url: APP_LOGO_URL,
+            width: 1200,
+            height: 630,
+            alt: "SellOnCampus Marketplace",
+          },
+        ]
+      : undefined,
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Campus Marketplace — Buy & Sell College Gear | SellOnCampus",
+    description:
+      "Explore student listings for textbooks, electronics, dorm essentials, lab equipment, and campus cycles directly from verified university peers.",
+    images: APP_LOGO_URL ? [APP_LOGO_URL] : undefined,
   },
 };
 
@@ -34,9 +62,54 @@ function ListingsLoadingFallback() {
 }
 
 export default function ListingsPage() {
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "CollectionPage",
+        "@id": `${siteUrl}/listings#webpage`,
+        url: `${siteUrl}/listings`,
+        name: "Campus Marketplace — Buy & Sell College Gear | SellOnCampus",
+        description:
+          "Explore student listings for textbooks, electronics, dorm essentials, lab equipment, and campus cycles directly from verified university peers.",
+        isPartOf: {
+          "@type": "WebSite",
+          "@id": `${siteUrl}/#website`,
+          name: "SellOnCampus",
+        },
+      },
+      {
+        "@type": "BreadcrumbList",
+        "@id": `${siteUrl}/listings#breadcrumb`,
+        itemListElement: [
+          {
+            "@type": "ListItem",
+            position: 1,
+            name: "Home",
+            item: siteUrl,
+          },
+          {
+            "@type": "ListItem",
+            position: 2,
+            name: "Campus Marketplace",
+            item: `${siteUrl}/listings`,
+          },
+        ],
+      },
+    ],
+  };
+
   return (
-    <React.Suspense fallback={<ListingsLoadingFallback />}>
-      <ListingsPageContent />
-    </React.Suspense>
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(structuredData).replace(/</g, "\\u003c"),
+        }}
+      />
+      <React.Suspense fallback={<ListingsLoadingFallback />}>
+        <ListingsPageContent />
+      </React.Suspense>
+    </>
   );
 }

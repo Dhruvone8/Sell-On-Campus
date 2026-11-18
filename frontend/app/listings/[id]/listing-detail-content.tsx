@@ -19,14 +19,17 @@ import { API_URL } from "@/lib/constants";
 
 export interface ListingDetailContentProps {
   id: string;
+  initialListing?: Listing | null;
 }
 
-export function ListingDetailContent({ id }: ListingDetailContentProps) {
+export function ListingDetailContent({ id, initialListing }: ListingDetailContentProps) {
   const { user } = useAuth();
-  const [listing, setListing] = React.useState<Listing | null>(null);
-  const [isLoading, setIsLoading] = React.useState(true);
+  const hasMatchingInitial = Boolean(initialListing && initialListing.id === id);
+  const [listing, setListing] = React.useState<Listing | null>(initialListing || null);
+  const [isLoading, setIsLoading] = React.useState(!hasMatchingInitial);
   const [error, setError] = React.useState<string | null>(null);
   const [hasOwnerChangedStatus, setHasOwnerChangedStatus] = React.useState(false);
+  const initialDataConsumedRef = React.useRef(hasMatchingInitial);
 
   const isOwner = Boolean(
     user && listing && (user.id === listing.sellerId || user.id === listing.seller?.id)
@@ -40,10 +43,14 @@ export function ListingDetailContent({ id }: ListingDetailContentProps) {
   React.useEffect(() => {
     let isMounted = true;
 
-    async function fetchListing() {
+    async function fetchListing(isBackgroundRefresh = false) {
       await Promise.resolve();
       if (!isMounted) return;
-      setIsLoading(true);
+
+      // Only show full-page blocking skeleton if we do not already have data to display
+      if (!isBackgroundRefresh) {
+        setIsLoading(true);
+      }
       setError(null);
 
       try {
@@ -69,8 +76,11 @@ export function ListingDetailContent({ id }: ListingDetailContentProps) {
         }
       } catch (err: unknown) {
         if (isMounted) {
-          const msg = err instanceof Error ? err.message : "Error loading listing";
-          setError(msg);
+          // If a background refresh fails but we already have prefetched data, keep displaying it
+          if (!isBackgroundRefresh) {
+            const msg = err instanceof Error ? err.message : "Error loading listing";
+            setError(msg);
+          }
         }
       } finally {
         if (isMounted) {
@@ -80,7 +90,13 @@ export function ListingDetailContent({ id }: ListingDetailContentProps) {
     }
 
     if (id) {
-      fetchListing();
+      if (initialDataConsumedRef.current) {
+        // Initial render already rendered prefetched content; consume flag and refresh in background
+        initialDataConsumedRef.current = false;
+        fetchListing(true);
+      } else {
+        fetchListing(false);
+      }
     }
 
     return () => {
