@@ -9,8 +9,13 @@ interface ListingSummary {
 }
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const siteUrl = (process.env.NEXT_PUBLIC_SITE_URL?.trim() || "https://selloncampus.site").replace(/\/+$/, "");
+  const siteUrl = (
+    process.env.NEXT_PUBLIC_SITE_URL?.trim() ||
+    process.env.NEXT_PUBLIC_APP_URL?.trim() ||
+    "https://selloncampus.site"
+  ).replace(/\/+$/, "");
 
+  // Canonical indexable static pages
   const staticRoutes: MetadataRoute.Sitemap = [
     {
       url: `${siteUrl}`,
@@ -24,39 +29,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "hourly",
       priority: 0.9,
     },
-    {
-      url: `${siteUrl}/register`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.6,
-    },
-    {
-      url: `${siteUrl}/login`,
-      lastModified: new Date(),
-      changeFrequency: "monthly",
-      priority: 0.5,
-    },
   ];
-
-  // Key campus category index routes
-  const categoryRoutes: MetadataRoute.Sitemap = [
-    "Books",
-    "Electronics",
-    "Hostel",
-    "Cycles",
-    "Furniture",
-    "Stationery",
-  ].map((cat) => ({
-    url: `${siteUrl}/listings?category=${encodeURIComponent(cat)}`,
-    lastModified: new Date(),
-    changeFrequency: "daily",
-    priority: 0.85,
-  }));
 
   // Fetch recent active listings from backend API
   let dynamicListingRoutes: MetadataRoute.Sitemap = [];
   try {
-    const res = await fetch(`${API_URL}/api/listings?limit=50&sort=newest`, {
+    const res = await fetch(`${API_URL}/api/listings?limit=100&sort=newest`, {
       next: { revalidate: 3600 },
       headers: {
         Accept: "application/json",
@@ -81,6 +59,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     dynamicListingRoutes = [];
   }
 
-  return [...staticRoutes, ...categoryRoutes, ...dynamicListingRoutes];
+  return [...staticRoutes, ...dynamicListingRoutes];
 }
-

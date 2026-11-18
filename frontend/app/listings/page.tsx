@@ -103,7 +103,9 @@ export default function ListingsPage() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(structuredData).replace(/</g, "\\u003c"),
+        }}
       />
       <React.Suspense fallback={<ListingsLoadingFallback />}>
         <ListingsPageContent />

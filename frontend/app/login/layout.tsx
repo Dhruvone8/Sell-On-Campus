@@ -6,6 +6,10 @@ export const metadata: Metadata = {
   title: "Student Sign In | SellOnCampus",
   description:
     "Sign in to your verified student account on SellOnCampus to message campus sellers, manage active listings, and trade university gear safely.",
+  robots: {
+    index: false,
+    follow: false,
+  },
   alternates: {
     canonical: `${siteUrl}/login`,
   },

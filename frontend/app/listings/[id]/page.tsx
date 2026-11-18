@@ -3,11 +3,17 @@ import type { Metadata } from "next";
 import { ListingDetailContent } from "./listing-detail-content";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Listing } from "@/lib/types";
-import { API_URL, APP_LOGO_URL, SITE_URL } from "@/lib/constants";
+import { API_URL, APP_LOGO_URL } from "@/lib/constants";
 
 interface PageProps {
   params: Promise<{ id: string }>;
 }
+
+const siteUrl = (
+  process.env.NEXT_PUBLIC_SITE_URL?.trim() ||
+  process.env.NEXT_PUBLIC_APP_URL?.trim() ||
+  "https://selloncampus.site"
+).replace(/\/+$/, "");
 
 async function getListing(id: string): Promise<Listing | null> {
   try {
@@ -30,7 +36,7 @@ async function getListing(id: string): Promise<Listing | null> {
 
 const CONDITION_SCHEMA_MAP: Record<string, string> = {
   NEW: "https://schema.org/NewCondition",
-  LIKE_NEW: "https://schema.org/RefurbishedCondition",
+  LIKE_NEW: "https://schema.org/UsedCondition",
   GOOD: "https://schema.org/UsedCondition",
   FAIR: "https://schema.org/UsedCondition",
 };
@@ -52,7 +58,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       : descSnippet;
 
     const mainImage = listing.images?.[0]?.imageUrl || APP_LOGO_URL;
-    const pageUrl = `${SITE_URL}/listings/${id}`;
+    const pageUrl = `${siteUrl}/listings/${id}`;
 
     return {
       title,
@@ -91,7 +97,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     description:
       "View item specifications, condition, campus handoff locations, and contact the student seller directly on SellOnCampus.",
     alternates: {
-      canonical: `${SITE_URL}/listings/${id}`,
+      canonical: `${siteUrl}/listings/${id}`,
     },
   };
 }
@@ -124,7 +130,7 @@ export default async function ListingDetailPage({ params }: PageProps) {
   const { id } = await params;
   const listing = await getListing(id);
 
-  const pageUrl = `${SITE_URL}/listings/${id}`;
+  const pageUrl = `${siteUrl}/listings/${id}`;
   const images = listing?.images?.map((img) => img.imageUrl) || [];
   if (images.length === 0 && APP_LOGO_URL) {
     images.push(APP_LOGO_URL);
@@ -173,19 +179,19 @@ export default async function ListingDetailPage({ params }: PageProps) {
                 "@type": "ListItem",
                 position: 1,
                 name: "Home",
-                item: SITE_URL,
+                item: siteUrl,
               },
               {
                 "@type": "ListItem",
                 position: 2,
                 name: "Marketplace",
-                item: `${SITE_URL}/listings`,
+                item: `${siteUrl}/listings`,
               },
               {
                 "@type": "ListItem",
                 position: 3,
                 name: categoryName,
-                item: `${SITE_URL}/listings?category=${encodeURIComponent(categoryName)}`,
+                item: `${siteUrl}/listings?category=${encodeURIComponent(categoryName)}`,
               },
               {
                 "@type": "ListItem",
@@ -204,7 +210,9 @@ export default async function ListingDetailPage({ params }: PageProps) {
       {structuredData && (
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(structuredData).replace(/</g, "\\u003c"),
+          }}
         />
       )}
       <React.Suspense fallback={<DetailLoadingFallback />}>

@@ -96,7 +96,9 @@ export default function HomePage() {
     <div className="w-full flex flex-col">
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(structuredData).replace(/</g, "\\u003c"),
+        }}
       />
       <LoadingScreen />
       <HeroSection />

@@ -6,6 +6,10 @@ export const metadata: Metadata = {
   title: "Student Registration — Join SellOnCampus | University Marketplace",
   description:
     "Create your student account with your verified campus email. Buy and sell textbooks, electronics, cycles, and dorm essentials with zero platform fees.",
+  robots: {
+    index: false,
+    follow: false,
+  },
   alternates: {
     canonical: `${siteUrl}/register`,
   },
