@@ -24,6 +24,7 @@
     "@types/node": "^26.2.0",
     "@types/nodemailer": "^8.0.1",
     "@types/pg": "^8.23.1",
+    "@types/web-push": "^3.6.4",
     "@types/ws": "^8.18.1",
     "argon2": "^0.45.1",
     "bullmq": "^6.6.0",
@@ -47,7 +48,6 @@
     "zod": "^4.5.4"
   },
   "devDependencies": {
-    "@types/web-push": "^3.6.4",
     "tsx": "^4.23.15"
   }
 }
