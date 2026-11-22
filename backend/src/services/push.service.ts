@@ -1,5 +1,6 @@
 import * as webpush from "web-push";
 import { prisma } from "../lib/prisma.js";
+import { isValidPushEndpoint } from "../validators/notification.validator.js";
 
 // 1. Initialize web-push with VAPID Keys
 const vapidPublicKey = process.env.VAPID_PUBLIC_KEY;
@@ -77,8 +78,13 @@ export async function sendPushNotification(userId: string, payload: PushPayload)
 
     const payloadString = JSON.stringify(payload);
 
-    // Send parallely to all devices
+    // Send concurrently to all devices with finite timeout and endpoint verification
     const sendPromises = subscriptions.map(async (sub) => {
+        if (!isValidPushEndpoint(sub.endpoint)) {
+            console.warn(`[PushService] Skipping untrusted endpoint for user ${userId}: ${sub.endpoint}`);
+            return;
+        }
+
         const target = {
             endpoint: sub.endpoint,
             keys: {
@@ -88,7 +94,7 @@ export async function sendPushNotification(userId: string, payload: PushPayload)
         };
 
         try {
-            await webpush.sendNotification(target, payloadString);
+            await webpush.sendNotification(target, payloadString, { timeout: 10000 });
             console.log(`[PushService] Push delivered successfully to device ${sub.id.slice(0, 8)}`);
         } catch (error: any) {
             if (error.statusCode === 404 || error.statusCode === 410) {

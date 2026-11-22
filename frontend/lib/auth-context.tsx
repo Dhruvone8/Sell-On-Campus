@@ -6,6 +6,7 @@ import type { UserProfile } from "./types";
 import { API_URL } from "./constants";
 import { useAuthStore } from "./stores/auth.store";
 import { useInboxStore } from "./stores/inbox.store";
+import { deleteSubscriptionFromServer } from "./push";
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -163,6 +164,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [verifyAndRefreshAuth, setUnreadMessagesCount, setUnreadNotificationsCount]);
 
   const logout = React.useCallback(async () => {
+    // 1. Clean up push subscription while auth session is still valid
+    try {
+      if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+        const registration = await navigator.serviceWorker.getRegistration();
+        const subscription = await registration?.pushManager.getSubscription();
+        if (subscription) {
+          const endpoint = subscription.endpoint;
+          await deleteSubscriptionFromServer(endpoint);
+          await subscription.unsubscribe();
+        }
+      }
+    } catch (err) {
+      console.warn("[Auth] Failed to clean up push subscription on logout:", err);
+    }
+
     try {
       await fetch(`${API_URL}/api/auth/logout`, {
         method: "POST",

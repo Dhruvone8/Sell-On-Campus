@@ -39,10 +39,12 @@ export function usePushNotifications() {
         const subscription = await registration.pushManager.getSubscription();
 
         if (subscription) {
-          setIsSubscribed(true);
-          // If authenticated, ensure the backend has this active subscription in DB
+          // For authenticated users, verify backend registration before marking active
           if (isAuthenticated) {
-            await saveSubscriptionToServer(subscription);
+            const saved = await saveSubscriptionToServer(subscription);
+            setIsSubscribed(saved);
+          } else {
+            setIsSubscribed(false);
           }
         } else {
           setIsSubscribed(false);
@@ -52,9 +54,11 @@ export function usePushNotifications() {
       }
     }
 
-    // Register the service worker and check initial status
-    registerServiceWorker().then(() => {
-      checkSubscription();
+    // Register the service worker and check initial status only if registration succeeded
+    registerServiceWorker().then((reg) => {
+      if (reg) {
+        checkSubscription();
+      }
     });
   }, [isAuthenticated]);
 
@@ -78,8 +82,17 @@ export function usePushNotifications() {
         return false;
       }
 
-      // 2. Ensure Service Worker is ready
-      const registration = await navigator.serviceWorker.ready;
+      // 2. Ensure Service Worker is registered before awaiting readiness
+      let registration = await navigator.serviceWorker.getRegistration();
+      if (!registration) {
+        registration = (await registerServiceWorker()) || undefined;
+      }
+      if (!registration) {
+        toast.error("Failed to initialize notification service worker.");
+        return false;
+      }
+
+      await navigator.serviceWorker.ready;
 
       // 3. Fetch current VAPID public key from backend
       const publicKey = await getVapidPublicKey();
