@@ -20,8 +20,10 @@ export function usePushNotifications() {
   const [isSubscribed, setIsSubscribed] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
 
-  // Operation sequence counter to prevent earlier async tasks from overwriting newer state
-  const operationIdRef = React.useRef(0);
+  // Separate counters for background status checks vs user actions
+  // This prevents background SW registration/checks from superseding user subscribe/unsubscribe calls
+  const actionIdRef = React.useRef(0);
+  const checkIdRef = React.useRef(0);
   // Abort controller for in-flight subscription work
   const activeAbortControllerRef = React.useRef<AbortController | null>(null);
 
@@ -29,9 +31,11 @@ export function usePushNotifications() {
   React.useEffect(() => {
     const handleSyncMessage = (event: MessageEvent) => {
       if (event.data?.type === "LOGOUT_START") {
-        operationIdRef.current++;
+        actionIdRef.current++;
+        checkIdRef.current++;
         activeAbortControllerRef.current?.abort();
         setIsSubscribed(false);
+        setIsLoading(false);
       }
     };
 
@@ -56,23 +60,23 @@ export function usePushNotifications() {
     setPermission(Notification.permission);
 
     async function checkSubscription() {
-      const currentOpId = ++operationIdRef.current;
+      const currentCheckId = ++checkIdRef.current;
       const initialGen = useAuthStore.getState().sessionGeneration;
 
       try {
         const registration = await navigator.serviceWorker.ready;
         const subscription = await registration.pushManager.getSubscription();
 
-        if (operationIdRef.current !== currentOpId) return;
+        if (checkIdRef.current !== currentCheckId) return;
 
         if (subscription) {
           // For authenticated users, verify backend registration before marking active
           if (isAuthenticated && useAuthStore.getState().sessionGeneration === initialGen) {
             const saved = await saveSubscriptionToServer(subscription);
 
-            // Invalidate if a newer action or logout intervened while awaiting server save
+            // Invalidate if a newer check or logout intervened while awaiting server save
             if (
-              operationIdRef.current !== currentOpId ||
+              checkIdRef.current !== currentCheckId ||
               useAuthStore.getState().sessionGeneration !== initialGen ||
               !useAuthStore.getState().isAuthenticated
             ) {
@@ -87,7 +91,7 @@ export function usePushNotifications() {
           setIsSubscribed(false);
         }
       } catch (err) {
-        if (operationIdRef.current === currentOpId) {
+        if (checkIdRef.current === currentCheckId) {
           console.error("[Push] Error checking subscription status:", err);
         }
       }
@@ -112,7 +116,7 @@ export function usePushNotifications() {
       return false;
     }
 
-    const currentOpId = ++operationIdRef.current;
+    const currentActionId = ++actionIdRef.current;
     const currentGen = useAuthStore.getState().sessionGeneration;
 
     const controller = new AbortController();
@@ -146,7 +150,7 @@ export function usePushNotifications() {
 
       // Check if logout occurred during readiness wait
       if (
-        operationIdRef.current !== currentOpId ||
+        actionIdRef.current !== currentActionId ||
         useAuthStore.getState().sessionGeneration !== currentGen ||
         !useAuthStore.getState().isAuthenticated
       ) {
@@ -174,7 +178,7 @@ export function usePushNotifications() {
 
       // Check session status before creating subscription in browser
       if (
-        operationIdRef.current !== currentOpId ||
+        actionIdRef.current !== currentActionId ||
         useAuthStore.getState().sessionGeneration !== currentGen ||
         !useAuthStore.getState().isAuthenticated
       ) {
@@ -189,7 +193,7 @@ export function usePushNotifications() {
 
       // Guard check: if logout started while browser was creating subscription, rollback immediately
       if (
-        operationIdRef.current !== currentOpId ||
+        actionIdRef.current !== currentActionId ||
         useAuthStore.getState().sessionGeneration !== currentGen ||
         !useAuthStore.getState().isAuthenticated
       ) {
@@ -208,7 +212,7 @@ export function usePushNotifications() {
 
       // Post-save verification: if logout began while save was in flight, immediately purge and unsubscribe
       if (
-        operationIdRef.current !== currentOpId ||
+        actionIdRef.current !== currentActionId ||
         useAuthStore.getState().sessionGeneration !== currentGen ||
         !useAuthStore.getState().isAuthenticated
       ) {
@@ -236,7 +240,7 @@ export function usePushNotifications() {
       }
       return false;
     } finally {
-      if (operationIdRef.current === currentOpId) {
+      if (actionIdRef.current === currentActionId) {
         setIsLoading(false);
       }
     }
@@ -245,7 +249,7 @@ export function usePushNotifications() {
   const unsubscribe = React.useCallback(async (): Promise<boolean> => {
     if (!isSupported) return false;
 
-    const currentOpId = ++operationIdRef.current;
+    const currentActionId = ++actionIdRef.current;
     setIsLoading(true);
 
     try {
@@ -260,7 +264,7 @@ export function usePushNotifications() {
         await deleteSubscriptionFromServer(endpoint);
       }
 
-      if (operationIdRef.current === currentOpId) {
+      if (actionIdRef.current === currentActionId) {
         setIsSubscribed(false);
         toast.success("Push notifications disabled.");
       }
@@ -270,7 +274,7 @@ export function usePushNotifications() {
       toast.error("Failed to disable notifications.");
       return false;
     } finally {
-      if (operationIdRef.current === currentOpId) {
+      if (actionIdRef.current === currentActionId) {
         setIsLoading(false);
       }
     }
