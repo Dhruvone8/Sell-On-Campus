@@ -9,6 +9,7 @@ export interface WelcomeEmailData {
 export function renderWelcomeEmail(data: WelcomeEmailData): { subject: string; text: string; html: string } {
     const firstName = escapeHtml(data.firstName);
     const marketplaceUrl = data.marketplaceUrl;
+    const notificationsUrl = `${marketplaceUrl.replace(/\/+$/, "")}/notifications?action=enable-push`;
     const logoUrl = data.logoUrl || "cid:selloncampus-logo";
 
     const subject = "Welcome to SellOnCampus!";
@@ -25,8 +26,10 @@ export function renderWelcomeEmail(data: WelcomeEmailData): { subject: string; t
         `- Discover great finds: Find useful items listed by fellow students.`,
         `- Sell what you no longer need: Give your unused items a new home.`,
         `- Connect directly: Chat with buyers and sellers to make deals happen.`,
+        `- Get real-time updates: Enable notifications to get alerts when someone messages you.`,
         ``,
         `Explore SellOnCampus: ${marketplaceUrl}`,
+        `Enable Notifications: ${notificationsUrl}`,
         ``,
         `Happy buying and selling!`,
         `Team SellOnCampus`,
@@ -112,7 +115,7 @@ export function renderWelcomeEmail(data: WelcomeEmailData): { subject: string; t
                   </td>
                 </tr>
                 <tr>
-                  <td style="padding: 12px 0; border-top: 1px solid #f4f4f5; border-bottom: 1px solid #f4f4f5;">
+                  <td style="padding: 12px 0; border-top: 1px solid #f4f4f5;">
                     <div style="font-size: 14px; font-weight: 600; color: #18181b; margin-bottom: 3px;">
                       Connect directly
                     </div>
@@ -121,14 +124,29 @@ export function renderWelcomeEmail(data: WelcomeEmailData): { subject: string; t
                     </div>
                   </td>
                 </tr>
+                <tr>
+                  <td style="padding: 12px 0; border-top: 1px solid #f4f4f5; border-bottom: 1px solid #f4f4f5;">
+                    <div style="font-size: 14px; font-weight: 600; color: #18181b; margin-bottom: 3px;">
+                      Get real-time updates
+                    </div>
+                    <div style="font-size: 14px; color: #71717a; line-height: 1.5;">
+                      Enable notifications to get real-time updates when someone messages you.
+                    </div>
+                  </td>
+                </tr>
               </table>
 
-              <!-- CTA Button -->
+              <!-- CTA Buttons -->
               <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin: 28px 0 32px 0;">
                 <tr>
-                  <td align="left" style="border-radius: 6px; background-color: #f95a1e;">
-                    <a href="${marketplaceUrl}" target="_blank" style="display: inline-block; padding: 12px 26px; font-size: 14px; font-weight: 600; color: #ffffff; text-decoration: none; border-radius: 6px;">
-                      Explore SellOnCampus
+                  <td align="left" style="padding-right: 12px;">
+                    <a href="${marketplaceUrl}" target="_blank" style="display: inline-block; padding: 12px 22px; font-size: 14px; font-weight: 600; color: #ffffff; background-color: #f95a1e; text-decoration: none; border-radius: 6px;">
+                      Explore Marketplace
+                    </a>
+                  </td>
+                  <td align="left">
+                    <a href="${notificationsUrl}" target="_blank" style="display: inline-block; padding: 11px 18px; font-size: 14px; font-weight: 600; color: #18181b; background-color: #f4f4f5; border: 1px solid #e4e4e7; text-decoration: none; border-radius: 6px;">
+                      Enable Notifications
                     </a>
                   </td>
                 </tr>

@@ -9,6 +9,7 @@ import { Footer } from "./footer";
 import { SmoothScrollProvider } from "./smooth-scroll-provider";
 import { AuthProvider } from "@/lib/auth-context";
 import { SocketProvider } from "@/lib/socket-context";
+import { PushOnboardingModal } from "@/components/notifications/push-onboarding-modal";
 
 import { cn } from "@/lib/utils";
 
@@ -65,6 +66,9 @@ export function AppShell({ children }: AppShellProps) {
             </main>
             {!hideFooter && <Footer />}
             <MobileNav />
+            <React.Suspense fallback={null}>
+              <PushOnboardingModal />
+            </React.Suspense>
           </div>
         </SmoothScrollProvider>
       </SocketProvider>
