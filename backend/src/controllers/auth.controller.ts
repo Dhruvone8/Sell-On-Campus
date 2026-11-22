@@ -256,10 +256,20 @@ export async function refreshAccessToken(req: Request, res: Response) {
     }
 }
 
-export function logout(_req: Request, res: Response) {
-    clearAuthCookies(res);
-
-    return res.status(200).json({ message: "Logout Successful" });
+export async function logout(req: Request, res: Response) {
+    try {
+        const { endpoint } = req.body || {};
+        if (endpoint && typeof endpoint === "string") {
+            await prisma.pushSubscription.deleteMany({
+                where: { endpoint },
+            }).catch(() => {});
+        }
+    } catch {
+        // ignore errors
+    } finally {
+        clearAuthCookies(res);
+        return res.status(200).json({ message: "Logout Successful" });
+    }
 }
 
 export async function requestPasswordResetOtp(req: Request, res: Response) {

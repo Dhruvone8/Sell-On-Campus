@@ -6,6 +6,12 @@ import type { UserProfile } from "./types";
 import { API_URL } from "./constants";
 import { useAuthStore } from "./stores/auth.store";
 import { useInboxStore } from "./stores/inbox.store";
+import { deleteSubscriptionFromServer } from "./push";
+
+export const authSyncChannel =
+  typeof window !== "undefined" && "BroadcastChannel" in window
+    ? new BroadcastChannel("soc_auth_sync")
+    : null;
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -163,17 +169,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [verifyAndRefreshAuth, setUnreadMessagesCount, setUnreadNotificationsCount]);
 
   const logout = React.useCallback(async () => {
+    // 1. Immediately bump session generation and notify other tabs so in-flight
+    // push subscriptions or fetches in any tab are immediately invalidated.
+    bumpSessionGeneration();
+    try {
+      authSyncChannel?.postMessage({ type: "LOGOUT_START" });
+    } catch {
+      // ignore channel broadcast errors
+    }
+
+    let activeEndpoint: string | null = null;
+
+    // 2. Bound cleanup of push subscription before clearing auth cookies
+    try {
+      if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+        const registration = await navigator.serviceWorker.getRegistration();
+        const subscription = await registration?.pushManager.getSubscription();
+        if (subscription) {
+          activeEndpoint = subscription.endpoint;
+
+          // Attempt authenticated backend deletion with a 3-second deadline
+          try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 3000);
+            await deleteSubscriptionFromServer(activeEndpoint, { signal: controller.signal });
+            clearTimeout(timeoutId);
+          } catch {
+            // Non-blocking: proceed even if backend delete timed out or failed
+          }
+
+          // Unsubscribe browser locally independently
+          try {
+            await subscription.unsubscribe();
+          } catch {
+            // ignore local unsubscribe error
+          }
+        }
+      }
+    } catch (err) {
+      console.warn("[Auth] Failed to clean up push subscription on logout:", err);
+    }
+
     try {
       await fetch(`${API_URL}/api/auth/logout`, {
         method: "POST",
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
+        body: JSON.stringify({ endpoint: activeEndpoint }),
       });
     } catch {
       // Ignore network errors on logout
     } finally {
-      // Bump generation FIRST — invalidates all in-flight fetch callbacks before
-      // we clear the store, so stale responses can't repopulate it after the reset.
-      bumpSessionGeneration();
       setIsAuthenticated(false);
       setUser(null);
       setUnreadMessagesCount(0);

@@ -9,6 +9,7 @@ import { useInboxStore } from "@/lib/stores/inbox.store";
 import { useNotificationsStore } from "@/lib/stores/notifications.store";
 import { useSocket } from "@/lib/socket-context";
 import { NotificationItem, NotificationData } from "@/components/notifications/notification-item";
+import { PushNotificationBanner } from "@/components/notifications/push-notification-banner";
 import { API_URL } from "@/lib/constants";
 import { cn } from "@/lib/utils";
 
@@ -252,8 +253,13 @@ export default function NotificationsPage() {
         )}
       </div>
 
+      {/* Web Push Notification Opt-In Banner */}
+      <div className="mt-6">
+        <PushNotificationBanner />
+      </div>
+
       {/* Filter Tabs */}
-      <div className="flex items-center gap-2 mt-6 mb-6">
+      <div className="flex items-center gap-2 mb-6">
         <button
           type="button"
           onClick={() => setActiveTab("all")}

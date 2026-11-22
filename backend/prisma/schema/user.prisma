@@ -18,9 +18,9 @@ model User {
   role   Role       @default(STUDENT)
   status UserStatus @default(ACTIVE)
 
-  department      String?
-  year            Int?
-  profileImageUrl String?
+  department         String?
+  year               Int?
+  profileImageUrl    String?
   emailVerifiedAt    DateTime?
   welcomeEmailSentAt DateTime?
 
@@ -34,8 +34,10 @@ model User {
   notifications Notification[]
 
   conversationParticipants ConversationParticipant[]
-  
+
   emailOutbox EmailOutbox[]
+
+  pushSubscriptions PushSubscription[]
 
   reportsMade     Report[] @relation("Reporter")
   reportsAgainst  Report[] @relation("ReportedUser")
