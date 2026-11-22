@@ -19,11 +19,18 @@ export function PushOnboardingModal() {
   } = usePushNotifications();
 
   const [isVisible, setIsVisible] = React.useState(false);
+  const timerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Check if deep-linked via email CTA (?action=enable-push)
   const isEmailAction = searchParams?.get("action") === "enable-push";
 
   React.useEffect(() => {
+    // Clear any existing timer on effect run
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
+
     // Don't show during auth loading, on auth screens, or if push unsupported
     if (authLoading || !isAuthenticated || !isSupported) {
       setIsVisible(false);
@@ -55,19 +62,33 @@ export function PushOnboardingModal() {
     }
 
     // Small delay for clean entrance after page load
-    const timer = setTimeout(() => {
+    timerRef.current = setTimeout(() => {
       setIsVisible(true);
+      timerRef.current = null;
     }, isEmailAction ? 300 : 1500);
 
-    return () => clearTimeout(timer);
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    };
   }, [authLoading, isAuthenticated, isSupported, isSubscribed, permission, pathname, isEmailAction]);
 
   const handleDismiss = () => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
     sessionStorage.setItem("soc_push_onboarding_dismissed", "true");
     setIsVisible(false);
   };
 
   const handleEnable = async () => {
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
+    }
     const success = await subscribe();
     if (success) {
       setIsVisible(false);
