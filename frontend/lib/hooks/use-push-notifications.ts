@@ -2,7 +2,8 @@
 
 import * as React from "react";
 import toast from "react-hot-toast";
-import { useAuth } from "@/lib/auth-context";
+import { useAuth, authSyncChannel } from "@/lib/auth-context";
+import { useAuthStore } from "@/lib/stores/auth.store";
 import {
   urlBase64ToUint8Array,
   registerServiceWorker,
@@ -19,6 +20,27 @@ export function usePushNotifications() {
   const [isSubscribed, setIsSubscribed] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
 
+  // Operation sequence counter to prevent earlier async tasks from overwriting newer state
+  const operationIdRef = React.useRef(0);
+  // Abort controller for in-flight subscription work
+  const activeAbortControllerRef = React.useRef<AbortController | null>(null);
+
+  // Cross-tab logout listener & push coordination
+  React.useEffect(() => {
+    const handleSyncMessage = (event: MessageEvent) => {
+      if (event.data?.type === "LOGOUT_START") {
+        operationIdRef.current++;
+        activeAbortControllerRef.current?.abort();
+        setIsSubscribed(false);
+      }
+    };
+
+    authSyncChannel?.addEventListener("message", handleSyncMessage);
+    return () => {
+      authSyncChannel?.removeEventListener("message", handleSyncMessage);
+    };
+  }, []);
+
   // Check browser support and existing subscription status
   React.useEffect(() => {
     const supported =
@@ -34,14 +56,29 @@ export function usePushNotifications() {
     setPermission(Notification.permission);
 
     async function checkSubscription() {
+      const currentOpId = ++operationIdRef.current;
+      const initialGen = useAuthStore.getState().sessionGeneration;
+
       try {
         const registration = await navigator.serviceWorker.ready;
         const subscription = await registration.pushManager.getSubscription();
 
+        if (operationIdRef.current !== currentOpId) return;
+
         if (subscription) {
           // For authenticated users, verify backend registration before marking active
-          if (isAuthenticated) {
+          if (isAuthenticated && useAuthStore.getState().sessionGeneration === initialGen) {
             const saved = await saveSubscriptionToServer(subscription);
+
+            // Invalidate if a newer action or logout intervened while awaiting server save
+            if (
+              operationIdRef.current !== currentOpId ||
+              useAuthStore.getState().sessionGeneration !== initialGen ||
+              !useAuthStore.getState().isAuthenticated
+            ) {
+              return;
+            }
+
             setIsSubscribed(saved);
           } else {
             setIsSubscribed(false);
@@ -50,7 +87,9 @@ export function usePushNotifications() {
           setIsSubscribed(false);
         }
       } catch (err) {
-        console.error("[Push] Error checking subscription status:", err);
+        if (operationIdRef.current === currentOpId) {
+          console.error("[Push] Error checking subscription status:", err);
+        }
       }
     }
 
@@ -67,6 +106,17 @@ export function usePushNotifications() {
       toast.error("Push notifications are not supported on this browser.");
       return false;
     }
+
+    if (!useAuthStore.getState().isAuthenticated) {
+      toast.error("Please sign in to enable notifications.");
+      return false;
+    }
+
+    const currentOpId = ++operationIdRef.current;
+    const currentGen = useAuthStore.getState().sessionGeneration;
+
+    const controller = new AbortController();
+    activeAbortControllerRef.current = controller;
 
     setIsLoading(true);
 
@@ -94,6 +144,15 @@ export function usePushNotifications() {
 
       await navigator.serviceWorker.ready;
 
+      // Check if logout occurred during readiness wait
+      if (
+        operationIdRef.current !== currentOpId ||
+        useAuthStore.getState().sessionGeneration !== currentGen ||
+        !useAuthStore.getState().isAuthenticated
+      ) {
+        return false;
+      }
+
       // 3. Fetch current VAPID public key from backend
       const publicKey = await getVapidPublicKey();
       if (!publicKey) {
@@ -113,14 +172,54 @@ export function usePushNotifications() {
         }
       }
 
+      // Check session status before creating subscription in browser
+      if (
+        operationIdRef.current !== currentOpId ||
+        useAuthStore.getState().sessionGeneration !== currentGen ||
+        !useAuthStore.getState().isAuthenticated
+      ) {
+        return false;
+      }
+
       // Create a fresh subscription with the verified public key
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: applicationServerKey as unknown as BufferSource,
       });
 
-      // 4. Send subscription keys to backend
-      const saved = await saveSubscriptionToServer(subscription);
+      // Guard check: if logout started while browser was creating subscription, rollback immediately
+      if (
+        operationIdRef.current !== currentOpId ||
+        useAuthStore.getState().sessionGeneration !== currentGen ||
+        !useAuthStore.getState().isAuthenticated
+      ) {
+        try {
+          await subscription.unsubscribe();
+        } catch {
+          // ignore rollback error
+        }
+        return false;
+      }
+
+      // 4. Send subscription keys to backend with abort signal
+      const saved = await saveSubscriptionToServer(subscription, {
+        signal: controller.signal,
+      });
+
+      // Post-save verification: if logout began while save was in flight, immediately purge and unsubscribe
+      if (
+        operationIdRef.current !== currentOpId ||
+        useAuthStore.getState().sessionGeneration !== currentGen ||
+        !useAuthStore.getState().isAuthenticated
+      ) {
+        try {
+          await deleteSubscriptionFromServer(subscription.endpoint);
+          await subscription.unsubscribe();
+        } catch {
+          // ignore cleanup error
+        }
+        return false;
+      }
 
       if (saved) {
         setIsSubscribed(true);
@@ -130,18 +229,23 @@ export function usePushNotifications() {
         toast.error("Failed to register subscription on the server.");
         return false;
       }
-    } catch (err) {
-      console.error("[Push] Error subscribing to push:", err);
-      toast.error("An error occurred while enabling notifications.");
+    } catch (err: any) {
+      if (err?.name !== "AbortError") {
+        console.error("[Push] Error subscribing to push:", err);
+        toast.error("An error occurred while enabling notifications.");
+      }
       return false;
     } finally {
-      setIsLoading(false);
+      if (operationIdRef.current === currentOpId) {
+        setIsLoading(false);
+      }
     }
   }, [isSupported]);
 
   const unsubscribe = React.useCallback(async (): Promise<boolean> => {
     if (!isSupported) return false;
 
+    const currentOpId = ++operationIdRef.current;
     setIsLoading(true);
 
     try {
@@ -156,15 +260,19 @@ export function usePushNotifications() {
         await deleteSubscriptionFromServer(endpoint);
       }
 
-      setIsSubscribed(false);
-      toast.success("Push notifications disabled.");
+      if (operationIdRef.current === currentOpId) {
+        setIsSubscribed(false);
+        toast.success("Push notifications disabled.");
+      }
       return true;
     } catch (err) {
       console.error("[Push] Error unsubscribing from push:", err);
       toast.error("Failed to disable notifications.");
       return false;
     } finally {
-      setIsLoading(false);
+      if (operationIdRef.current === currentOpId) {
+        setIsLoading(false);
+      }
     }
   }, [isSupported]);
 

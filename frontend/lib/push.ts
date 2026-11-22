@@ -64,7 +64,8 @@ export async function getVapidPublicKey(): Promise<string | null> {
  * Sends the browser's PushSubscription object to the backend to persist in PostgreSQL.
  */
 export async function saveSubscriptionToServer(
-  subscription: PushSubscription
+  subscription: PushSubscription,
+  options?: { signal?: AbortSignal }
 ): Promise<boolean> {
   try {
     const res = await fetch(`${API_URL}/api/notifications/push/subscribe`, {
@@ -73,12 +74,17 @@ export async function saveSubscriptionToServer(
         "Content-Type": "application/json",
       },
       credentials: "include",
+      signal: options?.signal,
       body: JSON.stringify(subscription),
     });
 
     return res.ok;
-  } catch (err) {
-    console.error("[Push] Error saving subscription to server:", err);
+  } catch (err: any) {
+    if (err?.name === "AbortError") {
+      console.log("[Push] Subscription save aborted.");
+    } else {
+      console.error("[Push] Error saving subscription to server:", err);
+    }
     return false;
   }
 }
@@ -87,7 +93,8 @@ export async function saveSubscriptionToServer(
  * Informs the backend to remove an existing push subscription.
  */
 export async function deleteSubscriptionFromServer(
-  endpoint: string
+  endpoint: string,
+  options?: { signal?: AbortSignal }
 ): Promise<boolean> {
   try {
     const res = await fetch(`${API_URL}/api/notifications/push/unsubscribe`, {
@@ -96,12 +103,17 @@ export async function deleteSubscriptionFromServer(
         "Content-Type": "application/json",
       },
       credentials: "include",
+      signal: options?.signal,
       body: JSON.stringify({ endpoint }),
     });
 
     return res.ok;
-  } catch (err) {
-    console.error("[Push] Error removing subscription from server:", err);
+  } catch (err: any) {
+    if (err?.name === "AbortError") {
+      console.log("[Push] Subscription delete aborted.");
+    } else {
+      console.error("[Push] Error removing subscription from server:", err);
+    }
     return false;
   }
 }
