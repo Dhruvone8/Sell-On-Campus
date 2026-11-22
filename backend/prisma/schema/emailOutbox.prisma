@@ -10,23 +10,23 @@ enum EmailStatus {
 }
 
 model EmailOutbox {
-  id          String      @id @default(uuid())
-  type        EmailType
-  status      EmailStatus @default(PENDING)
+  id     String      @id @default(uuid())
+  type   EmailType
+  status EmailStatus @default(PENDING)
 
-  userId      String
-  user        User        @relation(fields: [userId], references: [id])
+  userId String
+  user   User   @relation(fields: [userId], references: [id])
 
-  payload     Json
+  payload Json
 
-  attempts    Int         @default(0)
-  lastError   String?
+  attempts  Int     @default(0)
+  lastError String?
 
   dispatchedAt DateTime?
   sentAt       DateTime?
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([status, createdAt])
   @@index([userId])

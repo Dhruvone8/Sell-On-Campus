@@ -2,6 +2,7 @@ import { prisma } from "../lib/prisma.js";
 import { Prisma } from "../generated/prisma/client.js";
 import { AppError } from "../lib/error.js";
 import { sendToUser } from "../websocket/websocket.manager.js";
+import { sendPushNotification } from "./push.service.js";
 
 function encodeConversationCursor(updatedAt: Date, id: string) {
     return Buffer.from(
@@ -97,7 +98,24 @@ export async function createMessage(conversationId: string, senderId: string, co
         select: {
             id: true,
             buyerId: true,
-            sellerId: true
+            sellerId: true,
+            listing: {
+                select: {
+                    title: true,
+                }
+            },
+            buyer: {
+                select: {
+                    id: true,
+                    name: true,
+                },
+            },
+            seller: {
+                select: {
+                    id: true,
+                    name: true,
+                }
+            }
         },
     });
 
@@ -112,6 +130,8 @@ export async function createMessage(conversationId: string, senderId: string, co
     }
 
     const recipientId = conversation.buyerId === senderId ? conversation.sellerId : conversation.buyerId;
+    const senderName = conversation.buyerId === senderId ? conversation.buyer.name : conversation.seller.name;
+    const listingTitle = conversation.listing.title;
 
     const result = await prisma.$transaction(async (tx) => {
         const updatedConversation = await tx.conversation.update({
@@ -157,8 +177,23 @@ export async function createMessage(conversationId: string, senderId: string, co
         return { message, notification };
     });
 
+    // 1. Live Websocket Notification (if user is live at the site)
+
     sendToUser(recipientId, { type: "message:new", data: result.message });
     sendToUser(recipientId, { type: "notification:new", data: result.notification });
+
+    // 2. OS Web Push Notification (if user exited tab, screen locked)
+    sendPushNotification(recipientId, {
+        title: `${senderName} • ${listingTitle}`,
+        body: content.length > 120 ? `${content.slice(0, 117)}...` : content,
+        tag: `conversation-${conversation.id}`,
+        data: {
+            url: `/conversations?conversationId=${conversation.id}`,
+            conversationId: conversation.id
+        },
+    }).catch((err) => {
+        console.error("[Push] Error delivering push notification:", err);
+    });
 
     return result.message;
 }

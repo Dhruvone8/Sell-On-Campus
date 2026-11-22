@@ -21,6 +21,7 @@ Buy and sell textbooks, electronics, cycles, and dorm essentials securely with v
 </a>
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS_v4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 [![WebSockets](https://img.shields.io/badge/WebSockets-010101?style=for-the-badge&logo=socketdotio&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/API/WebSockets_API)
+[![Web Push](https://img.shields.io/badge/Web_Push_API-FF6C37?style=for-the-badge&logo=pwa&logoColor=white)](https://developer.mozilla.org/en-US/docs/Web/API/Push_API)
 [![Resend](https://img.shields.io/badge/Resend-000000?style=for-the-badge&logo=resend&logoColor=white)](https://resend.com/)
 [![Cloudinary](https://img.shields.io/badge/Cloudinary-3448C5?style=for-the-badge&logo=cloudinary&logoColor=white)](https://cloudinary.com/)
 
@@ -32,6 +33,9 @@ Buy and sell textbooks, electronics, cycles, and dorm essentials securely with v
 - [Overview](#-overview)
 - [Key Features](#-key-features)
 - [Architecture](#-architecture)
+- [Web Push Notification Architecture](#-web-push-notification-architecture)
+  - [Push Workflow](#push-workflow)
+  - [Technical Highlights & Resilience](#technical-highlights--resilience)
 - [Email Background Job Architecture](#-email-background-job-architecture)
   - [Workflow](#workflow)
   - [Reliability & Resilience Features](#reliability--resilience-features)
@@ -82,9 +86,13 @@ Designed specifically for university ecosystems, it connects students within ver
 - **Sequence Numbering & Read Receipts**: Live synchronization of read status and sequence tracking.
 - **Optimistic UI & Deduplication**: Outgoing messages render immediately with duplicate-suppression guards across racing tabs.
 
-### 🔔 Live Notifications
-- **Real-Time Badge Updates**: Global navbar badge updates for incoming chats and alerts.
-- **Interactive Notification Popover**: Quick desktop preview dropdown with direct link to active threads.
+### 🔔 Real-Time & OS-Level Web Push Notifications
+- **Dual-Layer Delivery**: Real-time in-app WebSocket events when the tab is open, combined with native OS push notifications when the user is away.
+- **Background Execution**: Background Service Worker (`sw.js`) intercepts encrypted push packets from Google FCM, Apple APNs, and Windows WNS even when the browser is closed or the screen is locked.
+- **Smart Stacking & Anti-Spam**: Tagged notifications (`tag: "conversation-{id}"`) with `renotify: true` replace earlier cards from the same chat, avoiding lock-screen clutter while still alerting the student.
+- **Deep-Link Navigation**: Clicking a notification banner automatically focuses an open SellOnCampus tab or launches a new window directly into the conversation (`/conversations?conversationId=...`).
+- **Self-Healing Pruning**: Subscriptions returning HTTP 410 (Gone) or 404 (Not Found) from push gateways are automatically purged from PostgreSQL to prevent dead payload dispatches.
+- **Real-Time Badge Updates**: Global navbar badge updates for incoming chats and alerts with an interactive preview popover.
 
 ### ⚡ Redis Caching, Rate Limiting & Abuse Prevention
 - **Cache-Aside Pattern**: In-memory Redis caching for hot entities (`listing:{id}`, search queries, and categories) with targeted invalidation on create/update/delete.
@@ -114,6 +122,7 @@ graph TD
         UI["UI Components & Pages"]
         AuthCtx["AuthContext (Cookie Sessions)"]
         SocketCtx["SocketProvider (Reconnection Lifecycle)"]
+        SW["Service Worker (public/sw.js)"]
     end
 
     subgraph Backend ["Backend API Server (Express 5 + TypeScript)"]
@@ -121,20 +130,25 @@ graph TD
         RateLimit["Rate Limiter (Redis Lua Scripts)"]
         AuthMiddleware["JWT Cookie Handshake & Verification"]
         Services["Business Services (Listings, Auth, Chat)"]
+        PushService["Web Push Engine (web-push & VAPID)"]
         CacheLayer["Redis Cache-Aside (node-redis)"]
         WSServer["WebSocket Server ('ws')"]
         OutboxDispatcher["Email Outbox Dispatcher (Polls every 5s)"]
     end
 
     subgraph DataStore ["Data & Queue Storage"]
-        NeonDB[("PostgreSQL / Neon (App Data & EmailOutbox)")]
+        NeonDB[("PostgreSQL / Neon (App Data, PushSubscriptions & EmailOutbox)")]
         RedisDB[("Redis Store (Caching, Rate Limiting & BullMQ Queue)")]
         Cloudinary["Cloudinary CDN (Listing Images)"]
     end
 
+    subgraph ExternalServices ["External Cloud Gateways"]
+        EmailService["Resend API (Transactional Delivery)"]
+        PushGateways["Push Gateways (Apple APNs / Google FCM / Windows WNS)"]
+    end
+
     subgraph WorkerProcess ["Background Worker Process"]
         EmailWorker["BullMQ Worker (email.worker.ts)"]
-        EmailService["Resend API (Transactional Delivery)"]
     end
 
     UI --> AuthCtx
@@ -148,6 +162,11 @@ graph TD
     Services <-->|"Cache-Aside (Listings, Queries, Categories)"| CacheLayer
     CacheLayer <-->|"node-redis connection"| RedisDB
     Services <-->|"Prisma ORM"| NeonDB
+    Services -->|"Trigger on message"| PushService
+    PushService -->|"Fetch endpoints"| NeonDB
+    PushService -->|"Encrypted payload (ECDSA VAPID)"| PushGateways
+    PushGateways -->|"Wakes background worker"| SW
+    SW -->|"showNotification & deep-link focus"| UI
     HTTP --> Cloudinary
     WSServer --> NeonDB
 
@@ -160,6 +179,60 @@ graph TD
     EmailWorker -->|"6. Send with Idempotency Key"| EmailService
     EmailWorker -->|"7. Mark SENT & update welcomeEmailSentAt"| NeonDB
 ```
+
+---
+
+## 📲 Web Push Notification Architecture
+
+SellOnCampus implements native **OS-level Web Push Notifications** (RFC 8030 / RFC 8292) using the Web Push API, Voluntary Application Server Identification (VAPID), and a root-scoped Service Worker. This allows students to receive real-time notifications on mobile (Android/iOS) and desktop (Windows/macOS) even when their browser tab is closed or the device screen is locked.
+
+### Push Workflow
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Buyer as Buyer (Device A)
+    actor Seller as Seller (Device B - Tab Closed)
+    participant BrowserB as Seller Browser / OS
+    participant SW as Service Worker (sw.js)
+    participant PushGW as Cloud Push Gateway (FCM / APNs / WNS)
+    participant Backend as Express Backend (web-push)
+    participant DB as PostgreSQL (Neon)
+
+    Note over Seller, Backend: 1. SUBSCRIPTION HANDSHAKE
+    Seller->>BrowserB: Clicks "Enable Notifications"
+    BrowserB->>Backend: GET /api/notifications/push/public-key
+    Backend-->>BrowserB: Returns VAPID_PUBLIC_KEY
+    BrowserB->>PushGW: pushManager.subscribe({ applicationServerKey })
+    PushGW-->>BrowserB: Returns PushSubscription (endpoint, p256dh, auth)
+    BrowserB->>Backend: POST /api/notifications/push/subscribe
+    Backend->>DB: prisma.pushSubscription.upsert(...)
+
+    Note over Buyer, Seller: 2. MESSAGE CREATION & OS NOTIFICATION
+    Buyer->>Backend: Sends chat message
+    Backend->>DB: Persists Message & In-App Notification (Transaction)
+    Backend->>DB: Queries active PushSubscriptions for recipient
+    Backend->>Backend: Signs JWT payload with VAPID_PRIVATE_KEY (ECDSA)
+    Backend->>PushGW: webpush.sendNotification(endpoint, payload)
+    PushGW->>BrowserB: Delivers push packet to device
+    BrowserB->>SW: Wakes Service Worker -> triggers 'push' event
+    SW->>BrowserB: self.registration.showNotification(title, options)
+    BrowserB-->>Seller: Native OS notification pops up on screen!
+
+    Note over Seller, BrowserB: 3. NOTIFICATION INTERACTION
+    Seller->>BrowserB: Clicks notification card
+    BrowserB->>SW: Triggers 'notificationclick' event
+    SW->>BrowserB: Focuses existing tab or opens /conversations?conversationId=...
+```
+
+### Technical Highlights & Resilience
+
+- **VAPID Authentication (RFC 8292)**: Outgoing push messages are cryptographically signed using an Elliptic Curve Digital Signature (`prime256v1` / ECDSA) with server-side private key verification, authenticating our backend directly to Apple, Google, and Microsoft push servers without relying on proprietary third-party SDKs.
+- **Root-Scoped Service Worker (`public/sw.js`)**: Served directly from `/sw.js` with root scope (`/`), granting the service worker permissions to display alerts and handle deep links across the entire application domain.
+- **Multi-Device Sync**: The `PushSubscription` model maps each device endpoint to a `userId`. If a student is signed in on both their phone and laptop, `push.service.ts` fans out the encrypted payload concurrently across all registered endpoints using `Promise.allSettled`.
+- **Self-Healing Subscription Pruning**: When users revoke permissions or uninstall a browser, push gateways respond with HTTP `410 Gone` or `404 Not Found`. The backend immediately purges dead subscriptions from PostgreSQL (`pushSubscription.delete`), eliminating ghost dispatches and saving server resources.
+- **Anti-Spam Grouping**: Notifications carry a conversation tag (`tag: conversation-${conversation.id}`) with `renotify: true`. Rapid incoming messages smoothly update the active banner rather than spamming the user's notification tray with stacked cards.
+- **Smart Window Focusing**: When clicked, `sw.js` iterates `clients.matchAll({ type: "window" })` to focus and navigate an already open tab instead of launching redundant browser windows.
 
 ---
 
@@ -272,6 +345,7 @@ The transactional outbox pattern guarantees **durable persistence of email deliv
 | **React 19** | Latest React features and concurrency hooks |
 | **Tailwind CSS v4** | Modern utility-first styling with custom theme tokens |
 | **Lucide React** | Consistent iconography across mobile and desktop views |
+| **Service Worker & Push API** | Root-scoped background worker (`sw.js`) handling native OS push events and window focus |
 | **WebSocket Client** | Reconnection engine with exponential backoff & intentional close tracking |
 
 ### Backend
@@ -279,7 +353,8 @@ The transactional outbox pattern guarantees **durable persistence of email deliv
 | :--- | :--- |
 | **Node.js & Express 5** | RESTful API server with TypeScript runtime |
 | **Prisma ORM 7** | Type-safe database queries, schema migrations, and atomic transactions |
-| **PostgreSQL (Neon)** | Cloud serverless relational database storing application entities and the transactional `EmailOutbox` |
+| **PostgreSQL (Neon)** | Cloud serverless relational database storing application entities, `PushSubscription`, and `EmailOutbox` |
+| **`web-push`** | Standards-compliant VAPID (RFC 8292) push notifications with ECDSA cryptographic payloads and endpoint management |
 | **BullMQ** | Distributed background job processing and task queue management with automatic retries and exponential backoff |
 | **ioredis** | High-performance Redis client providing a dedicated connection for BullMQ with `maxRetriesPerRequest: null` |
 | **Redis (`node-redis`)** | Official Redis client powering cache-aside caching (`listing:{id}`, categories) and atomic Lua rate limiting |
@@ -343,6 +418,11 @@ Ensure you have the following installed:
    CLOUDINARY_CLOUD_NAME=your_cloud_name
    CLOUDINARY_API_KEY=your_api_key
    CLOUDINARY_API_SECRET=your_api_secret
+
+   # Web Push Notifications (Generate with npx web-push generate-vapid-keys)
+   VAPID_PUBLIC_KEY="your_vapid_public_key"
+   VAPID_PRIVATE_KEY="your_vapid_private_key"
+   VAPID_SUBJECT="https://selloncampus.site"
 
    NODE_ENV=development
    ```
@@ -435,10 +515,10 @@ npm run build
 SellOnCampus/
 ├── backend/
 │   ├── prisma/
-│   │   ├── migrations/          # Versioned SQL migrations (includes add_email_outbox)
-│   │   └── schema/              # Modular Prisma schema models (user, emailOutbox, etc.)
+│   │   ├── migrations/          # Versioned SQL migrations (includes add_push_subscription)
+│   │   └── schema/              # Modular Prisma schema models (user, pushSubscription, etc.)
 │   ├── src/
-│   │   ├── controllers/         # Express endpoint controllers (auth, listings, chat, reports)
+│   │   ├── controllers/         # Express endpoint controllers (auth, listings, chat, push)
 │   │   ├── lib/
 │   │   │   ├── auth/            # Cookie helpers, token issuance (jose), and OTP crypto
 │   │   │   ├── cache/           # Redis client (node-redis) & cache-aside helper
@@ -446,8 +526,8 @@ SellOnCampus/
 │   │   │   ├── validation/      # Email domain verification
 │   │   │   └── prisma.ts        # PrismaClient instance with PostgreSQL adapter
 │   │   ├── middleware/          # Auth guards, rate limiting engine, uploads, and Zod validation
-│   │   ├── routes/              # Express API route modules
-│   │   ├── services/            # Business logic layer (email, listings, chat, reports)
+│   │   ├── routes/              # Express API route modules (includes notification/push routes)
+│   │   ├── services/            # Business logic layer (email, push.service, chat, listings)
 │   │   │   └── email/           # Email service, templates, and CID logo asset
 │   │   ├── types/               # TypeScript global declarations
 │   │   ├── utils/               # Rate limit presets & helper utilities
@@ -467,16 +547,20 @@ SellOnCampus/
 │   │   ├── conversations/       # Real-time chat & inbox
 │   │   ├── listings/            # Marketplace search, details, and creation
 │   │   ├── my-listings/         # Seller item management
-│   │   ├── notifications/       # User notifications feed
+│   │   ├── notifications/       # User notifications feed with Push Opt-In banner
 │   │   ├── profile/             # Student account & settings
 │   │   ├── layout.tsx           # Root layout & font injection
 │   │   └── page.tsx             # Marketplace home page
 │   ├── components/
 │   │   ├── layout/              # Glass navbar, footer, mobile nav, app shell
 │   │   ├── marketplace/         # Filters, search bar, item cards, drawers
+│   │   ├── notifications/       # Notification items, popover & push opt-in banner
 │   │   ├── ui/                  # Atomic buttons, inputs, avatars, badges, skeletons
 │   │   └── ...
-│   ├── lib/                     # Auth context, WebSocket context, utilities, types
+│   ├── lib/                     # Auth & Socket contexts, push.ts, use-push-notifications hook
+│   ├── public/
+│   │   ├── sw.js                # Root-scoped Service Worker (push & notificationclick)
+│   │   └── images/              # Static assets and stamp graphics
 │   ├── package.json
 │   └── next.config.ts
 │
@@ -502,6 +586,8 @@ SellOnCampus/
 - **Graceful Multi-Process Shutdown**: Both the API server and the standalone email worker capture `SIGTERM` and `SIGINT` to cleanly close queue listeners, wait for active jobs to finish processing, and disconnect database and Redis connections.
 - **Robust Reconnection Management**: Sockets closed intentionally (e.g. user logout, provider cleanup) are flagged using memory-safe `WeakSet` registries to prevent background reconnection loops.
 - **Pure State Updates**: Real-time event dispatches decouple side-effects from React state updaters, preventing redundant network requests and ensuring strict React 19 compliance.
+- **VAPID Cryptographic Identification (RFC 8292)**: Push packets are signed via Elliptic Curve Digital Signatures (`prime256v1` / ECDSA) using matching VAPID key pairs. Browser push services directly authenticate the origin, eliminating third-party intermediaries and unauthorized delivery attempts.
+- **Fail-Safe Subscription Pruning**: Subscriptions returning HTTP `410 Gone` or `404 Not Found` are immediately purged from PostgreSQL, preserving database hygiene and preventing dead-endpoint latency.
 
 ---
 
