@@ -17,17 +17,36 @@ function getOrCreateVisitorId(): string {
   }
 }
 
+function hasRecordedSession(): boolean {
+  if (typeof window === "undefined") return true;
+  try {
+    return sessionStorage.getItem("soc_visit_recorded") === "1";
+  } catch {
+    // If storage is unavailable / denied by policy, route to GET-only path
+    return true;
+  }
+}
+
+function markSessionRecorded(): void {
+  if (typeof window === "undefined") return;
+  try {
+    sessionStorage.setItem("soc_visit_recorded", "1");
+  } catch {
+    // Gracefully ignore storage write failures
+  }
+}
+
 export function VisitorPill() {
   const [visitorCount, setVisitorCount] = React.useState<number | null>(null);
 
   React.useEffect(() => {
     let isMounted = true;
     const visitorId = getOrCreateVisitorId();
-    const hasRecordedSession = sessionStorage.getItem("soc_visit_recorded");
+    const isSessionRecorded = hasRecordedSession();
 
     async function recordOrFetchVisit() {
       try {
-        if (!hasRecordedSession && visitorId) {
+        if (!isSessionRecorded && visitorId) {
           const res = await fetch(`${API_URL}/api/stats/visit`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -37,13 +56,13 @@ export function VisitorPill() {
             const data = await res.json();
             if (isMounted && typeof data.totalVisitors === "number") {
               setVisitorCount(data.totalVisitors);
-              sessionStorage.setItem("soc_visit_recorded", "1");
+              markSessionRecorded();
               return;
             }
           }
         }
 
-        // Otherwise fetch the latest count
+        // Otherwise fetch the latest count (GET-only count path)
         const res = await fetch(`${API_URL}/api/stats/visitors`);
         if (res.ok) {
           const data = await res.json();
@@ -52,7 +71,7 @@ export function VisitorPill() {
           }
         }
       } catch (err) {
-        console.error("[VisitorPill] Failed to record visit:", err);
+        console.error("[VisitorPill] Failed to record or fetch visitor count:", err);
       }
     }
 
@@ -79,14 +98,14 @@ export function VisitorPill() {
           <span className="font-bold text-charcoal-900 font-jakarta tracking-tight">
             {visitorCount.toLocaleString()}
           </span>
-          <span className="hidden sm:inline text-charcoal-500 font-medium">
+          <span className="hidden lg:inline text-charcoal-500 font-medium">
             visitors
           </span>
         </div>
       ) : (
         <div className="flex items-center gap-1 leading-none text-xs sm:text-sm">
           <span className="inline-block w-4 sm:w-8 h-3 bg-charcoal-200/60 rounded animate-pulse" />
-          <span className="hidden sm:inline text-charcoal-400 font-medium">
+          <span className="hidden lg:inline text-charcoal-400 font-medium">
             visitors
           </span>
         </div>
@@ -94,3 +113,4 @@ export function VisitorPill() {
     </div>
   );
 }
+

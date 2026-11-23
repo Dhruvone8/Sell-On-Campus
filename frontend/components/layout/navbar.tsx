@@ -99,7 +99,7 @@ export function Navbar() {
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 glass-header">
-      <div className="w-full h-16 px-3 sm:px-6 lg:px-8 xl:px-10 flex items-center justify-between gap-3 lg:gap-4">
+      <div className="w-full h-16 px-3 sm:px-4 md:px-5 lg:px-8 xl:px-10 flex items-center justify-between gap-2 md:gap-3 lg:gap-4">
         {/* Left Section: Brand / Logo */}
         <div className="flex items-center shrink-0">
           <Link
@@ -124,16 +124,16 @@ export function Navbar() {
         </div>
 
         {/* Center Section: Notification Bell | Search Bar | Browse | Messages */}
-        <div className="hidden md:flex items-center justify-center gap-2 lg:gap-3 xl:gap-4 flex-1 max-w-xl xl:max-w-2xl mx-2 lg:mx-4">
-          {/* Notification CTA / Popover (To the left of Search Bar) */}
-          <NotificationPopover />
+        <div className="hidden md:flex items-center justify-center gap-2 lg:gap-3 xl:gap-4 flex-1 max-w-xl xl:max-w-2xl mx-1.5 md:mx-2 lg:mx-4">
+          {/* Notification CTA / Popover (Only for authenticated users; unauthenticated visitors have no notifications) */}
+          {isAuthenticated && <NotificationPopover />}
 
           {/* Search Bar */}
           <form
             onSubmit={handleSearchSubmit}
             role="search"
             aria-label="Campus marketplace search"
-            className="relative flex-1 min-w-[200px] max-w-xs lg:max-w-sm xl:max-w-md flex items-center"
+            className="relative flex-1 min-w-[140px] max-w-xs lg:max-w-sm xl:max-w-md flex items-center"
           >
             <Search className="absolute left-3.5 h-4 w-4 text-charcoal-400 pointer-events-none" />
             <input
@@ -156,8 +156,9 @@ export function Navbar() {
           {/* Browse CTA */}
           <Link
             href="/listings"
+            aria-label="Browse listings"
             className={cn(
-              "h-9 px-3 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center shrink-0 focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:outline-none",
+              "h-9 px-2.5 lg:px-3 rounded-xl text-xs lg:text-sm font-semibold transition-all duration-200 flex items-center shrink-0 focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:outline-none",
               pathname === "/listings"
                 ? "bg-charcoal-100 text-charcoal-900 font-bold"
                 : "text-charcoal-600 hover:text-charcoal-900 hover:bg-charcoal-50"
@@ -169,8 +170,9 @@ export function Navbar() {
           {/* Messages CTA */}
           <Link
             href="/conversations"
+            aria-label="Messages"
             className={cn(
-              "relative h-9 px-3 rounded-xl text-sm font-semibold transition-all duration-200 flex items-center gap-1.5 shrink-0 focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:outline-none",
+              "relative h-9 px-2.5 lg:px-3 rounded-xl text-xs lg:text-sm font-semibold transition-all duration-200 flex items-center gap-1.5 shrink-0 focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:outline-none",
               pathname.startsWith("/conversations")
                 ? "bg-charcoal-100 text-charcoal-900 font-bold"
                 : "text-charcoal-600 hover:text-charcoal-900 hover:bg-charcoal-50"
@@ -187,7 +189,7 @@ export function Navbar() {
         </div>
 
         {/* Right Section: Sell Item CTA | Visitor Counter | Auth CTAs / Profile */}
-        <div className="flex items-center justify-end gap-2 sm:gap-2.5 shrink-0">
+        <div className="flex items-center justify-end gap-1.5 sm:gap-2 lg:gap-2.5 shrink-0">
           {/* Mobile Notifications Shortcut */}
           {isAuthenticated && (
             <Link
@@ -207,13 +209,14 @@ export function Navbar() {
             </Link>
           )}
 
-          {/* Sell Item CTA - Desktop & Tablet only */}
+          {/* Sell Item CTA - Desktop & Tablet */}
           <Link
             href="/listings/create"
-            className="hidden sm:inline-flex h-9 items-center gap-1.5 px-3 sm:px-3.5 rounded-xl bg-brand-500 hover:bg-brand-600 active:scale-95 text-white text-xs sm:text-sm font-bold shadow-xs hover:shadow-[0_3px_10px_0_rgba(249,90,30,0.25)] transition-all duration-200 shrink-0 focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:outline-none"
+            aria-label="Sell Item"
+            className="hidden sm:inline-flex h-9 items-center gap-1.5 px-2.5 lg:px-3.5 rounded-xl bg-brand-500 hover:bg-brand-600 active:scale-95 text-white text-xs sm:text-sm font-bold shadow-xs hover:shadow-[0_3px_10px_0_rgba(249,90,30,0.25)] transition-all duration-200 shrink-0 focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:outline-none"
           >
             <Plus className="h-4 w-4" />
-            <span>Sell Item</span>
+            <span className="hidden lg:inline">Sell Item</span>
           </Link>
 
           {/* Unique Visitor Counter (Positioned immediately after Sell Item CTA) */}
@@ -318,13 +321,13 @@ export function Navbar() {
             <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
               <Link
                 href="/login"
-                className="h-9 inline-flex items-center px-2.5 sm:px-3 rounded-xl text-xs sm:text-sm font-semibold text-charcoal-700 hover:bg-charcoal-100 hover:text-charcoal-900 transition-all duration-200 shrink-0 focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:outline-none"
+                className="h-9 inline-flex items-center px-2 sm:px-2.5 lg:px-3 rounded-xl text-xs sm:text-sm font-semibold text-charcoal-700 hover:bg-charcoal-100 hover:text-charcoal-900 transition-all duration-200 shrink-0 focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:outline-none"
               >
                 Sign in
               </Link>
               <Link
                 href="/register"
-                className="h-9 inline-flex items-center px-3 sm:px-3.5 rounded-xl bg-charcoal-900 hover:bg-charcoal-800 active:scale-95 text-white text-xs sm:text-sm font-semibold shadow-xs transition-all duration-200 shrink-0 focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:outline-none"
+                className="h-9 inline-flex items-center px-2.5 sm:px-3 lg:px-3.5 rounded-xl bg-charcoal-900 hover:bg-charcoal-800 active:scale-95 text-white text-xs sm:text-sm font-semibold shadow-xs transition-all duration-200 shrink-0 focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:outline-none"
               >
                 Register
               </Link>
