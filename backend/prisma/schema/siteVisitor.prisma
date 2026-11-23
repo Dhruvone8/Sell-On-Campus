@@ -1,0 +1,8 @@
+model SiteVisitor {
+  id         String   @id @default(uuid())
+  visitorId  String   @unique
+  createdAt  DateTime @default(now())
+  lastSeenAt DateTime @default(now())
+
+  @@index([createdAt])
+}
