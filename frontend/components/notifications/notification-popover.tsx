@@ -175,7 +175,7 @@ export function NotificationPopover() {
 
       {/* Floating Popover Panel */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-[340px] sm:w-[380px] bg-white rounded-2xl shadow-xl border border-charcoal-200/80 z-50 overflow-hidden animate-in fade-in-0 zoom-in-95 duration-150">
+        <div className="absolute left-0 mt-2 w-[340px] sm:w-[380px] bg-white rounded-2xl shadow-xl border border-charcoal-200/80 z-50 overflow-hidden animate-in fade-in-0 zoom-in-95 duration-150">
           {/* Popover Header */}
           <div className="px-4 py-3 border-b border-charcoal-100 flex items-center justify-between bg-charcoal-50/50">
             <div className="flex items-center gap-2">
