@@ -56,6 +56,7 @@ export function AccountSettings({ user, onProfileUpdated }: AccountSettingsProps
   const [isLoggingOut, setIsLoggingOut] = React.useState(false);
   const [saveSuccess, setSaveSuccess] = React.useState<string | null>(null);
   const [saveError, setSaveError] = React.useState<string | null>(null);
+  const photoRevisionRef = React.useRef(0);
 
   // Read cropped File into a StrictMode-safe data URL for circular preview
   React.useEffect(() => {
@@ -111,12 +112,15 @@ export function AccountSettings({ user, onProfileUpdated }: AccountSettingsProps
     if (cropTargetFile) {
       setSourceFile(cropTargetFile);
     }
+    photoRevisionRef.current += 1;
     setCroppedFile(cropped);
     setRemovePhoto(false);
     setCropTargetFile(null);
   };
 
   const handleRemovePhoto = () => {
+    if (isSaving) return;
+    photoRevisionRef.current += 1;
     setCroppedFile(null);
     setSourceFile(null);
     setRemovePhoto(true);
@@ -134,6 +138,8 @@ export function AccountSettings({ user, onProfileUpdated }: AccountSettingsProps
       toast.error(msg);
       return;
     }
+
+    const submittedPhotoRevision = photoRevisionRef.current;
 
     try {
       setIsSaving(true);
@@ -162,9 +168,11 @@ export function AccountSettings({ user, onProfileUpdated }: AccountSettingsProps
         throw new Error(data.message || "Failed to update profile");
       }
 
-      setCroppedFile(null);
-      setSourceFile(null);
-      setRemovePhoto(false);
+      if (photoRevisionRef.current === submittedPhotoRevision) {
+        setCroppedFile(null);
+        setSourceFile(null);
+        setRemovePhoto(false);
+      }
       setSaveSuccess("Profile updated successfully!");
       toast.success("Profile updated successfully!");
       if (data.user) {
@@ -314,10 +322,11 @@ export function AccountSettings({ user, onProfileUpdated }: AccountSettingsProps
               ref={photoInputRef}
               type="file"
               accept="image/jpeg,image/png,image/webp"
+              disabled={isSaving}
               className="hidden"
               onChange={(e) => {
                 const selected = e.target.files?.[0];
-                if (selected) {
+                if (selected && !isSaving) {
                   handleSelectPhotoFile(selected);
                 }
                 e.target.value = "";
@@ -327,12 +336,13 @@ export function AccountSettings({ user, onProfileUpdated }: AccountSettingsProps
             <div
               onDragOver={(e) => {
                 e.preventDefault();
-                setIsDraggingPhoto(true);
+                if (!isSaving) setIsDraggingPhoto(true);
               }}
               onDragLeave={() => setIsDraggingPhoto(false)}
               onDrop={(e) => {
                 e.preventDefault();
                 setIsDraggingPhoto(false);
+                if (isSaving) return;
                 const dropped = e.dataTransfer.files?.[0];
                 if (dropped) {
                   handleSelectPhotoFile(dropped);
@@ -342,7 +352,7 @@ export function AccountSettings({ user, onProfileUpdated }: AccountSettingsProps
                 isDraggingPhoto
                   ? "border-brand-500 bg-brand-50/50"
                   : "border-charcoal-200/80 bg-charcoal-50/40"
-              }`}
+              } ${isSaving ? "opacity-70" : ""}`}
             >
               {/* Circular Avatar Preview */}
               <div className="flex items-center gap-4">
@@ -360,10 +370,11 @@ export function AccountSettings({ user, onProfileUpdated }: AccountSettingsProps
                   )}
                   <button
                     type="button"
+                    disabled={isSaving}
                     onClick={() => photoInputRef.current?.click()}
                     title="Upload profile photo"
                     aria-label="Upload profile photo"
-                    className="absolute -bottom-0.5 -right-0.5 w-7 h-7 rounded-full bg-brand-500 hover:bg-brand-600 text-white shadow-sm ring-2 ring-white flex items-center justify-center transition-colors cursor-pointer"
+                    className="absolute -bottom-0.5 -right-0.5 w-7 h-7 rounded-full bg-brand-500 hover:bg-brand-600 text-white shadow-sm ring-2 ring-white flex items-center justify-center transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Camera className="w-3.5 h-3.5" />
                   </button>
@@ -389,8 +400,9 @@ export function AccountSettings({ user, onProfileUpdated }: AccountSettingsProps
               <div className="flex flex-wrap items-center gap-2 shrink-0">
                 <button
                   type="button"
+                  disabled={isSaving}
                   onClick={() => photoInputRef.current?.click()}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-charcoal-800 bg-white hover:bg-charcoal-100 border border-charcoal-200 transition-colors cursor-pointer shadow-2xs"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-charcoal-800 bg-white hover:bg-charcoal-100 border border-charcoal-200 transition-colors cursor-pointer shadow-2xs disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   <UploadCloud className="w-3.5 h-3.5 text-brand-500" />
                   <span>{activePreviewUrl ? "Change Photo" : "Upload Photo"}</span>
@@ -399,8 +411,9 @@ export function AccountSettings({ user, onProfileUpdated }: AccountSettingsProps
                 {sourceFile && (
                   <button
                     type="button"
+                    disabled={isSaving}
                     onClick={() => setCropTargetFile(sourceFile)}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-charcoal-700 bg-white hover:bg-charcoal-100 border border-charcoal-200 transition-colors cursor-pointer shadow-2xs"
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-charcoal-700 bg-white hover:bg-charcoal-100 border border-charcoal-200 transition-colors cursor-pointer shadow-2xs disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <SlidersHorizontal className="w-3.5 h-3.5" />
                     <span>Adjust</span>
@@ -410,8 +423,9 @@ export function AccountSettings({ user, onProfileUpdated }: AccountSettingsProps
                 {activePreviewUrl && (
                   <button
                     type="button"
+                    disabled={isSaving}
                     onClick={handleRemovePhoto}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-red-600 bg-white hover:bg-red-50 border border-red-200 transition-colors cursor-pointer shadow-2xs"
+                    className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold text-red-600 bg-white hover:bg-red-50 border border-red-200 transition-colors cursor-pointer shadow-2xs disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                     <span>Remove</span>

@@ -2,6 +2,7 @@
 "use client";
 
 import * as React from "react";
+import { createPortal } from "react-dom";
 import { X, ZoomIn, ZoomOut, RotateCcw, Check, Move, Loader2 } from "lucide-react";
 
 const STAGE_SIZE = 300;
@@ -29,6 +30,14 @@ export function AvatarCropModal({ file, onCancel, onConfirm }: AvatarCropModalPr
   const [isExporting, setIsExporting] = React.useState(false);
   const [loadError, setLoadError] = React.useState<string | null>(null);
 
+  const isClient = React.useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false
+  );
+
+  const backdropRef = React.useRef<HTMLDivElement | null>(null);
+  const dialogRef = React.useRef<HTMLDivElement | null>(null);
   const imgRef = React.useRef<HTMLImageElement | null>(null);
   const dragStartRef = React.useRef<{
     pointerX: number;
@@ -63,12 +72,79 @@ export function AvatarCropModal({ file, onCancel, onConfirm }: AvatarCropModalPr
 
   const imageSrc = loadedImage?.file === file ? loadedImage.url : null;
 
+  // Move focus into dialog, lock scroll, mark background siblings inert, and restore on close
+  React.useEffect(() => {
+    if (!isClient) return;
+
+    const previouslyFocused =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const originalOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const portalNode = backdropRef.current;
+    const madeInert: HTMLElement[] = [];
+    Array.from(document.body.children).forEach((child) => {
+      if (child !== portalNode && child instanceof HTMLElement && !child.inert) {
+        child.inert = true;
+        madeInert.push(child);
+      }
+    });
+
+    dialogRef.current?.focus();
+
+    return () => {
+      document.body.style.overflow = originalOverflow;
+      madeInert.forEach((el) => {
+        el.inert = false;
+      });
+      if (previouslyFocused && previouslyFocused.isConnected) {
+        previouslyFocused.focus();
+      }
+    };
+  }, [isClient]);
+
+  // Contain Tab/Shift+Tab navigation and support Escape dismissal
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape" && !isExporting) {
+        e.preventDefault();
         onCancel();
+        return;
+      }
+
+      if (e.key === "Tab" && dialogRef.current) {
+        const focusable = Array.from(
+          dialogRef.current.querySelectorAll<HTMLElement>(
+            'button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), a[href], [tabindex]:not([tabindex="-1"]):not([disabled])'
+          )
+        ).filter((el) => el.offsetParent !== null || el === document.activeElement);
+
+        if (focusable.length === 0) {
+          e.preventDefault();
+          dialogRef.current.focus();
+          return;
+        }
+
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        const active = document.activeElement as HTMLElement | null;
+
+        if (!active || !dialogRef.current.contains(active) || active === dialogRef.current) {
+          e.preventDefault();
+          (e.shiftKey ? last : first).focus();
+          return;
+        }
+
+        if (e.shiftKey && active === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && active === last) {
+          e.preventDefault();
+          first.focus();
+        }
       }
     };
+
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isExporting, onCancel]);
@@ -202,17 +278,25 @@ export function AvatarCropModal({ file, onCancel, onConfirm }: AvatarCropModalPr
     }
   };
 
-  return (
+  if (!isClient) return null;
+
+  return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-charcoal-950/70 backdrop-blur-xs p-4 animate-in fade-in duration-150"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="avatar-crop-title"
-      onClick={(e) => {
+      ref={backdropRef}
+      onMouseDown={(e) => {
         if (e.target === e.currentTarget && !isExporting) onCancel();
       }}
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-charcoal-950/70 backdrop-blur-xs p-4 animate-in fade-in duration-150"
     >
-      <div className="w-full max-w-md rounded-3xl bg-white border border-charcoal-200/80 shadow-2xl overflow-hidden">
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="avatar-crop-title"
+        tabIndex={-1}
+        onMouseDown={(e) => e.stopPropagation()}
+        className="w-full max-w-md rounded-3xl bg-white border border-charcoal-200/80 shadow-2xl overflow-hidden outline-none"
+      >
         {/* Header */}
         <div className="px-5 py-4 border-b border-charcoal-100 flex items-center justify-between">
           <div>
@@ -401,6 +485,7 @@ export function AvatarCropModal({ file, onCancel, onConfirm }: AvatarCropModalPr
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
