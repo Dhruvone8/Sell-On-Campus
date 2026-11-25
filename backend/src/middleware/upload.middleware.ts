@@ -32,3 +32,13 @@ export function uploadListingImages(req: Request, res: Response, next: NextFunct
         next();
     });
 }
+
+export function uploadProfileImage(req: Request, res: Response, next: NextFunction) {
+    upload.single("image")(req, res, (error) => {
+        if (error) {
+            return handleMulterError(error, req, res, next);
+        }
+
+        next();
+    });
+}
