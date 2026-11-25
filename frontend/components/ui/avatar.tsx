@@ -16,7 +16,7 @@ export function Avatar({
   className,
   ...props
 }: AvatarProps) {
-  const [imageError, setImageError] = React.useState(false);
+  const [failedSrc, setFailedSrc] = React.useState<string | null>(null);
 
   const sizes = {
     sm: "h-7 w-7 text-xs",
@@ -25,7 +25,7 @@ export function Avatar({
     xl: "h-16 w-16 text-lg font-bold",
   };
 
-  const hasImage = src && !imageError;
+  const hasImage = Boolean(src) && failedSrc !== src;
 
   return (
     <div
@@ -40,9 +40,9 @@ export function Avatar({
       {hasImage ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img
-          src={src}
+          src={src ?? undefined}
           alt={name || "User Avatar"}
-          onError={() => setImageError(true)}
+          onError={() => setFailedSrc(src ?? null)}
           className="h-full w-full object-cover"
         />
       ) : (

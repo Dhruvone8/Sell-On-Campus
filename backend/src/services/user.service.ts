@@ -1,5 +1,6 @@
 import { prisma } from "../lib/prisma.js";
 import { AppError } from "../lib/error.js";
+import { uploadImage, deleteImage } from "./cloudinary.service.js";
 
 const SAFE_USER_SELECT = {
   id: true,
@@ -20,7 +21,16 @@ export type UpdateProfileInput = {
   department?: string | null;
   year?: number | null;
   profileImageUrl?: string | null;
+  removeProfileImage?: boolean;
 };
+
+function extractAvatarPublicId(url: string | null | undefined, userId: string): string | null {
+  if (!url) return null;
+  const escapedUserId = userId.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const pattern = new RegExp(`/upload/(?:v\\d+/)?(sell-on-campus/avatars/${escapedUserId}/[^?#]+?)(?:\\.[a-zA-Z0-9]+)?(?:[?#]|$)`);
+  const match = url.match(pattern);
+  return match?.[1] ?? null;
+}
 
 export async function getUserProfile(userId: string) {
   const user = await prisma.user.findUnique({
@@ -35,7 +45,11 @@ export async function getUserProfile(userId: string) {
   return user;
 }
 
-export async function updateUserProfile(userId: string, data: UpdateProfileInput) {
+export async function updateUserProfile(
+  userId: string,
+  data: UpdateProfileInput,
+  file?: Express.Multer.File
+) {
   const user = await prisma.user.findUnique({
     where: { id: userId },
   });
@@ -44,16 +58,48 @@ export async function updateUserProfile(userId: string, data: UpdateProfileInput
     throw new AppError("User not found", 404);
   }
 
-  const updatedUser = await prisma.user.update({
-    where: { id: userId },
-    data: {
-      ...(data.name !== undefined && { name: data.name }),
-      ...("department" in data && { department: data.department }),
-      ...("year" in data && { year: data.year }),
-      ...("profileImageUrl" in data && { profileImageUrl: data.profileImageUrl }),
-    },
-    select: SAFE_USER_SELECT,
-  });
+  let nextProfileImageUrl: string | null | undefined = undefined;
+  let uploadedPublicId: string | null = null;
 
-  return updatedUser;
+  if (file) {
+    const uploaded = await uploadImage(file.buffer, `sell-on-campus/avatars/${userId}`);
+    nextProfileImageUrl = uploaded.secure_url;
+    uploadedPublicId = uploaded.public_id;
+  } else if (data.removeProfileImage) {
+    nextProfileImageUrl = null;
+  } else if ("profileImageUrl" in data) {
+    nextProfileImageUrl = data.profileImageUrl;
+  }
+
+  try {
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(data.name !== undefined && { name: data.name }),
+        ...("department" in data && { department: data.department }),
+        ...("year" in data && { year: data.year }),
+        ...(nextProfileImageUrl !== undefined && { profileImageUrl: nextProfileImageUrl }),
+      },
+      select: SAFE_USER_SELECT,
+    });
+
+    // Clean up replaced or removed avatar from Cloudinary if we own it
+    if (nextProfileImageUrl !== undefined && user.profileImageUrl && user.profileImageUrl !== nextProfileImageUrl) {
+      const oldPublicId = extractAvatarPublicId(user.profileImageUrl, userId);
+      if (oldPublicId) {
+        deleteImage(oldPublicId).catch((cleanupError) => {
+          console.error("Failed to delete previous avatar from Cloudinary:", oldPublicId, cleanupError);
+        });
+      }
+    }
+
+    return updatedUser;
+  } catch (error) {
+    if (uploadedPublicId) {
+      deleteImage(uploadedPublicId).catch((cleanupError) => {
+        console.error("Failed to rollback uploaded avatar from Cloudinary:", uploadedPublicId, cleanupError);
+      });
+    }
+    throw error;
+  }
 }

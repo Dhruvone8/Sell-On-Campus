@@ -30,7 +30,15 @@ export async function updateMyProfile(req: Request, res: Response) {
       return res.status(401).json({ message: "Unauthenticated" });
     }
 
-    const user = await updateUserProfileService(userId, req.body);
+    const file = req.file;
+    const hasBodyFields = req.body && Object.keys(req.body).length > 0;
+    if (!file && !hasBodyFields) {
+      return res.status(400).json({
+        message: "At least one field or image must be provided to update profile",
+      });
+    }
+
+    const user = await updateUserProfileService(userId, req.body, file);
     return res.status(200).json({
       message: "Profile updated successfully",
       user,
