@@ -7,7 +7,7 @@ export interface PasswordResetOtpEmailData {
 export function renderPasswordResetOtpEmail(data: PasswordResetOtpEmailData): { subject: string; text: string; html: string } {
     const otp = escapeHtml(data.otp);
     const subject = "SellOnCampus Password Reset";
-    const text = `Your SellOnCampus password reset code is ${data.otp}. This code expires in 2 minutes`;
+    const text = `Your SellOnCampus password reset code is ${data.otp}. This code expires in 5 minutes`;
     const html = `<!DOCTYPE html>
 <html>
 <body style="margin: 0; padding: 24px; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #1e293b;">
@@ -21,7 +21,7 @@ export function renderPasswordResetOtpEmail(data: PasswordResetOtpEmailData): { 
       <div style="background-color: #fff7ed; border: 1px solid #fed7aa; border-radius: 8px; padding: 16px; text-align: center; margin-bottom: 20px;">
         <span style="font-size: 32px; font-weight: 800; letter-spacing: 6px; color: #ea580c; font-family: monospace;">${otp}</span>
       </div>
-      <p style="margin: 0; font-size: 13px; color: #64748b;">This code expires in <strong>2 minutes</strong>.</p>
+      <p style="margin: 0; font-size: 13px; color: #64748b;">This code expires in <strong>5 minutes</strong>.</p>
     </div>
   </div>
 </body>
