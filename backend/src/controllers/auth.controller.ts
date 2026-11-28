@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { prisma } from "../lib/prisma.js";
-import { requestOtp, verifyOtpCode } from "../services/auth/otp.service.js";
+import { cleanupOtp, requestOtp, verifyOtpCode } from "../services/auth/otp.service.js";
 import { sendPasswordResetOtpEmail, sendRegistrationOtpEmail } from "../services/email/email.service.js";
 import argon2 from "argon2";
 import {
@@ -35,7 +35,14 @@ export async function requestRegistrationOtp(req: Request, res: Response) {
 
         const otp = await requestOtp(normalizedEmail, "REGISTRATION");
 
-        await sendRegistrationOtpEmail(normalizedEmail, otp);
+        try {
+            await sendRegistrationOtpEmail(normalizedEmail, otp);
+        } catch (emailError) {
+            await cleanupOtp(normalizedEmail, "REGISTRATION").catch((cleanupErr) => {
+                console.error("Failed to clean up registration OTP after email failure:", cleanupErr);
+            });
+            throw emailError;
+        }
 
         return res.status(200).json({ message: "OTP sent successfully" });
 
@@ -297,7 +304,14 @@ export async function requestPasswordResetOtp(req: Request, res: Response) {
         if (user) {
             const otp = await requestOtp(normalizedEmail, "PASSWORD_RESET");
 
-            await sendPasswordResetOtpEmail(normalizedEmail, otp);
+            try {
+                await sendPasswordResetOtpEmail(normalizedEmail, otp);
+            } catch (emailError) {
+                await cleanupOtp(normalizedEmail, "PASSWORD_RESET").catch((cleanupErr) => {
+                    console.error("Failed to clean up password reset OTP after email failure:", cleanupErr);
+                });
+                throw emailError;
+            }
         }
 
         return res.status(200).json({ message: "OTP sent for Password Reset" });

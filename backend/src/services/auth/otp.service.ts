@@ -1,7 +1,16 @@
 import { prisma } from '../../lib/prisma.js';
 import { generateOtp, hashOtp, verifyOtp } from '../../lib/auth/otp.js';
 
-const OTP_EXPIRATION_TIME = 2 * 60 * 1000; // 2 minutes in milliseconds
+const OTP_EXPIRATION_TIME = 5 * 60 * 1000; // 5 minutes in milliseconds
+
+export async function cleanupOtp(email: string, purpose: "REGISTRATION" | "PASSWORD_RESET") {
+    await prisma.verification.deleteMany({
+        where: {
+            email,
+            purpose,
+        },
+    });
+}
 
 export async function requestOtp(email: string, purpose: "REGISTRATION" | "PASSWORD_RESET") {
     const otp = generateOtp();
